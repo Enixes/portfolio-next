@@ -9,7 +9,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3001](http://localhost:3001).
+
+For the alternate Sites-compatible development runtime, use `npm run dev:sites`.
 
 ## Production builds
 

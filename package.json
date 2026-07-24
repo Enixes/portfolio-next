@@ -6,7 +6,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "dev": "next dev --webpack --hostname 127.0.0.1 -p 3001",
+    "dev:sites": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "build:next": "next build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
