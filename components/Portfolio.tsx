@@ -12,6 +12,8 @@ const reveal = {
   transition: { duration: 0.65, ease: [0.2, 0.7, 0.2, 1] as const },
 };
 
+const particleSkills = ["SYSTEM", "JAVA", "AI", "C#", "PYTHON", "SQL", "SPRING"];
+
 function ProjectModal({
   project,
   onClose,
@@ -106,6 +108,10 @@ export function Portfolio() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [particleSkillIndex, setParticleSkillIndex] = useState(0);
+  const activeParticleSkill = particleSkills[particleSkillIndex];
+  const nextParticleSkill =
+    particleSkills[(particleSkillIndex + 1) % particleSkills.length];
 
   useEffect(() => {
     setMounted(true);
@@ -204,8 +210,32 @@ export function Portfolio() {
               </div>
               <h1 className="mt-7 text-[clamp(4.4rem,8vw,9rem)] font-[480] leading-[0.85] tracking-[-0.075em]">
                 I make complex systems{" "}
-                <span className="text-[#6f7980]">behave.</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setParticleSkillIndex(
+                      (current) => (current + 1) % particleSkills.length,
+                    )
+                  }
+                  className="group relative cursor-pointer text-left text-[#6f7980] transition-colors duration-300 hover:text-white"
+                  aria-label={`Morph particles into ${nextParticleSkill}`}
+                  title={`Click to morph particles into ${nextParticleSkill}`}
+                >
+                  behave.
+                  <span className="absolute -bottom-1 left-1 h-[2px] w-0 bg-gradient-to-r from-[#27e8ff] via-[#7857ff] to-[#ff43d1] transition-all duration-300 group-hover:w-[94%]" />
+                </button>
               </h1>
+              <div
+                className="mt-5 flex items-center gap-3 font-mono text-[9px] uppercase tracking-[0.15em] text-[#738087]"
+                aria-live="polite"
+              >
+                <span className="text-[#27e8ff]">Particle mode</span>
+                <span className="h-px w-6 bg-white/15" />
+                {activeParticleSkill}
+                <span className="hidden text-[#59646a] sm:inline">
+                  · click “behave.” to cycle
+                </span>
+              </div>
               <p className="mt-8 max-w-xl text-lg leading-relaxed text-[#a2acb0] sm:text-xl">
                 Backend engineering for environments where throughput, recovery,
                 and reliability are not optional.
@@ -227,7 +257,7 @@ export function Portfolio() {
             </motion.div>
 
             <div className="pointer-events-auto absolute -right-[26%] top-[34%] h-[560px] w-[760px] -translate-y-1/2 sm:-right-[16%] sm:top-1/2 sm:h-[720px] sm:w-[900px] lg:-right-[4%] xl:right-[-2%]">
-              <Hero3D />
+              <Hero3D activeSkill={activeParticleSkill} />
             </div>
 
             <div className="absolute bottom-3 left-0 right-0 z-10 border-t border-white/10 pt-6">

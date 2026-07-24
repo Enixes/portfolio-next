@@ -8,7 +8,7 @@ const Scene = dynamic(() => import("./Scene"), {
   loading: () => <div className="chaos-fallback" aria-hidden="true" />,
 });
 
-export function Hero3D() {
+export function Hero3D({ activeSkill }: { activeSkill: string }) {
   const [fallback, setFallback] = useState(false);
   const [organized, setOrganized] = useState(false);
 
@@ -24,7 +24,7 @@ export function Hero3D() {
       {fallback ? (
         <div className="static-core" aria-hidden="true" />
       ) : (
-        <Scene />
+        <Scene activeSkill={activeSkill} />
       )}
       <div className="absolute bottom-[12%] right-[10%] z-10 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-[#8f9ba1]">
         <span
@@ -34,7 +34,7 @@ export function Hero3D() {
               : "animate-pulse bg-[#ff4fd8] shadow-[0_0_14px_#ff4fd8]"
           }`}
         />
-        {organized ? "System online" : "Assembling topology"}
+        {organized ? `${activeSkill} topology` : "Assembling topology"}
       </div>
     </>
   );

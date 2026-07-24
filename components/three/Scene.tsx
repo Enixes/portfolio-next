@@ -26,18 +26,64 @@ function easeInOutCubic(value: number) {
     : 1 - (-2 * value + 2) ** 3 / 2;
 }
 
-function ConcurrencyCore() {
+function createTextTarget(label: string, count: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 840;
+  canvas.height = 280;
+  const context = canvas.getContext("2d");
+  const target = new Float32Array(count * 3);
+  if (!context) return target;
+
+  const fontSize = label.length > 5 ? 150 : label.length > 3 ? 185 : 220;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#ffffff";
+  context.font = `900 ${fontSize}px Arial, sans-serif`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(label, canvas.width / 2, canvas.height / 2 + 8);
+
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const samples: Array<[number, number]> = [];
+  for (let y = 0; y < canvas.height; y += 3) {
+    for (let x = 0; x < canvas.width; x += 3) {
+      if (pixels[(y * canvas.width + x) * 4 + 3] > 100) {
+        samples.push([x, y]);
+      }
+    }
+  }
+
+  const random = seededRandom(
+    label.split("").reduce((total, character) => total + character.charCodeAt(0), 0),
+  );
+  for (let i = 0; i < count; i += 1) {
+    const index = i * 3;
+    const sample =
+      samples[Math.floor((i / count) * samples.length)] ??
+      samples[Math.floor(random() * samples.length)] ??
+      [canvas.width / 2, canvas.height / 2];
+    target[index] = (sample[0] - canvas.width / 2) * 0.0062;
+    target[index + 1] = -(sample[1] - canvas.height / 2) * 0.0062;
+    target[index + 2] = (random() - 0.5) * 0.2;
+  }
+
+  return target;
+}
+
+function ConcurrencyCore({ activeSkill }: { activeSkill: string }) {
   const core = useRef<THREE.Group>(null);
   const requests = useRef<THREE.Group>(null);
   const positionsRef = useRef<THREE.BufferAttribute>(null);
   const colorsRef = useRef<THREE.BufferAttribute>(null);
   const materialRef = useRef<THREE.PointsMaterial>(null);
   const startedAt = useRef<number | null>(null);
+  const lastSkill = useRef(activeSkill);
+  const morphStart = useRef<number | null>(null);
+  const morphFrom = useRef<Float32Array | null>(null);
   const { pointer, camera } = useThree();
 
   const particleData = useMemo(() => {
     const initial = new Float32Array(PARTICLE_COUNT * 3);
-    const target = new Float32Array(PARTICLE_COUNT * 3);
+    const sphereTarget = new Float32Array(PARTICLE_COUNT * 3);
     const current = new Float32Array(PARTICLE_COUNT * 3);
     const colors = new Float32Array(PARTICLE_COUNT * 3);
     const finalColors = new Float32Array(PARTICLE_COUNT * 3);
@@ -58,9 +104,9 @@ function ConcurrencyCore() {
       const angle = golden * i;
       const shell = 1.83 + Math.sin(i * 0.19) * 0.055;
 
-      target[index] = Math.cos(angle) * radius * shell;
-      target[index + 1] = y * shell;
-      target[index + 2] = Math.sin(angle) * radius * shell;
+      sphereTarget[index] = Math.cos(angle) * radius * shell;
+      sphereTarget[index + 1] = y * shell;
+      sphereTarget[index + 2] = Math.sin(angle) * radius * shell;
 
       const chaosRadius = 0.5 + random() * 4.2;
       const chaosAngle = random() * Math.PI * 2;
@@ -84,7 +130,19 @@ function ConcurrencyCore() {
       colors[index + 2] = asleep.b;
     }
 
-    return { initial, target, current, colors, finalColors };
+    const skillTargets: Record<string, Float32Array> = {};
+    for (const skill of ["JAVA", "AI", "C#", "PYTHON", "SQL", "SPRING"]) {
+      skillTargets[skill] = createTextTarget(skill, PARTICLE_COUNT);
+    }
+
+    return {
+      initial,
+      sphereTarget,
+      skillTargets,
+      current,
+      colors,
+      finalColors,
+    };
   }, []);
 
   const requestNodes = useMemo(
@@ -101,7 +159,7 @@ function ConcurrencyCore() {
     if (startedAt.current === null) startedAt.current = state.clock.elapsedTime;
     const elapsed = state.clock.elapsedTime - startedAt.current;
     const rawProgress = THREE.MathUtils.clamp((elapsed - 0.9) / 4.2, 0, 1);
-    const progress = easeInOutCubic(rawProgress);
+    const bootProgress = easeInOutCubic(rawProgress);
     const lightProgress = THREE.MathUtils.smoothstep(rawProgress, 0.05, 0.62);
     const positionAttribute = positionsRef.current;
     const colorAttribute = colorsRef.current;
@@ -109,42 +167,69 @@ function ConcurrencyCore() {
     if (positionAttribute && colorAttribute) {
       const positions = positionAttribute.array as Float32Array;
       const colors = colorAttribute.array as Float32Array;
+      if (lastSkill.current !== activeSkill) {
+        morphFrom.current = new Float32Array(positions);
+        morphStart.current = elapsed;
+        lastSkill.current = activeSkill;
+      }
+
+      const selectedTarget =
+        activeSkill === "SYSTEM"
+          ? particleData.sphereTarget
+          : particleData.skillTargets[activeSkill] ?? particleData.sphereTarget;
+      const rawMorphProgress =
+        morphStart.current === null
+          ? 0
+          : THREE.MathUtils.clamp((elapsed - morphStart.current) / 1.65, 0, 1);
+      const morphProgress = easeInOutCubic(rawMorphProgress);
+      const organizedProgress =
+        morphStart.current === null ? bootProgress : morphProgress;
 
       for (let i = 0; i < PARTICLE_COUNT; i += 1) {
         const index = i * 3;
         const chaos =
-          (1 - progress) *
+          (morphStart.current === null ? 1 - bootProgress : 0) *
           Math.sin(elapsed * 1.8 + i * 0.071) *
           (0.09 + (i % 5) * 0.005);
         const pointerWave =
-          progress *
+          organizedProgress *
           0.055 *
           Math.sin(i * 0.043 + pointer.x * 3.2 + pointer.y * 2.1);
         const breathing =
-          progress * 0.018 * Math.sin(elapsed * 0.85 + i * 0.021);
+          organizedProgress * 0.018 * Math.sin(elapsed * 0.85 + i * 0.021);
         const influence = 1 + pointerWave + breathing;
+        const fromX =
+          morphStart.current === null
+            ? particleData.initial[index]
+            : morphFrom.current?.[index] ?? positions[index];
+        const fromY =
+          morphStart.current === null
+            ? particleData.initial[index + 1]
+            : morphFrom.current?.[index + 1] ?? positions[index + 1];
+        const fromZ =
+          morphStart.current === null
+            ? particleData.initial[index + 2]
+            : morphFrom.current?.[index + 2] ?? positions[index + 2];
+        const transitionProgress =
+          morphStart.current === null ? bootProgress : morphProgress;
 
         positions[index] =
-          THREE.MathUtils.lerp(
-            particleData.initial[index],
-            particleData.target[index],
-            progress,
-          ) *
+          THREE.MathUtils.lerp(fromX, selectedTarget[index], transitionProgress) *
             influence +
           chaos;
         positions[index + 1] =
           THREE.MathUtils.lerp(
-            particleData.initial[index + 1],
-            particleData.target[index + 1],
-            progress,
+            fromY,
+            selectedTarget[index + 1],
+            transitionProgress,
           ) *
             influence +
           chaos * 0.65;
         positions[index + 2] =
           THREE.MathUtils.lerp(
-            particleData.initial[index + 2],
-            particleData.target[index + 2],
-            progress,
+            fromZ,
+            selectedTarget[index + 2],
+            transitionProgress,
           ) * influence;
 
         colors[index] = THREE.MathUtils.lerp(
@@ -178,21 +263,39 @@ function ConcurrencyCore() {
     const scrollProgress = scrollRange > 0 ? window.scrollY / scrollRange : 0;
 
     if (core.current) {
-      core.current.rotation.y += delta * (progress > 0.98 ? 0.1 : 0.035);
-      core.current.rotation.x = THREE.MathUtils.lerp(
-        core.current.rotation.x,
-        pointer.y * 0.16 + scrollProgress * 0.56,
-        0.04,
-      );
-      core.current.rotation.z = THREE.MathUtils.lerp(
-        core.current.rotation.z,
-        -pointer.x * 0.16,
-        0.04,
-      );
+      if (activeSkill === "SYSTEM") {
+        core.current.rotation.y += delta * (bootProgress > 0.98 ? 0.1 : 0.035);
+        core.current.rotation.x = THREE.MathUtils.lerp(
+          core.current.rotation.x,
+          pointer.y * 0.16 + scrollProgress * 0.56,
+          0.04,
+        );
+        core.current.rotation.z = THREE.MathUtils.lerp(
+          core.current.rotation.z,
+          -pointer.x * 0.16,
+          0.04,
+        );
+      } else {
+        core.current.rotation.x = THREE.MathUtils.lerp(
+          core.current.rotation.x,
+          pointer.y * 0.035,
+          0.07,
+        );
+        core.current.rotation.y = THREE.MathUtils.lerp(
+          core.current.rotation.y,
+          pointer.x * 0.025,
+          0.07,
+        );
+        core.current.rotation.z = THREE.MathUtils.lerp(
+          core.current.rotation.z,
+          0,
+          0.07,
+        );
+      }
     }
 
     if (requests.current) {
-      requests.current.visible = progress > 0.72;
+      requests.current.visible = bootProgress > 0.72;
       requests.current.rotation.z += delta * 0.12;
       requests.current.rotation.y -= delta * 0.075;
     }
@@ -239,7 +342,7 @@ function ConcurrencyCore() {
             color="#694dff"
             wireframe
             transparent
-            opacity={0.09}
+            opacity={activeSkill === "SYSTEM" ? 0.09 : 0.018}
             blending={THREE.AdditiveBlending}
           />
         </mesh>
@@ -278,7 +381,7 @@ function ConcurrencyCore() {
   );
 }
 
-export default function Scene() {
+export default function Scene({ activeSkill }: { activeSkill: string }) {
   return (
     <Canvas
       dpr={[1, 1.5]}
@@ -291,7 +394,7 @@ export default function Scene() {
     >
       <ambientLight intensity={0.28} />
       <directionalLight position={[4, 4, 5]} intensity={1.1} color="#8d76ff" />
-      <ConcurrencyCore />
+      <ConcurrencyCore activeSkill={activeSkill} />
       <Environment resolution={64}>
         <Lightformer
           form="ring"
@@ -311,7 +414,7 @@ export default function Scene() {
       <OrbitControls
         enablePan={false}
         enableZoom={false}
-        autoRotate
+        autoRotate={activeSkill === "SYSTEM"}
         autoRotateSpeed={0.17}
         rotateSpeed={0.25}
       />
