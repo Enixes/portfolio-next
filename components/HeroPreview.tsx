@@ -188,7 +188,7 @@ export function HeroPreview() {
               </article>
 
               <div className="preview-actions">
-                <a className="preview-primary" href="#work">
+                <a className="trace-evidence" href="#work">
                   Trace the evidence <span aria-hidden="true">↘</span>
                 </a>
                 <a className="preview-secondary" href="#blog">Read field notes ↗</a>

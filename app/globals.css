@@ -213,31 +213,34 @@ a { color: inherit; text-decoration: none; }
 .board-sticky,
 .war-note {
   box-shadow: 3px 5px 9px rgba(48,43,35,.18);
-  animation: note-reveal .5s ease-out both;
   transform: rotate(var(--tilt, 0deg));
   transform-origin: 52% 0;
 }
 
 .is-breezing {
-  animation: note-gust .88s cubic-bezier(.2,.72,.25,1) both;
+  animation: note-fold-from-left .96s cubic-bezier(.2,.68,.24,1) both;
   animation-delay: var(--gust-delay, 0ms);
-  will-change: transform;
 }
 
-.gust-from-left {
-  --gust-peak: .82deg;
-  --gust-rebound: -.34deg;
-  --gust-settle: .13deg;
-  --gust-skew: .14deg;
-  --gust-rebound-skew: -.06deg;
+.board-paper::before,
+.board-sticky::before,
+.war-note::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 22%;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(to top, rgba(255,255,255,.58), rgba(78,67,45,.1) 38%, transparent 82%);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: bottom;
 }
 
-.gust-from-right {
-  --gust-peak: -.76deg;
-  --gust-rebound: .31deg;
-  --gust-settle: -.12deg;
-  --gust-skew: -.13deg;
-  --gust-rebound-skew: .055deg;
+.is-breezing::before {
+  animation: note-fold-light .96s cubic-bezier(.2,.68,.24,1) both;
+  animation-delay: var(--gust-delay, 0ms);
 }
 
 .board-paper { background: #fffef8; }
@@ -325,7 +328,6 @@ a { color: inherit; text-decoration: none; }
   height: auto;
   aspect-ratio: 1;
   object-fit: cover;
-  filter: saturate(.82) contrast(1.04);
 }
 .profile-photo figcaption {
   position: absolute;
@@ -538,21 +540,36 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 15px;
 }
-.preview-primary {
+.trace-evidence {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 15px;
-  padding: 13px 17px;
-  border: 2px solid #202629;
-  background: #23282b;
-  box-shadow: 4px 5px 0 #b4322b;
-  color: #fff;
-  font: 700 9px/1 var(--mono);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  transition: translate .17s ease, box-shadow .17s ease;
+  gap: 9px;
+  padding: 8px 11px;
+  color: #22282a;
+  font: 700 clamp(15px,1.55vw,22px)/1 var(--hand);
+  letter-spacing: -.02em;
+  rotate: -2deg;
+  text-decoration: none;
 }
-.preview-primary:hover { translate: 3px 3px; box-shadow: 1px 2px 0 #b4322b; }
+.trace-evidence span { color: #347492; font-size: 1.15em; }
+.trace-evidence::after {
+  content: "";
+  position: absolute;
+  inset: -7px -13px -8px -12px;
+  border: 3px solid #b4322b;
+  border-radius: 49% 44% 52% 46%;
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(-4deg) scale(.84);
+  transition: opacity .16s ease, transform .22s ease;
+}
+.trace-evidence:hover::after,
+.trace-evidence:focus-visible::after {
+  opacity: .92;
+  transform: rotate(-4deg) scale(1);
+}
+.trace-evidence:focus-visible { outline: none; }
 .preview-secondary { border-bottom: 1px solid currentColor; font: 700 8px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 
 .marker-tray {
@@ -584,24 +601,25 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
 }
 
-@keyframes note-reveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes note-fold-from-left {
+  0%, 100% {
+    transform: rotate(var(--tilt, 0deg)) translateX(0) scaleY(1) skewY(0deg);
+  }
+  28% {
+    transform: rotate(calc(var(--tilt, 0deg) + .68deg)) translateX(2px) scaleY(.955) skewY(-.28deg);
+  }
+  50% {
+    transform: rotate(calc(var(--tilt, 0deg) - .24deg)) translateX(.5px) scaleY(.987) skewY(.1deg);
+  }
+  72% {
+    transform: rotate(calc(var(--tilt, 0deg) + .1deg)) translateX(0) scaleY(.996) skewY(-.03deg);
+  }
 }
 
-@keyframes note-gust {
-  0%, 100% {
-    transform: rotate(var(--tilt, 0deg)) skewX(0deg);
-  }
-  24% {
-    transform: rotate(calc(var(--tilt, 0deg) + var(--gust-peak, .82deg))) skewX(var(--gust-skew, .14deg));
-  }
-  48% {
-    transform: rotate(calc(var(--tilt, 0deg) + var(--gust-rebound, -.34deg))) skewX(var(--gust-rebound-skew, -.06deg));
-  }
-  70% {
-    transform: rotate(calc(var(--tilt, 0deg) + var(--gust-settle, .13deg))) skewX(0deg);
-  }
+@keyframes note-fold-light {
+  0%, 100% { opacity: 0; transform: scaleY(.25); }
+  28% { opacity: .72; transform: scaleY(1); }
+  54% { opacity: .24; transform: scaleY(.48); }
 }
 
 @media (max-width: 900px) {

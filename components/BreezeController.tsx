@@ -31,7 +31,7 @@ export function BreezeController() {
 
     const clearGust = () => {
       activeNotes.forEach((note) => {
-        note.classList.remove("is-breezing", "gust-from-left", "gust-from-right");
+        note.classList.remove("is-breezing");
         note.style.removeProperty("--gust-delay");
       });
       activeNotes = [];
@@ -57,17 +57,21 @@ export function BreezeController() {
         .sort((a, b) => a.order - b.order);
       const noteCount = Math.min(window.innerWidth <= 900 ? 2 : 3, shuffled.length);
 
-      activeNotes = shuffled.slice(0, noteCount).map(({ note }, index) => {
-        note.style.setProperty("--gust-delay", `${index * 85}ms`);
-        note.classList.add(
-          "is-breezing",
-          Math.random() > 0.5 ? "gust-from-left" : "gust-from-right",
-        );
-        return note;
-      });
+      activeNotes = shuffled
+        .slice(0, noteCount)
+        .map(({ note }) => note)
+        .sort(
+          (left, right) =>
+            left.getBoundingClientRect().left - right.getBoundingClientRect().left,
+        )
+        .map((note, index) => {
+          note.style.setProperty("--gust-delay", `${index * 110}ms`);
+          note.classList.add("is-breezing");
+          return note;
+        });
 
       window.clearTimeout(cleanupTimer);
-      cleanupTimer = window.setTimeout(clearGust, 1_250);
+      cleanupTimer = window.setTimeout(clearGust, 1_400);
       scheduleGust(9_000 + Math.random() * 5_000);
     };
 
@@ -82,7 +86,7 @@ export function BreezeController() {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    scheduleGust(3_200);
+    scheduleGust(3_600);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
