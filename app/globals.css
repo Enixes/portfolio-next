@@ -48,6 +48,100 @@ a { color: inherit; text-decoration: none; }
     linear-gradient(115deg, #4c443a, #292521 48%, #3a332b);
 }
 
+.war-room-intro {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(177, 142, 91, .12), transparent 38%),
+    linear-gradient(180deg, rgba(8, 9, 9, .97) 0%, rgba(13, 14, 14, .72) 48%, rgba(7, 8, 8, .96) 100%);
+  color: #eee6d8;
+  animation: war-room-intro-exit 2.65s ease-in-out both;
+}
+
+.war-room-intro::before,
+.war-room-intro::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 239, 209, .16);
+}
+.war-room-intro::before { left: 7vw; }
+.war-room-intro::after { right: 7vw; }
+
+.intro-case,
+.intro-signal {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  color: rgba(238, 230, 216, .68);
+  font: 700 9px/1 var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.intro-case { top: 30px; left: max(22px, 7vw); }
+.intro-signal { right: max(22px, 7vw); bottom: 28px; }
+
+.intro-copy {
+  position: absolute;
+  z-index: 4;
+  top: 27%;
+  left: 50%;
+  display: grid;
+  width: min(360px, calc(100vw - 52px));
+  justify-items: center;
+  transform: translateX(-50%);
+  text-align: center;
+  text-transform: uppercase;
+}
+.intro-copy > span {
+  color: #cbbfab;
+  font: 700 9px/1 var(--mono);
+  letter-spacing: .2em;
+}
+.intro-copy > strong {
+  margin-top: 13px;
+  font: 650 clamp(20px, 2.3vw, 32px)/1 var(--sans);
+  letter-spacing: -.035em;
+}
+.intro-progress {
+  position: relative;
+  display: block;
+  width: 168px;
+  height: 2px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .14);
+}
+.intro-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #c3473f;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: war-room-progress 1.8s cubic-bezier(.18,.78,.24,1) .12s both;
+}
+
+.war-room-silhouettes {
+  position: absolute;
+  z-index: 2;
+  bottom: -3%;
+  left: 50%;
+  display: block;
+  width: min(112vw, 1600px);
+  max-width: none;
+  height: auto;
+  transform: translateX(-50%);
+  transform-origin: center bottom;
+  animation: war-room-people-exit 2.65s cubic-bezier(.2,.72,.26,1) both;
+}
+
 .ambient-window {
   position: absolute;
   top: 10%;
@@ -82,6 +176,7 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 14px 36px rgba(0,0,0,.26);
   color: #eee6d8;
   transform: translateX(-50%);
+  animation: preview-header-enter .55s ease-out 2.08s both;
 }
 
 .preview-brand,
@@ -129,6 +224,8 @@ a { color: inherit; text-decoration: none; }
   min-height: 100vh;
   place-items: center;
   padding: 94px 24px 50px;
+  transform-origin: 50% 48%;
+  animation: board-camera-in 2.5s cubic-bezier(.18,.76,.2,1) .08s both;
 }
 
 .evidence-board-wrap {
@@ -619,7 +716,38 @@ a { color: inherit; text-decoration: none; }
   54% { opacity: .24; transform: scaleY(.48); }
 }
 
+@keyframes board-camera-in {
+  0%, 13% { transform: translateY(7vh) scale(.58); }
+  66% { transform: translateY(1.2vh) scale(.91); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes war-room-intro-exit {
+  0%, 61% { opacity: 1; visibility: visible; }
+  82% { opacity: .58; }
+  99% { opacity: 0; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes war-room-people-exit {
+  0%, 52% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(12%) scale(1.08); }
+}
+
+@keyframes war-room-progress {
+  0% { transform: scaleX(0); }
+  68% { transform: scaleX(.74); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes preview-header-enter {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 @media (max-width: 900px) {
+  .intro-copy { top: 22%; }
+  .war-room-silhouettes { width: 150vw; }
   .preview-header { top: 10px; min-height: 50px; }
   .preview-nav { gap: 0; }
   .preview-nav a { padding-inline: 8px; font-size: 8px; }
@@ -651,6 +779,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 520px) {
+  .intro-case { max-width: 170px; line-height: 1.5; }
+  .intro-signal { display: none; }
+  .war-room-silhouettes { bottom: 1%; width: 210vw; }
   .preview-header { width: calc(100% - 20px); padding-left: 12px; }
   .preview-brand { font-size: 8px; }
   .preview-nav a { padding-inline: 6px; font-size: 7px; }
@@ -664,6 +795,9 @@ a { color: inherit; text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .war-room-intro { display: none; }
+  .preview-header,
+  .preview-hero { animation: none !important; }
   *, *::before, *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;

@@ -20,6 +20,26 @@ export function HeroPreview() {
   return (
     <main id="top" className="portfolio-preview">
       <BreezeController />
+
+      <div className="war-room-intro" aria-hidden="true">
+        <p className="intro-case">Case board 01 · systems / reliability</p>
+        <div className="intro-copy">
+          <span>Systems war room</span>
+          <strong>Tracing the evidence</strong>
+          <i className="intro-progress" />
+        </div>
+        <p className="intro-signal">Signal acquired · zooming in</p>
+        <img
+          className="war-room-silhouettes"
+          src="/war-room-silhouettes.png"
+          alt=""
+          width="1600"
+          height="671"
+          decoding="async"
+          fetchPriority="high"
+        />
+      </div>
+
       <header className="preview-header" aria-label="Primary navigation">
         <a className="preview-brand" href="#top" aria-label="Asu Singh, home">
           <span aria-hidden="true" />
