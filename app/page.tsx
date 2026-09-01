@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Portfolio } from "@/components/Portfolio";
+import { HeroPreview } from "@/components/HeroPreview";
 
 export const metadata: Metadata = {
   title: "Asu Singh — Senior Software Engineer",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <Portfolio />;
+  return <HeroPreview />;
 }
