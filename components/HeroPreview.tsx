@@ -76,11 +76,6 @@ export function HeroPreview() {
                 <span className="sketch-arrow" aria-hidden="true">↘</span>
               </article>
 
-              <p className="handwritten-role">
-                Senior Software Engineer
-                <span aria-hidden="true" />
-              </p>
-
               <figure className="board-paper profile-photo">
                 <span className="board-pin" aria-hidden="true" />
                 <img
@@ -97,7 +92,8 @@ export function HeroPreview() {
 
               <article className="board-sticky sticky-yellow thesis-card">
                 <span className="board-pin" aria-hidden="true" />
-                <p>Working thesis</p>
+                <p className="thesis-role">Senior Software Engineer</p>
+                <span className="thesis-kicker">Working thesis</span>
                 <h1 id="hero-title">
                   I make complex systems <em>behave.</em>
                 </h1>

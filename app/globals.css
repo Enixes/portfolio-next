@@ -201,7 +201,6 @@ a { color: inherit; text-decoration: none; }
 .board-paper,
 .board-sticky,
 .war-note,
-.handwritten-role,
 .latency-ring,
 .blueprint-arrow,
 .preview-actions {
@@ -283,7 +282,7 @@ a { color: inherit; text-decoration: none; }
   --tilt: -2.4deg;
 }
 .paper-eyebrow,
-.thesis-card > p,
+.thesis-kicker,
 .blog-note > p,
 .life-note > p {
   margin: 0 0 10px;
@@ -315,9 +314,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-photo {
-  top: 45%;
-  left: 21.5%;
-  width: 10.5%;
+  z-index: 5;
+  top: 9%;
+  left: 44%;
+  width: 12%;
   margin: 0;
   padding: 7px 7px 22px;
   --tilt: -3.2deg;
@@ -344,16 +344,6 @@ a { color: inherit; text-decoration: none; }
   white-space: nowrap;
 }
 
-.handwritten-role {
-  top: 8.2%;
-  left: 35%;
-  margin: 0;
-  color: #272c2f;
-  font: 700 clamp(15px,1.9vw,28px)/1 var(--hand);
-  rotate: -2deg;
-}
-.handwritten-role span { display: block; height: 4px; margin-top: 5px; background: #b93630; rotate: -1deg; }
-
 .thesis-card {
   top: 34%;
   left: 34.5%;
@@ -362,6 +352,13 @@ a { color: inherit; text-decoration: none; }
   padding: clamp(17px,2.4vw,36px);
   --tilt: 1.6deg;
 }
+.thesis-role {
+  margin: 0 0 7px;
+  color: #252a2c;
+  font: 700 clamp(19px,2.2vw,31px)/.96 var(--hand);
+  letter-spacing: -.025em;
+}
+.thesis-kicker { display: block; margin-bottom: 10px; }
 .thesis-card h1 { margin: 0; font: 700 clamp(23px,3.8vw,54px)/.93 var(--hand); letter-spacing: -.04em; }
 .thesis-card em { color: #97251f; font-style: normal; }
 .red-underline { display: block; width: 64%; height: 11px; margin: 11px 0 0 28%; border-top: 4px solid #a52d26; border-radius: 50%; rotate: -2deg; }
@@ -414,7 +411,7 @@ a { color: inherit; text-decoration: none; }
 .war-note .board-pin { width: 12px; height: 12px; top: -6px; }
 
 .api-gateway-note {
-  top: 18%;
+  top: 21%;
   left: 27.5%;
   width: 13%;
   background: #f3dea0;
@@ -476,9 +473,9 @@ a { color: inherit; text-decoration: none; }
 .latency-ring strong { display: block; margin-top: 4px; color: #9e2c26; font-size: clamp(8px,.78vw,11px); }
 
 .observability-card {
-  top: 10.5%;
-  left: 42.5%;
-  width: 12.5%;
+  top: 6%;
+  left: 30%;
+  width: 11.5%;
   padding: clamp(9px,1vw,14px);
   --tilt: 1.2deg;
 }
@@ -631,9 +628,8 @@ a { color: inherit; text-decoration: none; }
   .evidence-board-frame { padding: 10px; transform: none; }
   .evidence-board { min-height: 1020px; background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%; }
   .evidence-thread { opacity: .38; }
-  .identity-file { top: 5%; left: 4%; width: 44%; }
-  .profile-photo { top: 5%; right: 5%; left: auto; width: 33%; }
-  .handwritten-role { top: 21%; left: 57%; width: 37%; }
+  .identity-file { top: 5%; left: 3%; width: 29%; padding-inline: 11px; }
+  .profile-photo { top: 4.5%; right: auto; left: 34%; width: 32%; }
   .metric-throughput { top: 25%; right: auto; left: 5%; width: 35%; min-height: 10%; }
   .api-gateway-note { top: 25%; right: 5%; left: auto; width: 39%; min-height: 9%; }
   .thesis-card { top: 36%; left: 7%; width: 72%; min-height: 19%; }
@@ -661,9 +657,8 @@ a { color: inherit; text-decoration: none; }
   .preview-nav a:last-child { display: none; }
   .evidence-board { min-height: 1020px; }
   .board-date { display: none; }
-  .identity-file { width: 47%; }
-  .profile-photo { width: 35%; }
-  .handwritten-role { left: 58%; font-size: 14px; }
+  .identity-file { width: 30%; }
+  .profile-photo { left: 34%; width: 32%; }
   .thesis-card { width: 72%; }
 }
 
