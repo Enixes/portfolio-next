@@ -33,25 +33,75 @@ test("server-renders the war-room intro and portfolio board", async () => {
   assert.match(html, /class="war-room-intro" aria-hidden="true"/);
   assert.match(html, /Systems war room/);
   assert.match(html, /Tracing the evidence/);
-  assert.match(html, /src="\/war-room-silhouettes\.png"/);
+  assert.match(html, /war-room-environment-anime\.jpg/);
+  assert.match(html, /war-room-silhouettes-hires\.png/);
   assert.match(html, /fetchPriority="high"/);
   assert.match(html, /class="evidence-board"/);
   assert.match(html, /Senior Software Engineer/);
   assert.match(html, /I make complex systems/);
+  assert.match(html, /00 \/ Profile/);
+  assert.match(html, /01 \/ Systems \+ Work/);
+  assert.match(html, /02 \/ Field Notes/);
+  assert.match(html, /03 \/ Life/);
+  assert.match(html, /id="profile-board"/);
+  assert.match(html, /id="work-board"/);
+  assert.match(html, /id="blog-board"/);
+  assert.match(html, /id="life-board"/);
+  assert.match(html, /id="contact-board"/);
+  assert.match(html, /Bring me the hard problem/);
+  assert.match(html, /Open channel/);
+  assert.match(html, /data-board-story="true"/);
+  assert.match(html, /data-board-track="true"/);
+  assert.match(html, /Scroll through the boards/);
+  assert.match(html, /Zoom out\. Follow the next board/);
+  assert.match(html, /Idempotency keys/);
+  assert.match(html, /Load shedding/);
+  assert.match(html, /Queue fan-out with three workers/);
+  assert.match(html, /Circuit breaker states moving from closed to open/);
+  assert.doesNotMatch(html, /evidence-thread/);
+  assert.doesNotMatch(html, /class="preview-actions"/);
 });
 
-test("keeps the intro lightweight and motion-safe", async () => {
-  const [component, css, asset] = await Promise.all([
+test("keeps the intro and scroll story lightweight and motion-safe", async () => {
+  const [component, controller, css, peopleAsset, roomAsset] = await Promise.all([
     readFile(new URL("../components/HeroPreview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/BoardScrollController.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    stat(new URL("../public/war-room-silhouettes.png", import.meta.url)),
+    stat(new URL("../public/war-room-silhouettes-hires.png", import.meta.url)),
+    stat(new URL("../public/war-room-environment-anime.jpg", import.meta.url)),
   ]);
 
-  assert.ok(asset.size > 0 && asset.size < 850_000);
+  assert.ok(peopleAsset.size > 0 && peopleAsset.size < 1_100_000);
+  assert.ok(roomAsset.size > 0 && roomAsset.size < 350_000);
   assert.doesNotMatch(component, /^\s*["']use client["']/m);
   assert.doesNotMatch(component, /framer-motion|@react-three|<canvas/i);
+  assert.match(controller, /requestAnimationFrame/);
+  assert.match(controller, /addEventListener\("scroll", requestRender, \{ passive: true \}\)/);
+  assert.match(controller, /const focusProgress = \(index \+ \.42\) \/ panels\.length/);
+  assert.match(controller, /window\.history\.pushState/);
+  assert.match(controller, /panels\[index\]\.focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(controller, /setInterval|framer-motion|@react-three|<canvas/i);
   assert.match(css, /@keyframes board-camera-in/);
+  assert.match(css, /@keyframes room-camera-in/);
   assert.match(css, /@keyframes war-room-people-exit/);
+  assert.match(css, /@keyframes thesis-marker-sweep/);
+  assert.match(css, /@media \(max-width: 760px\)/);
+  assert.match(css, /\.evidence-board\s*\{\s*min-height:\s*1600px;/);
+  assert.doesNotMatch(css, /linear-gradient\(var\(--grid\)/);
+  assert.match(css, /\.board-zone span\s*\{[\s\S]*?background:\s*transparent;/);
+  assert.doesNotMatch(component, /const pins|evidence-thread/);
+  assert.match(css, /\.board-zone:hover::after/);
+  assert.match(css, /\.board-zone::before[\s\S]*?right:\s*-7%[\s\S]*?bottom:\s*7%/);
+  assert.doesNotMatch(css, /border-right-color:\s*transparent/);
+  assert.match(css, /\.board-scroll-story\s*\{[\s\S]*?height:\s*650svh/);
+  assert.match(css, /\.board-scroll-track\s*\{/);
+  assert.match(css, /\.scroll-board-panel\s*\{/);
+  assert.match(css, /scroll-snap-type:\s*x mandatory/);
+  assert.match(css, /\.board-scrawl\s*\{/);
+  assert.match(css, /\.board-diagram\s*\{/);
+  assert.match(css, /\.diagram-fanout\s*\{[\s\S]*?display:\s*block;/);
+  assert.match(css, /stroke-dasharray:\s*38 1\.4 61 1 27 1\.8/);
+  assert.match(css, /\.queue-depth-note\s*\{[\s\S]*?display:\s*grid;/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /\.war-room-intro\s*\{\s*display:\s*none;/);
   assert.doesNotMatch(css, /backdrop-filter|filter:\s*blur|perspective:/i);

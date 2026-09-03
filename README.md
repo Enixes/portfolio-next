@@ -1,6 +1,6 @@
 # Asu Singh — Portfolio
 
-An interactive, backend-centric portfolio built with Next.js App Router, React, TypeScript, Tailwind CSS, Framer Motion, and react-three-fiber.
+An interactive, backend-centric portfolio built with Next.js App Router, React, TypeScript, and performance-conscious CSS/SVG motion.
 
 ## Local development
 
