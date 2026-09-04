@@ -135,15 +135,31 @@ export function HeroPreview() {
               <span className="note-spotlight spotlight-result" aria-hidden="true" />
 
               <a className="board-zone board-zone-profile" href="#profile-board" aria-label="Open the Profile board">
+                <svg className="zone-mark zone-mark-profile" viewBox="0 0 180 56" aria-hidden="true">
+                  <path pathLength={100} d="M13 11 C48 7 118 8 166 11 L163 44 C116 48 54 47 10 42 Z" />
+                  <path pathLength={100} d="M18 7 L170 14 M7 38 L157 50" />
+                </svg>
                 <span>00 / Profile</span>
               </a>
               <a className="board-zone board-zone-work" href="#work-board" aria-label="Open the Systems and Work board">
+                <svg className="zone-mark zone-mark-work" viewBox="0 0 235 58" aria-hidden="true">
+                  <path pathLength={100} d="M17 4 L207 3 L229 27 L207 55 L18 54 L5 28 Z" />
+                  <path pathLength={100} d="M3 42 L17 56 M209 2 L232 17" />
+                </svg>
                 <span>01 / Systems + Work</span>
               </a>
               <a className="board-zone board-zone-blog" href="#blog-board" aria-label="Open the Field Notes and Blog board">
+                <svg className="zone-mark zone-mark-blog" viewBox="0 0 205 60" aria-hidden="true">
+                  <path pathLength={100} d="M22 13 C61 3 161 4 191 20 C215 35 174 53 96 52 C34 52 3 40 14 22 C18 15 28 10 38 8" />
+                  <path pathLength={100} d="M15 19 C25 9 39 6 50 7" />
+                </svg>
                 <span>02 / Field Notes</span>
               </a>
               <a className="board-zone board-zone-life" href="#life-board" aria-label="Open the Life board">
+                <svg className="zone-mark zone-mark-life" viewBox="0 0 150 66" aria-hidden="true">
+                  <path pathLength={100} d="M22 48 C7 47 4 36 15 29 C8 18 18 9 31 13 C37 2 55 4 59 14 C69 3 88 7 89 19 C102 10 119 17 116 29 C137 27 143 42 127 49 C106 57 47 58 22 48 Z" />
+                  <path pathLength={100} d="M13 51 C43 61 111 60 136 47" />
+                </svg>
                 <span>03 / Life</span>
               </a>
 

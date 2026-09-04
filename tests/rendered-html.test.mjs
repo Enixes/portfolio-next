@@ -50,6 +50,10 @@ test("server-renders the war-room intro and portfolio board", async () => {
   assert.match(html, /id="contact-board"/);
   assert.match(html, /Bring me the hard problem/);
   assert.match(html, /Open channel/);
+  assert.match(html, /class="zone-mark zone-mark-profile"/);
+  assert.match(html, /class="zone-mark zone-mark-work"/);
+  assert.match(html, /class="zone-mark zone-mark-blog"/);
+  assert.match(html, /class="zone-mark zone-mark-life"/);
   assert.match(html, /data-board-story="true"/);
   assert.match(html, /data-board-track="true"/);
   assert.match(html, /Scroll through the boards/);
@@ -85,6 +89,8 @@ test("keeps the intro and scroll story lightweight and motion-safe", async () =>
   assert.match(css, /@keyframes room-camera-in/);
   assert.match(css, /@keyframes war-room-people-exit/);
   assert.match(css, /@keyframes thesis-marker-sweep/);
+  assert.match(css, /@keyframes zone-marker-cycle/);
+  assert.match(css, /\.zone-mark-life\s*\{/);
   assert.match(css, /@media \(max-width: 760px\)/);
   assert.match(css, /\.evidence-board\s*\{\s*min-height:\s*1600px;/);
   assert.doesNotMatch(css, /linear-gradient\(var\(--grid\)/);
@@ -104,5 +110,6 @@ test("keeps the intro and scroll story lightweight and motion-safe", async () =>
   assert.match(css, /\.queue-depth-note\s*\{[\s\S]*?display:\s*grid;/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /\.war-room-intro\s*\{\s*display:\s*none;/);
+  assert.match(css, /\.zone-mark path\s*\{\s*animation:\s*none !important;/);
   assert.doesNotMatch(css, /backdrop-filter|filter:\s*blur|perspective:/i);
 });

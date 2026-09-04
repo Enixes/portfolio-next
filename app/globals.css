@@ -1020,6 +1020,7 @@ a { color: inherit; text-decoration: none; }
 }
 .board-zone span {
   position: absolute;
+  z-index: 2;
   top: 3%;
   left: 6%;
   padding: 0;
@@ -1081,6 +1082,63 @@ a { color: inherit; text-decoration: none; }
 .board-zone-profile { color: #76508d; }
 .board-zone-blog { color: #287694; }
 .board-zone-life { color: #4f873c; }
+
+.zone-mark {
+  position: absolute;
+  z-index: 1;
+  top: -6px;
+  left: 2.5%;
+  width: clamp(122px, 42%, 210px);
+  height: 62px;
+  overflow: visible;
+  fill: none;
+  pointer-events: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.2;
+}
+.zone-mark path {
+  opacity: 0;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: zone-marker-cycle 13.5s ease-in-out infinite;
+}
+.zone-mark path + path {
+  stroke-width: 2.2;
+  animation-delay: .18s;
+}
+.zone-mark-profile { width: clamp(124px, 55%, 178px); }
+.zone-mark-work {
+  top: -13px;
+  width: clamp(184px, 39%, 244px);
+  height: 72px;
+}
+.zone-mark-blog { width: clamp(156px, 50%, 205px); }
+.zone-mark-life {
+  top: -10px;
+  width: clamp(112px, 60%, 150px);
+  height: 68px;
+}
+.zone-mark-work path { animation-delay: 2.7s; }
+.zone-mark-work path + path { animation-delay: 2.88s; }
+.zone-mark-blog path { animation-delay: 5.4s; }
+.zone-mark-blog path + path { animation-delay: 5.58s; }
+.zone-mark-life path { animation-delay: 8.1s; }
+.zone-mark-life path + path { animation-delay: 8.28s; }
+.board-zone:hover .zone-mark path,
+.board-zone:focus-visible .zone-mark path {
+  animation: none;
+  opacity: .92;
+  stroke-dashoffset: 0;
+}
+
+@keyframes zone-marker-cycle {
+  0%, 7% { opacity: 0; stroke-dashoffset: 100; }
+  17% { opacity: .88; stroke-dashoffset: 0; }
+  31% { opacity: .78; stroke-dashoffset: 0; }
+  42%, 100% { opacity: 0; stroke-dashoffset: -100; }
+}
 
 .blog-topic-one,
 .blog-topic-two,
@@ -1608,6 +1666,7 @@ a { color: inherit; text-decoration: none; }
   .evidence-board-wrap { animation: none !important; }
   .section-board,
   .evidence-board-frame:has(.section-board:target) .evidence-board { transition: none !important; }
+  .zone-mark path { animation: none !important; opacity: .52; stroke-dashoffset: 0; }
   .board-scroll-story { height: auto; padding: 84px 0 28px; }
   .board-story-stop,
   .board-story-progress { display: none; }
