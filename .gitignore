@@ -18,6 +18,11 @@
 /.vinext/
 /out/
 
+# local IDE / editor metadata
+/.idea/
+*.iml
+/.fleet/
+
 # misc
 .DS_Store
 *.pem
@@ -41,3 +46,5 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Intentionally tracked: .openai/hosting.json is part of the ChatGPT Sites build/hosting configuration.
