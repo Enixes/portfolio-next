@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HeroPreview } from "@/components/HeroPreview";
+import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
 
 export const metadata: Metadata = {
   title: "Asu Singh — Senior Software Engineer",
@@ -9,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <HeroPreview />;
+  return (
+    <>
+      <HeroPreview />
+      <WorkCvBoardPortal />
+    </>
+  );
 }
