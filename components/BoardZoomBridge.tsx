@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 const styles = `
 .board-scroll-story {
-  height: 720svh;
+  height: 780svh;
 }
 
 .board-scroll-sticky {
@@ -70,6 +70,7 @@ const styles = `
   opacity: 0;
   pointer-events: none;
   will-change: transform, opacity;
+  transition: none !important;
 }
 
 .story-board-frame {
@@ -126,6 +127,12 @@ const styles = `
   letter-spacing: .16em !important;
 }
 
+.story-board-header,
+.work-cv-header {
+  will-change: transform, opacity;
+  transition: none !important;
+}
+
 .story-board-header {
   width: min(760px, 68vw) !important;
   margin: 0 !important;
@@ -160,6 +167,16 @@ const styles = `
   gap: clamp(18px, 2.4vw, 36px) !important;
 }
 
+.story-case,
+.work-company-chit,
+.work-evidence-chit,
+.work-tenure-tag,
+.work-cv-pencil,
+.work-cv-legend {
+  will-change: transform, opacity;
+  transition-property: box-shadow !important;
+}
+
 .story-case {
   min-height: clamp(180px, 27vh, 260px) !important;
   padding: clamp(22px, 2.5vw, 34px) !important;
@@ -190,6 +207,11 @@ const styles = `
   font-family: var(--hand) !important;
   font-size: clamp(11px, 1vw, 16px) !important;
   transform: rotate(-2deg);
+}
+
+.work-cv-thread .thread-main,
+.work-cv-thread .thread-branch {
+  animation: none !important;
 }
 
 .board-story-progress {
@@ -230,7 +252,7 @@ const styles = `
 }
 
 @media (max-width: 760px) {
-  .board-scroll-story { height: 660svh; }
+  .board-scroll-story { height: 720svh; }
   .scroll-board-panel { padding-top: 64px !important; }
   .zoom-master-board { width: 96vw; }
   .board-story-progress {
@@ -264,6 +286,14 @@ const styles = `
 @media (prefers-reduced-motion: reduce) {
   .zoom-master-board { display: none; }
   .scroll-board-panel { transform: none !important; }
+  .story-board-header,
+  .work-cv-header,
+  .story-case,
+  .work-company-chit,
+  .work-evidence-chit,
+  .work-tenure-tag,
+  .work-cv-pencil,
+  .work-cv-legend { transform: none !important; opacity: 1 !important; }
 }
 `;
 
@@ -290,7 +320,7 @@ export function BoardZoomBridge() {
     host.prepend(clone);
 
     const oldProgressText = progressLabel?.textContent ?? "";
-    if (progressLabel) progressLabel.textContent = "Zoom through the board";
+    if (progressLabel) progressLabel.textContent = "Zoom into the evidence";
 
     return () => {
       clone.remove();
