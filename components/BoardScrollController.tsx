@@ -42,6 +42,8 @@ type WindowTweenOptions = {
   updateHash?: boolean;
   duration?: number;
   ease?: string;
+  onComplete?: () => void;
+  onInterrupt?: () => void;
 };
 
 function offsetWithin(element: HTMLElement, ancestor: HTMLElement) {
@@ -62,6 +64,10 @@ export function BoardScrollController() {
   useEffect(() => {
     const story = document.querySelector<HTMLElement>("[data-board-story]");
     const track = story?.querySelector<HTMLElement>("[data-board-track]");
+    const stickyHost = story?.querySelector<HTMLElement>(".board-scroll-sticky") ?? null;
+    const heroSource = document.querySelector<HTMLElement>(
+      ".preview-hero .evidence-board-frame",
+    );
     let masterBoard = story?.querySelector<HTMLElement>("[data-zoom-master-board]") ?? null;
     const room = story?.querySelector<HTMLElement>(".board-story-room");
     const stops = story
@@ -94,6 +100,8 @@ export function BoardScrollController() {
     let lastWindowY = window.scrollY;
     let lastScrollDirection = 0;
     let scrollTween: gsap.core.Tween | null = null;
+    let heroHandoffTimeline: gsap.core.Timeline | null = null;
+    let heroHandoffActive = false;
     let touchStartY: number | null = null;
     let touchTarget: EventTarget | null = null;
     let touchPrevented = false;
@@ -110,7 +118,7 @@ export function BoardScrollController() {
     };
 
     const measureZoomTargets = () => {
-      masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
+      masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
       if (!masterBoard) {
         zoomTargets = [];
         return;
@@ -143,7 +151,7 @@ export function BoardScrollController() {
       const bounds = story.getBoundingClientRect();
       storyTop = window.scrollY + bounds.top;
       travel = Math.max(1, story.offsetHeight - window.innerHeight);
-      measureZoomTargets();
+      if (!heroHandoffActive) measureZoomTargets();
     };
 
     const buildPanelTimeline = (index: number) => {
@@ -343,8 +351,8 @@ export function BoardScrollController() {
 
     const render = () => {
       frame = 0;
-      masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
-      if (masterBoard && zoomTargets.length === 0) measureZoomTargets();
+      masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
+      if (masterBoard && zoomTargets.length === 0 && !heroHandoffActive) measureZoomTargets();
 
       const progress = currentStoryProgress();
       const stages = progress * panels.length;
@@ -366,7 +374,7 @@ export function BoardScrollController() {
           });
           ensurePanelTimeline(index)?.progress(active ? 1 : 0);
         });
-        if (masterBoard) gsap.set(masterBoard, { autoAlpha: 0 });
+        if (masterBoard && !heroHandoffActive) gsap.set(masterBoard, { autoAlpha: 0 });
         if (room) gsap.set(room, { opacity: 0.18, scale: 1 });
       } else {
         const enter = smoothstep((localProgress - 0.02) / 0.22);
@@ -402,7 +410,7 @@ export function BoardScrollController() {
           if (timeline) timeline.progress(active ? assemblyProgress : 0, false);
         });
 
-        if (masterBoard) {
+        if (masterBoard && !heroHandoffActive) {
           const boardScale = 0.88 + zoomStrength * 3.35;
           const boardVisibility = Math.max(1 - detailEnter * 0.97, exit);
 
@@ -444,6 +452,28 @@ export function BoardScrollController() {
       frame = window.requestAnimationFrame(render);
     };
 
+    const resetHeroHandoff = () => {
+      heroHandoffTimeline?.kill();
+      heroHandoffTimeline = null;
+
+      if (masterBoard && stickyHost && masterBoard.parentElement !== stickyHost) {
+        stickyHost.prepend(masterBoard);
+      }
+
+      if (masterBoard) {
+        gsap.set(masterBoard, {
+          clearProps:
+            "position,top,left,right,bottom,width,height,margin,zIndex,xPercent,yPercent,x,y,scale,transformOrigin,opacity,visibility,filter",
+        });
+      }
+      if (heroSource) gsap.set(heroSource, { clearProps: "opacity,visibility" });
+
+      heroHandoffActive = false;
+      zoomTargets = [];
+      measureZoomTargets();
+      requestRender();
+    };
+
     const setWindowScrollImmediate = (destination: number) => {
       const targetY = Math.max(0, destination);
       window.clearTimeout(snapTimer);
@@ -472,6 +502,7 @@ export function BoardScrollController() {
           if (options.updateHash) updateHashForSection(options.index);
           window.requestAnimationFrame(() => panels[options.index!]?.focus({ preventScroll: true }));
         }
+        options.onComplete?.();
         return;
       }
 
@@ -495,10 +526,12 @@ export function BoardScrollController() {
             if (options.updateHash) updateHashForSection(options.index);
             panels[options.index]?.focus({ preventScroll: true });
           }
+          options.onComplete?.();
         },
         onInterrupt: () => {
           scrollTween = null;
           restoreScrollBehavior();
+          options.onInterrupt?.();
         },
       });
     };
@@ -516,6 +549,116 @@ export function BoardScrollController() {
         immediate: behavior === "auto",
         updateHash,
         duration,
+      });
+    };
+
+    const canBeginHeroHandoff = () => {
+      if (!heroSource || !masterBoard || !stickyHost || heroHandoffActive) return false;
+      if (window.scrollY >= storyTop) return false;
+
+      const rect = heroSource.getBoundingClientRect();
+      const closeEnough = storyTop - window.scrollY <= window.innerHeight * 1.08;
+      const boardVisible = rect.bottom > window.innerHeight * 0.16 && rect.top < window.innerHeight * 0.84;
+      return closeEnough && boardVisible && rect.width > 10 && rect.height > 10;
+    };
+
+    const enterProfileFromHero = (updateHash = true) => {
+      if (!heroSource || !stickyHost) {
+        navigateToSection(0, "smooth", updateHash);
+        return;
+      }
+
+      masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
+      if (!masterBoard || reducedMotion.matches) {
+        navigateToSection(0, reducedMotion.matches ? "auto" : "smooth", updateHash);
+        return;
+      }
+
+      measure();
+      const sourceRect = heroSource.getBoundingClientRect();
+      if (
+        sourceRect.width <= 10 ||
+        sourceRect.height <= 10 ||
+        sourceRect.bottom <= 0 ||
+        sourceRect.top >= window.innerHeight
+      ) {
+        navigateToSection(0, "smooth", updateHash);
+        return;
+      }
+
+      window.clearTimeout(snapTimer);
+      scrollTween?.kill();
+      scrollTween = null;
+      heroHandoffTimeline?.kill();
+
+      heroHandoffActive = true;
+      document.body.appendChild(masterBoard);
+
+      gsap.set(masterBoard, {
+        position: "fixed",
+        top: sourceRect.top,
+        left: sourceRect.left,
+        right: "auto",
+        bottom: "auto",
+        width: sourceRect.width,
+        height: sourceRect.height,
+        margin: 0,
+        zIndex: 35,
+        xPercent: 0,
+        yPercent: 0,
+        x: 0,
+        y: 0,
+        scale: 1,
+        autoAlpha: 1,
+        filter: "none",
+        force3D: true,
+      });
+      gsap.set(heroSource, { autoAlpha: 0 });
+
+      const profileTarget = masterBoard.querySelector<HTMLElement>(zoomTargetSelectors[0]);
+      const point = profileTarget
+        ? offsetWithin(profileTarget, masterBoard)
+        : { x: sourceRect.width * 0.2, y: sourceRect.height * 0.27 };
+      const originX = clamp(point.x / Math.max(1, sourceRect.width));
+      const originY = clamp(point.y / Math.max(1, sourceRect.height));
+      const targetX = window.innerWidth / 2 - (sourceRect.left + point.x);
+      const targetY = window.innerHeight / 2 - (sourceRect.top + point.y);
+      const destination = sectionScrollTop(0);
+      const panelRevealY = sectionProgressTop(0, 0.11);
+      const travelToSection = Math.max(1, destination - window.scrollY);
+      const revealFraction = clamp((panelRevealY - window.scrollY) / travelToSection, 0.32, 0.58);
+      const zoomDuration = SCROLL_TRANSITION_DURATION * revealFraction;
+      const fadeDuration = SCROLL_TRANSITION_DURATION * 0.24;
+
+      gsap.set(masterBoard, {
+        transformOrigin: `${originX * 100}% ${originY * 100}%`,
+      });
+
+      heroHandoffTimeline = gsap.timeline({ defaults: { overwrite: true } });
+      heroHandoffTimeline.to(masterBoard, {
+        x: targetX,
+        y: targetY,
+        scale: 4.23,
+        duration: zoomDuration,
+        ease: "power3.inOut",
+      });
+      heroHandoffTimeline.to(
+        masterBoard,
+        {
+          autoAlpha: 0,
+          duration: fadeDuration,
+          ease: "power2.out",
+        },
+        Math.max(0, zoomDuration - SCROLL_TRANSITION_DURATION * 0.04),
+      );
+
+      animateWindowTo(destination, {
+        index: 0,
+        updateHash,
+        duration: SCROLL_TRANSITION_DURATION,
+        ease: "power2.inOut",
+        onComplete: resetHeroHandoff,
+        onInterrupt: resetHeroHandoff,
       });
     };
 
@@ -553,7 +696,11 @@ export function BoardScrollController() {
       const currentY = window.scrollY;
 
       if (direction > 0 && currentY < firstStop - 10) {
-        navigateToSection(0, "smooth", updateHash);
+        if (currentY < storyTop && canBeginHeroHandoff()) {
+          enterProfileFromHero(updateHash);
+        } else {
+          navigateToSection(0, "smooth", updateHash);
+        }
         return;
       }
 
@@ -569,7 +716,7 @@ export function BoardScrollController() {
     };
 
     const snapToSectionAfterManualScroll = () => {
-      if (scrollTween) return;
+      if (scrollTween || heroHandoffActive) return;
       const storyEnd = storyTop + travel;
       const currentY = window.scrollY;
       if (currentY < storyTop || currentY > storyEnd) return;
@@ -616,7 +763,12 @@ export function BoardScrollController() {
       if (window.location.hash !== link.hash) {
         window.history.pushState(null, "", link.hash);
       }
-      directZoomToSection(index);
+
+      if (index === 0 && window.scrollY < storyTop && canBeginHeroHandoff()) {
+        enterProfileFromHero(false);
+      } else {
+        directZoomToSection(index);
+      }
     };
 
     const handleHistoryNavigation = () => {
@@ -627,7 +779,16 @@ export function BoardScrollController() {
       if (Math.abs(event.deltaY) < 2) return;
       const storyEnd = storyTop + travel;
       const currentY = window.scrollY;
-      if (currentY < storyTop - 2 || currentY > storyEnd + 2) return;
+
+      if (currentY < storyTop - 2) {
+        if (event.deltaY > 0 && canBeginHeroHandoff()) {
+          event.preventDefault();
+          if (!scrollTween) enterProfileFromHero(true);
+        }
+        return;
+      }
+
+      if (currentY > storyEnd + 2) return;
       if (canScrollInsideSection(event.target, event.deltaY)) return;
 
       event.preventDefault();
@@ -681,9 +842,18 @@ export function BoardScrollController() {
       if (touchStartY === null || event.touches.length !== 1) return;
       const storyEnd = storyTop + travel;
       const currentY = window.scrollY;
-      if (currentY < storyTop - 2 || currentY > storyEnd + 2) return;
 
       const deltaY = touchStartY - (event.touches[0]?.clientY ?? touchStartY);
+
+      if (currentY < storyTop - 2) {
+        if (deltaY > 5 && canBeginHeroHandoff()) {
+          event.preventDefault();
+          touchPrevented = true;
+        }
+        return;
+      }
+
+      if (currentY > storyEnd + 2) return;
       if (Math.abs(deltaY) < 5 || canScrollInsideSection(touchTarget, deltaY)) return;
       event.preventDefault();
       touchPrevented = true;
@@ -694,12 +864,17 @@ export function BoardScrollController() {
       const endY = event.changedTouches[0]?.clientY ?? touchStartY;
       const deltaY = touchStartY - endY;
       const shouldNavigate = touchPrevented && Math.abs(deltaY) >= 34;
+      const beforeStory = window.scrollY < storyTop - 2;
 
       touchStartY = null;
       touchTarget = null;
       touchPrevented = false;
 
       if (!shouldNavigate || scrollTween) return;
+      if (beforeStory && deltaY > 0 && canBeginHeroHandoff()) {
+        enterProfileFromHero(true);
+        return;
+      }
       navigateByDirection(deltaY > 0 ? 1 : -1);
     };
 
@@ -710,7 +885,7 @@ export function BoardScrollController() {
       lastWindowY = currentY;
       requestRender();
 
-      if (scrollTween) return;
+      if (scrollTween || heroHandoffActive) return;
       window.clearTimeout(snapTimer);
       const storyEnd = storyTop + travel;
       if (currentY >= storyTop && currentY <= storyEnd) {
@@ -721,6 +896,7 @@ export function BoardScrollController() {
     const handleResize = () => {
       scrollTween?.kill();
       scrollTween = null;
+      if (heroHandoffActive) resetHeroHandoff();
       restoreScrollBehavior();
       killPanelTimelines();
       measure();
@@ -743,7 +919,7 @@ export function BoardScrollController() {
     // Work CV content is portalled in just after this controller mounts.
     window.requestAnimationFrame(() => {
       if (!panelTimelines[1]) panelTimelines[1] = buildPanelTimeline(1);
-      measureZoomTargets();
+      if (!heroHandoffActive) measureZoomTargets();
       requestRender();
     });
 
@@ -771,9 +947,14 @@ export function BoardScrollController() {
       window.cancelAnimationFrame(initialNavigationFrame);
       window.cancelAnimationFrame(directZoomFrame);
       scrollTween?.kill();
+      heroHandoffTimeline?.kill();
+      if (masterBoard && stickyHost && masterBoard.parentElement !== stickyHost) {
+        stickyHost.prepend(masterBoard);
+      }
+      if (heroSource) gsap.set(heroSource, { clearProps: "opacity,visibility" });
       restoreScrollBehavior();
       killPanelTimelines();
-      gsap.killTweensOf([masterBoard, room, ...panels].filter(Boolean));
+      gsap.killTweensOf([masterBoard, room, heroSource, ...panels].filter(Boolean));
       delete document.documentElement.dataset.zoomSection;
     };
   }, []);
