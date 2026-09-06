@@ -101,8 +101,11 @@ export function ProfileLiveBoardPortal() {
     const surface = title?.closest<HTMLElement>(".story-board-surface") ?? null;
     if (!surface) return;
     surface.classList.add("profile-live-mounted");
-    setTarget(surface);
-    return () => surface.classList.remove("profile-live-mounted");
+    const mountFrame = window.requestAnimationFrame(() => setTarget(surface));
+    return () => {
+      window.cancelAnimationFrame(mountFrame);
+      surface.classList.remove("profile-live-mounted");
+    };
   }, []);
 
   const board = target ? createPortal(

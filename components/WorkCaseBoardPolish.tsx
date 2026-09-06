@@ -113,8 +113,9 @@ function maxScroll(surface: HTMLElement) {
 
 /*
  * Route one vertical gesture through two scroll domains. The dossier consumes
- * as much as it physically can. Any remainder is applied to the outer page in
- * the same frame, so reaching an edge can never trap the user in Systems.
+ * as much as it physically can. The gesture that reaches an edge stays inside
+ * the dossier; only a fresh gesture at that edge advances the outer story.
+ * This prevents trackpad momentum from skipping the detailed Work experience.
  */
 function routeDelta(surface: HTMLElement, deltaY: number) {
   if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.1) return;
@@ -123,12 +124,14 @@ function routeDelta(surface: HTMLElement, deltaY: number) {
   const start = surface.scrollTop;
   const next = Math.max(0, Math.min(maximum, start + deltaY));
   const consumed = next - start;
-  const remainder = deltaY - consumed;
 
-  if (Math.abs(consumed) > 0.1) surface.scrollTop = next;
+  if (Math.abs(consumed) > 0.1) {
+    surface.scrollTop = next;
+    return;
+  }
 
-  if (Math.abs(remainder) > EDGE_EPSILON) {
-    window.scrollBy({ top: remainder, left: 0, behavior: "auto" });
+  if (Math.abs(deltaY) > EDGE_EPSILON) {
+    window.scrollBy({ top: deltaY, left: 0, behavior: "auto" });
   }
 }
 

@@ -78,6 +78,8 @@ export function BoardScrollController() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const originalScrollBehavior = document.documentElement.style.scrollBehavior;
     const sectionIds = stops.map((stop) => stop.id);
+    const initialHash = window.location.hash;
+    let allowHashSync = !sectionIds.includes(initialHash.replace(/^#/, ""));
     const navigationLinks = Array.from(
       document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'),
     ).filter((link) => sectionIds.includes(link.hash.slice(1)));
@@ -91,6 +93,9 @@ export function BoardScrollController() {
     let travel = 1;
     let scrollTween: gsap.core.Tween | null = null;
     let lastWindowY = window.scrollY;
+    let renderedSectionId = "";
+    let previousActiveIndex = -1;
+    let requestedWorkEdge: "start" | "end" | null = null;
 
     let heroHandoffActive = false;
     let heroHandoffStartY = 0;
@@ -422,6 +427,20 @@ export function BoardScrollController() {
         activeIndex === panels.length - 1 && progress === 1 ? 1 : stages - activeIndex;
       const activeSectionId = sectionIds[activeIndex] ?? "";
 
+      if (activeIndex !== previousActiveIndex || (activeIndex === 1 && requestedWorkEdge)) {
+        if (activeIndex === 1) {
+          const workBoard = panels[1]?.querySelector<HTMLElement>(".work-cv-board");
+          if (workBoard) {
+            const edge = requestedWorkEdge ?? (previousActiveIndex > 1 ? "end" : "start");
+            workBoard.scrollTop = edge === "end"
+              ? Math.max(0, workBoard.scrollHeight - workBoard.clientHeight)
+              : 0;
+            requestedWorkEdge = null;
+          }
+        }
+        previousActiveIndex = activeIndex;
+      }
+
       if (reducedMotion.matches) {
         panels.forEach((panel, index) => {
           const active = index === activeIndex;
@@ -526,6 +545,18 @@ export function BoardScrollController() {
       });
 
       document.documentElement.dataset.zoomSection = activeSectionId;
+      if (
+        allowHashSync &&
+        activeSectionId !== renderedSectionId &&
+        window.scrollY >= storyTop - 1 &&
+        window.scrollY <= storyTop + travel + 1
+      ) {
+        renderedSectionId = activeSectionId;
+        const activeHash = `#${activeSectionId}`;
+        if (window.location.hash !== activeHash) {
+          window.history.replaceState(null, "", activeHash);
+        }
+      }
     }
 
     const setWindowScrollImmediate = (destination: number) => {
@@ -585,6 +616,7 @@ export function BoardScrollController() {
 
     const directZoomToSection = (index: number) => {
       if (index < 0 || index >= panels.length) return;
+      if (index === 1) requestedWorkEdge = "start";
       measure();
 
       if (reducedMotion.matches) {
@@ -622,6 +654,7 @@ export function BoardScrollController() {
     const navigateToHash = (hash: string) => {
       const index = sectionIds.indexOf(hash.replace(/^#/, ""));
       if (index < 0) return;
+      if (index === 1) requestedWorkEdge = "start";
       measure();
       setWindowScrollImmediate(sectionScrollTop(index));
     };
@@ -699,9 +732,11 @@ export function BoardScrollController() {
       requestRender();
     });
 
-    if (window.location.hash) {
+    if (initialHash) {
       initialNavigationFrame = window.requestAnimationFrame(() => {
-        navigateToHash(window.location.hash);
+        navigateToHash(initialHash);
+        allowHashSync = true;
+        requestRender();
       });
     }
 

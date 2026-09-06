@@ -66,10 +66,12 @@ test("server-renders the war-room intro and portfolio board", async () => {
   assert.doesNotMatch(html, /class="preview-actions"/);
 });
 
-test("keeps the intro and scroll story lightweight and motion-safe", async () => {
-  const [component, controller, css, peopleAsset, roomAsset] = await Promise.all([
+test("keeps the intro and scroll story lightweight, explorable, and motion-safe", async () => {
+  const [component, controller, workPortal, workPolish, css, peopleAsset, roomAsset] = await Promise.all([
     readFile(new URL("../components/HeroPreview.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/BoardScrollController.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/WorkCvBoardPortal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/WorkCaseBoardPolish.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     stat(new URL("../public/war-room-silhouettes-hires.png", import.meta.url)),
     stat(new URL("../public/war-room-environment-anime.jpg", import.meta.url)),
@@ -80,11 +82,19 @@ test("keeps the intro and scroll story lightweight and motion-safe", async () =>
   assert.doesNotMatch(component, /^\s*["']use client["']/m);
   assert.doesNotMatch(component, /framer-motion|@react-three|<canvas/i);
   assert.match(controller, /requestAnimationFrame/);
-  assert.match(controller, /addEventListener\("scroll", requestRender, \{ passive: true \}\)/);
-  assert.match(controller, /const focusProgress = \(index \+ \.42\) \/ panels\.length/);
+  assert.match(controller, /addEventListener\("scroll", handleScroll, \{ passive: true \}\)/);
+  assert.match(controller, /SECTION_STOP_LOCAL_PROGRESS/);
   assert.match(controller, /window\.history\.pushState/);
-  assert.match(controller, /panels\[index\]\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(controller, /window\.history\.replaceState/);
+  assert.match(controller, /panels\[options\.index\]\?\.focus\(\{ preventScroll: true \}\)/);
   assert.doesNotMatch(controller, /setInterval|framer-motion|@react-three|<canvas/i);
+  assert.match(workPortal, /\.scroll-board-red \.story-board-frame \{[\s\S]*?height:100%!important;[\s\S]*?overflow:hidden!important;/);
+  assert.match(workPortal, /Drag or scroll · 0%/);
+  assert.match(workPortal, /board\.scrollHeight - board\.clientHeight/);
+  assert.match(workPolish, /window\.addEventListener\("wheel", onWheel, \{ passive: false, capture: true \}\)/);
+  assert.match(workPolish, /window\.addEventListener\("pointermove", onPointerMove/);
+  assert.match(workPolish, /window\.addEventListener\("touchmove", onTouchMove/);
+  assert.match(workPolish, /if \(Math\.abs\(consumed\) > 0\.1\) \{[\s\S]*?surface\.scrollTop = next;[\s\S]*?return;/);
   assert.match(css, /@keyframes board-camera-in/);
   assert.match(css, /@keyframes room-camera-in/);
   assert.match(css, /@keyframes war-room-people-exit/);

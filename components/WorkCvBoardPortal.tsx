@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { cv } from "@/data/cv";
@@ -105,18 +105,19 @@ const styles = `
 .work-cv-mounted > .story-board-header,
 .work-cv-mounted > .story-board-grid,
 .work-cv-mounted > .story-board-footnote { display:none!important; }
+.scroll-board-red .story-board-frame {
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
 .work-cv-mounted {
   position:relative;
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
+  display:block!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
   padding:0!important;
-  overscroll-behavior:contain;
-  scrollbar-width:thin;
-  scrollbar-color:#9b302a rgba(99,78,53,.08);
 }
-.work-cv-mounted::-webkit-scrollbar { width:8px; }
-.work-cv-mounted::-webkit-scrollbar-track { background:rgba(99,78,53,.08); }
-.work-cv-mounted::-webkit-scrollbar-thumb { background:#9b302a; border-radius:999px; }
 .work-cv-board {
   position:relative;
   min-height:100%;
@@ -150,8 +151,11 @@ const styles = `
 .work-cv-header p { margin:0; max-width:620px; color:#5e5c57; font-size:9px; line-height:1.55; }
 .work-cv-legend { display:flex; gap:9px; align-items:center; margin-top:8px; padding:8px 10px; background:#fff6cf; box-shadow:2px 3px 7px rgba(59,42,24,.12); transform:rotate(1.8deg); font-size:8px; text-transform:uppercase; letter-spacing:.06em; }
 .work-cv-legend i { width:54px; height:3px; background:#a52d26; border-radius:999px; box-shadow:0 2px 0 rgba(68,28,20,.2); }
-.work-scroll-cue { position:sticky; z-index:18; top:10px; width:max-content; margin:14px 0 -28px auto; padding:7px 10px; color:#7f2f2a; background:rgba(255,248,218,.9); border:1px dashed rgba(127,47,42,.42); font:800 8px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; transform:rotate(1deg); backdrop-filter:blur(5px); }
+.work-scroll-cue { --work-progress:0%; position:sticky; z-index:18; top:10px; display:grid; grid-template-columns:auto auto; gap:4px 8px; align-items:center; width:min(230px,72vw); margin:14px 0 -34px auto; padding:8px 10px 7px; color:#7f2f2a; background:rgba(255,248,218,.94); border:1px dashed rgba(127,47,42,.42); font:800 8px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; transform:rotate(1deg); backdrop-filter:blur(5px); box-shadow:2px 4px 9px rgba(66,46,27,.12); }
 .work-scroll-cue b { font:900 14px/1 var(--marker,var(--hand)); }
+.work-scroll-cue i { grid-column:1/-1; height:3px; overflow:hidden; border-radius:999px; background:rgba(127,47,42,.15); }
+.work-scroll-cue em { display:block; width:var(--work-progress); height:100%; border-radius:inherit; background:#9b302a; transition:width .08s linear; }
+.work-cv-board[data-scroll-state="end"] .work-scroll-cue b { transform:rotate(-90deg); }
 
 .work-experience-stage { position:relative; z-index:3; height:720px; margin-top:34px; }
 .work-cv-pencil { position:absolute; z-index:2; color:rgba(46,72,86,.72); font:800 12px/1 var(--marker,var(--hand)); }
@@ -337,20 +341,47 @@ const styles = `
 
 export function WorkCvBoardPortal() {
   const [target, setTarget] = useState<HTMLElement | null>(null);
+  const surfaceRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const title = document.getElementById("work-board-story-title");
     const surface = title?.closest<HTMLElement>(".story-board-surface") ?? null;
     if (!surface) return;
+    surfaceRef.current = surface;
     surface.classList.add("work-cv-mounted");
-    setTarget(surface);
-    return () => surface.classList.remove("work-cv-mounted");
+    const mountFrame = window.requestAnimationFrame(() => setTarget(surface));
+    return () => {
+      window.cancelAnimationFrame(mountFrame);
+      surfaceRef.current = null;
+      surface.classList.remove("work-cv-mounted");
+    };
   }, []);
 
   useEffect(() => {
-    if (!target) return;
-    const board = target.querySelector<HTMLElement>(".work-cv-board");
+    const scrollSurface = surfaceRef.current;
+    if (!target || !scrollSurface) return;
+    const board = scrollSurface.querySelector<HTMLElement>(".work-cv-board");
     if (!board) return;
+
+    const cue = board.querySelector<HTMLElement>(".work-scroll-cue");
+    const cueLabel = cue?.querySelector<HTMLElement>("[data-work-scroll-label]");
+
+    const updateScrollProgress = () => {
+      const maximum = Math.max(1, board.scrollHeight - board.clientHeight);
+      const progress = Math.min(1, Math.max(0, board.scrollTop / maximum));
+      const percent = Math.round(progress * 100);
+      cue?.style.setProperty("--work-progress", `${percent}%`);
+      if (cueLabel) cueLabel.textContent = percent >= 100 ? "End of case file · continue" : `Drag or scroll · ${percent}%`;
+      board.dataset.scrollState = percent <= 0 ? "start" : percent >= 100 ? "end" : "middle";
+    };
+
+    board.addEventListener("scroll", updateScrollProgress, { passive: true });
+    board.scrollTop = 0;
+    const restoreFrame = window.requestAnimationFrame(() => {
+      if (window.location.hash === "#work-board") board.scrollTop = 0;
+      updateScrollProgress();
+    });
+    updateScrollProgress();
 
     const sections = Array.from(board.querySelectorAll<HTMLElement>(".work-section"));
     const reveal = (section: HTMLElement) => {
@@ -367,7 +398,7 @@ export function WorkCvBoardPortal() {
 
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((entry) => entry.isIntersecting && reveal(entry.target as HTMLElement)),
-      { root: target, threshold: .13, rootMargin: "0px 0px -8% 0px" },
+      { root: board, threshold: .13, rootMargin: "0px 0px -8% 0px" },
     );
     sections.forEach((section) => observer.observe(section));
 
@@ -376,7 +407,12 @@ export function WorkCvBoardPortal() {
       gsap.fromTo(heroNodes, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: .48, stagger: .035, delay: .15, ease: "power2.out" });
     }
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(restoreFrame);
+      board.removeEventListener("scroll", updateScrollProgress);
+      delete board.dataset.scrollState;
+    };
   }, [target]);
 
   const board = target ? createPortal(
@@ -389,7 +425,9 @@ export function WorkCvBoardPortal() {
         </div>
         <aside className="work-cv-legend"><i aria-hidden="true" /><span>longer thread = longer tenure</span></aside>
       </header>
-      <aside className="work-scroll-cue">scroll the case file <b>↓</b></aside>
+      <aside className="work-scroll-cue">
+        <span data-work-scroll-label>Drag or scroll · 0%</span><b aria-hidden="true">↓</b><i aria-hidden="true"><em /></i>
+      </aside>
 
       <div className="work-experience-stage">
         <span className="work-cv-pencil pencil-one">production → evidence → outcome</span>
