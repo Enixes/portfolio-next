@@ -3,16 +3,28 @@
 import { useEffect } from "react";
 
 const styles = `
-/* The Work surface is the only long-form board. Let it own a real internal
-   scroll range while the outer sticky story remains fixed behind it. */
+/* The shared story surface stays fixed. The dossier itself owns scrolling. */
 .work-cv-mounted {
   display:block!important;
   width:100%!important;
   height:100%!important;
   min-height:0!important;
+  overflow:hidden!important;
+  padding:0!important;
+}
+
+.work-cv-mounted > .work-cv-board {
+  display:block!important;
+  position:relative!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
   overflow-y:auto!important;
   overflow-x:hidden!important;
-  padding:0!important;
+  align-self:stretch!important;
+  justify-self:stretch!important;
+  grid-row:auto!important;
+  grid-column:auto!important;
   overscroll-behavior-y:auto!important;
   touch-action:pan-y;
   -webkit-overflow-scrolling:touch;
@@ -21,22 +33,9 @@ const styles = `
   scrollbar-width:thin;
   scrollbar-color:#9b302a rgba(99,78,53,.08);
 }
-.work-cv-mounted::-webkit-scrollbar{width:8px}
-.work-cv-mounted::-webkit-scrollbar-track{background:rgba(99,78,53,.08)}
-.work-cv-mounted::-webkit-scrollbar-thumb{background:#9b302a;border-radius:999px}
-
-.work-cv-mounted > .work-cv-board {
-  display:block!important;
-  position:relative!important;
-  width:100%!important;
-  height:auto!important;
-  min-height:calc(100% + 2px)!important;
-  overflow:visible!important;
-  align-self:start!important;
-  justify-self:stretch!important;
-  grid-row:auto!important;
-  grid-column:auto!important;
-}
+.work-cv-mounted > .work-cv-board::-webkit-scrollbar{width:8px}
+.work-cv-mounted > .work-cv-board::-webkit-scrollbar-track{background:rgba(99,78,53,.08)}
+.work-cv-mounted > .work-cv-board::-webkit-scrollbar-thumb{background:#9b302a;border-radius:999px}
 
 /* Animation is enhancement-only. Nothing on the board is allowed to disappear
    just because a timeline or observer has not fired yet. */
@@ -61,11 +60,9 @@ const styles = `
 .work-section.is-visible .skill-chip::before{animation:skillOutlineDraw .58s cubic-bezier(.2,.75,.2,1) calc(.24s + var(--skill-delay)) forwards!important}
 .work-section.is-visible .skill-chip::after{animation:skillColorIn .52s cubic-bezier(.2,.75,.2,1) calc(.62s + var(--skill-delay)) forwards!important}
 
-/* This long dossier already has enough visual detail; never place the roaming
-   Work doodle over it. */
 .work-cv-mounted > .board-tech-sketch.tech-work{display:none!important}
 
-@media(max-width:760px){.work-cv-mounted{scrollbar-gutter:auto}}
+@media(max-width:760px){.work-cv-mounted > .work-cv-board{scrollbar-gutter:auto}}
 @media(prefers-reduced-motion:reduce){
  .work-section.is-visible .skill-chip,
  .work-section.is-visible .skill-chip::before,
@@ -83,7 +80,7 @@ type WorkContext = {
 
 function visibleWorkContext(): WorkContext | null {
   const panel = document.querySelector<HTMLElement>(WORK_PANEL_SELECTOR);
-  const surface = panel?.querySelector<HTMLElement>(".work-cv-mounted") ?? null;
+  const surface = panel?.querySelector<HTMLElement>(".work-cv-board") ?? null;
   if (!panel || !surface) return null;
 
   const style = window.getComputedStyle(panel);
@@ -92,9 +89,6 @@ function visibleWorkContext(): WorkContext | null {
   const coversViewportCenter =
     rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.5;
 
-  // Hit-testing the viewport centre tells us which panel the browser actually
-  // considers interactive. This is more reliable than the outer story's
-  // progress/data attribute, which can change during the same wheel gesture.
   const centreHit = document.elementFromPoint(
     Math.max(0, Math.floor(window.innerWidth * 0.5)),
     Math.max(0, Math.floor(window.innerHeight * 0.5)),
@@ -162,8 +156,6 @@ export function WorkCaseBoardPolish() {
 
       const deltaY = normalizedWheelDelta(event, context.surface);
       if (!consume(context.surface, deltaY)) {
-        // At the dossier's edge, deliberately release this gesture to the outer
-        // story so the next board remains reachable naturally.
         releaseWindow();
         return;
       }
@@ -218,8 +210,6 @@ export function WorkCaseBoardPolish() {
 
     const onTouchEnd = () => {
       lastTouchY = null;
-      // Keep the outer window pinned only while another gesture is actively
-      // consuming the inner dossier.
       releaseWindow();
     };
 
