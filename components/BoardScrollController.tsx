@@ -11,10 +11,15 @@ const smoothstep = (value: number) => {
   return bounded * bounded * (3 - 2 * bounded);
 };
 
-// Each section is allowed to animate through the master-board zoom, but the page
-// only rests once the section has fully assembled and is interactive.
+// Rest only after a section has fully assembled and become interactive.
 const SECTION_STOP_LOCAL_PROGRESS = 0.72;
-const SCROLL_IDLE_SNAP_MS = 110;
+// Explicit clicks skip every unrelated section and begin at the chosen section's zoom frame.
+const CLICK_ZOOM_START_LOCAL_PROGRESS = 0.015;
+const SCROLL_TRANSITION_DURATION = 2.9;
+const CLICK_ZOOM_DURATION = 1.95;
+const MANUAL_SNAP_DURATION = 1.55;
+const LEAVE_STORY_DURATION = 1.2;
+const SCROLL_IDLE_SNAP_MS = 130;
 
 const zoomTargetSelectors = [
   ".board-zone-profile",
@@ -29,6 +34,14 @@ type ZoomTarget = {
   y: number;
   originX: number;
   originY: number;
+};
+
+type WindowTweenOptions = {
+  index?: number;
+  immediate?: boolean;
+  updateHash?: boolean;
+  duration?: number;
+  ease?: string;
 };
 
 function offsetWithin(element: HTMLElement, ancestor: HTMLElement) {
@@ -64,6 +77,7 @@ export function BoardScrollController() {
     if (!story || !track || panels.length === 0) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
     const sectionIds = stops.map((stop) => stop.id);
     const navigationLinks = Array.from(
       document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'),
@@ -73,6 +87,7 @@ export function BoardScrollController() {
     let zoomTargets: ZoomTarget[] = [];
     let frame = 0;
     let initialNavigationFrame = 0;
+    let directZoomFrame = 0;
     let snapTimer = 0;
     let storyTop = 0;
     let travel = 1;
@@ -82,7 +97,10 @@ export function BoardScrollController() {
     let touchStartY: number | null = null;
     let touchTarget: EventTarget | null = null;
     let touchPrevented = false;
-    let inlineScrollBehavior = document.documentElement.style.scrollBehavior;
+
+    const restoreScrollBehavior = () => {
+      document.documentElement.style.scrollBehavior = originalScrollBehavior;
+    };
 
     const killPanelTimelines = () => {
       panelTimelines.forEach((timeline, index) => {
@@ -137,8 +155,7 @@ export function BoardScrollController() {
       if (!header) return null;
 
       if (index === 1 && !workHeader) {
-        // The Work CV portal mounts just after this controller. Waiting one frame
-        // keeps the real CV header as the zoom anchor instead of the hidden fallback.
+        // WorkCvBoardPortal mounts one frame after this controller.
         return null;
       }
 
@@ -150,7 +167,9 @@ export function BoardScrollController() {
       const indexLabel = panel.querySelector<HTMLElement>(".story-board-index");
       const footnote = panel.querySelector<HTMLElement>(".story-board-footnote, .work-cv-footnote");
       const threadPaths = Array.from(
-        panel.querySelectorAll<SVGPathElement>(".work-cv-thread .thread-main, .work-cv-thread .thread-branch"),
+        panel.querySelectorAll<SVGPathElement>(
+          ".work-cv-thread .thread-main, .work-cv-thread .thread-branch",
+        ),
       );
 
       const compact = window.innerWidth <= 760;
@@ -159,7 +178,6 @@ export function BoardScrollController() {
         ? Math.min(window.innerHeight * 0.1, 70)
         : Math.min(window.innerHeight * 0.17, 150);
       const introScale = compact ? 1.22 : 1.62;
-
       const timeline = gsap.timeline({ paused: true, defaults: { overwrite: "auto" } });
 
       gsap.set(header, { transformOrigin: "0% 0%", force3D: true });
@@ -171,7 +189,7 @@ export function BoardScrollController() {
           autoAlpha: 0,
           x: introX,
           y: introY,
-          scale: introScale * 0.88,
+          scale: introScale * 0.86,
           rotation: -1.2,
         },
         {
@@ -180,23 +198,23 @@ export function BoardScrollController() {
           y: introY,
           scale: introScale,
           rotation: 0,
-          duration: 0.16,
+          duration: 0.18,
           ease: "power3.out",
         },
         0,
       );
 
-      // Deliberate hold: the section title owns the frame before the board assembles.
+      // Let the title own the frame long enough to be read before the board assembles.
       timeline.to(
         header,
         {
           x: introX,
           y: introY,
           scale: introScale,
-          duration: 0.24,
+          duration: 0.34,
           ease: "none",
         },
-        0.16,
+        0.18,
       );
 
       timeline.to(
@@ -206,10 +224,10 @@ export function BoardScrollController() {
           y: 0,
           scale: 1,
           rotation: 0,
-          duration: 0.24,
+          duration: 0.28,
           ease: "power3.inOut",
         },
-        0.4,
+        0.52,
       );
 
       if (indexLabel && !workHeader) {
@@ -218,10 +236,10 @@ export function BoardScrollController() {
           {
             autoAlpha: 0,
             x: -28,
-            duration: 0.16,
+            duration: 0.2,
             ease: "power2.out",
           },
-          0.42,
+          0.56,
         );
       }
 
@@ -236,16 +254,16 @@ export function BoardScrollController() {
             },
             y: (itemIndex) => {
               const lane = (itemIndex % 3) - 1;
-              return 68 + lane * Math.min(window.innerHeight * 0.085, 72);
+              return 74 + lane * Math.min(window.innerHeight * 0.085, 72);
             },
-            scale: (itemIndex) => 0.68 + (itemIndex % 3) * 0.035,
+            scale: (itemIndex) => 0.66 + (itemIndex % 3) * 0.04,
             rotation: (itemIndex) => (itemIndex % 2 === 0 ? -7 : 7),
-            duration: 0.33,
-            stagger: { each: 0.038, from: "start" },
-            ease: "back.out(1.35)",
+            duration: 0.42,
+            stagger: { each: 0.05, from: "start" },
+            ease: "back.out(1.3)",
             force3D: true,
           },
-          0.49,
+          0.66,
         );
       }
 
@@ -257,10 +275,10 @@ export function BoardScrollController() {
           {
             strokeDasharray: length,
             strokeDashoffset: 0,
-            duration: 0.28,
+            duration: 0.36,
             ease: "power2.out",
           },
-          0.56 + pathIndex * 0.025,
+          0.76 + pathIndex * 0.035,
         );
       });
 
@@ -270,29 +288,33 @@ export function BoardScrollController() {
           {
             autoAlpha: 0,
             y: 18,
-            duration: 0.2,
+            duration: 0.24,
             ease: "power2.out",
           },
-          0.78,
+          1.06,
         );
       }
 
-      timeline.duration(1);
+      timeline.duration(1.32);
       timeline.progress(0);
       return timeline;
     };
 
     const ensurePanelTimeline = (index: number) => {
-      if (!panelTimelines[index]) {
-        panelTimelines[index] = buildPanelTimeline(index);
-      }
+      if (!panelTimelines[index]) panelTimelines[index] = buildPanelTimeline(index);
       return panelTimelines[index];
     };
 
-    const sectionScrollTop = (index: number) => {
-      const progress = (index + SECTION_STOP_LOCAL_PROGRESS) / panels.length;
+    const sectionProgressTop = (index: number, localProgress: number) => {
+      const progress = (index + localProgress) / panels.length;
       return storyTop + travel * progress;
     };
+
+    const sectionScrollTop = (index: number) =>
+      sectionProgressTop(index, SECTION_STOP_LOCAL_PROGRESS);
+
+    const sectionZoomStartTop = (index: number) =>
+      sectionProgressTop(index, CLICK_ZOOM_START_LOCAL_PROGRESS);
 
     const currentStoryProgress = () => clamp((window.scrollY - storyTop) / travel);
 
@@ -319,14 +341,125 @@ export function BoardScrollController() {
       window.history.replaceState(null, "", `#${id}`);
     };
 
-    const animateWindowTo = (
-      destination: number,
-      options: { index?: number; immediate?: boolean; updateHash?: boolean } = {},
-    ) => {
+    const render = () => {
+      frame = 0;
+      masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
+      if (masterBoard && zoomTargets.length === 0) measureZoomTargets();
+
+      const progress = currentStoryProgress();
+      const stages = progress * panels.length;
+      const activeIndex = Math.min(panels.length - 1, Math.floor(stages));
+      const localProgress =
+        activeIndex === panels.length - 1 && progress === 1 ? 1 : stages - activeIndex;
+      const activeSectionId = sectionIds[activeIndex] ?? "";
+
+      if (reducedMotion.matches) {
+        panels.forEach((panel, index) => {
+          const active = index === activeIndex;
+          gsap.set(panel, {
+            autoAlpha: active ? 1 : 0,
+            x: 0,
+            y: 0,
+            scale: 1,
+            zIndex: active ? 5 : 1,
+            pointerEvents: active ? "auto" : "none",
+          });
+          ensurePanelTimeline(index)?.progress(active ? 1 : 0);
+        });
+        if (masterBoard) gsap.set(masterBoard, { autoAlpha: 0 });
+        if (room) gsap.set(room, { opacity: 0.18, scale: 1 });
+      } else {
+        const enter = smoothstep((localProgress - 0.02) / 0.22);
+        const detailEnter = smoothstep((localProgress - 0.11) / 0.18);
+        const exit = smoothstep((localProgress - 0.84) / 0.14);
+        const panelVisibility = detailEnter * (1 - exit);
+        const zoomStrength = enter * (1 - exit);
+        const assemblyProgress = clamp((localProgress - 0.11) / 0.61);
+        const target = zoomTargets[activeIndex] ?? {
+          x: 0,
+          y: 0,
+          originX: 0.5,
+          originY: 0.5,
+        };
+
+        panels.forEach((panel, index) => {
+          const active = index === activeIndex;
+          const visible = active ? panelVisibility : 0;
+          const panelScale = active ? 1.08 - visible * 0.08 : 0.96;
+          const panelY = active ? (1 - visible) * 18 : 0;
+
+          gsap.set(panel, {
+            autoAlpha: visible,
+            y: panelY,
+            scale: panelScale,
+            transformOrigin: "50% 38%",
+            zIndex: active ? 5 : 1,
+            pointerEvents: visible > 0.78 ? "auto" : "none",
+            force3D: true,
+          });
+
+          const timeline = ensurePanelTimeline(index);
+          if (timeline) timeline.progress(active ? assemblyProgress : 0, false);
+        });
+
+        if (masterBoard) {
+          const boardScale = 0.88 + zoomStrength * 3.35;
+          const boardVisibility = Math.max(1 - detailEnter * 0.97, exit);
+
+          gsap.set(masterBoard, {
+            xPercent: -50,
+            yPercent: -50,
+            x: target.x * zoomStrength,
+            y: target.y * zoomStrength,
+            scale: boardScale,
+            transformOrigin: `${target.originX * 100}% ${target.originY * 100}%`,
+            autoAlpha: boardVisibility,
+            filter: `brightness(${0.9 + boardVisibility * 0.1}) saturate(${0.78 + boardVisibility * 0.22})`,
+            force3D: true,
+          });
+        }
+
+        if (room) {
+          gsap.set(room, {
+            opacity: 0.1 + Math.max(1 - detailEnter, exit) * 0.17,
+            scale: 1.04 + zoomStrength * 0.055,
+            force3D: true,
+          });
+        }
+      }
+
+      dots.forEach((dot, index) => {
+        dot.classList.toggle("is-active", index === activeIndex);
+      });
+
+      navigationLinks.forEach((link) => {
+        link.classList.toggle("is-active", link.hash.slice(1) === activeSectionId);
+      });
+
+      document.documentElement.dataset.zoomSection = activeSectionId;
+    };
+
+    const requestRender = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(render);
+    };
+
+    const setWindowScrollImmediate = (destination: number) => {
+      const targetY = Math.max(0, destination);
+      window.clearTimeout(snapTimer);
+      scrollTween?.kill();
+      scrollTween = null;
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, targetY);
+      restoreScrollBehavior();
+      lastWindowY = targetY;
+      render();
+    };
+
+    const animateWindowTo = (destination: number, options: WindowTweenOptions = {}) => {
       const targetY = Math.max(0, destination);
       const startY = window.scrollY;
       const distance = Math.abs(targetY - startY);
-      const stageDistance = Math.max(1, travel / panels.length);
       const immediate = options.immediate || reducedMotion.matches || distance < 2;
 
       window.clearTimeout(snapTimer);
@@ -334,11 +467,7 @@ export function BoardScrollController() {
       scrollTween = null;
 
       if (immediate) {
-        document.documentElement.style.scrollBehavior = "auto";
-        window.scrollTo(0, targetY);
-        document.documentElement.style.scrollBehavior = inlineScrollBehavior;
-        lastWindowY = targetY;
-        requestRender();
+        setWindowScrollImmediate(targetY);
         if (typeof options.index === "number") {
           if (options.updateHash) updateHashForSection(options.index);
           window.requestAnimationFrame(() => panels[options.index!]?.focus({ preventScroll: true }));
@@ -347,21 +476,19 @@ export function BoardScrollController() {
       }
 
       const state = { y: startY };
-      const duration = clamp(0.82 + (distance / stageDistance) * 0.18, 0.82, 1.38);
-      inlineScrollBehavior = document.documentElement.style.scrollBehavior;
       document.documentElement.style.scrollBehavior = "auto";
 
       scrollTween = gsap.to(state, {
         y: targetY,
-        duration,
-        ease: "power2.inOut",
+        duration: options.duration ?? SCROLL_TRANSITION_DURATION,
+        ease: options.ease ?? "power2.inOut",
         overwrite: true,
         onUpdate: () => {
           window.scrollTo(0, state.y);
         },
         onComplete: () => {
           scrollTween = null;
-          document.documentElement.style.scrollBehavior = inlineScrollBehavior;
+          restoreScrollBehavior();
           lastWindowY = window.scrollY;
           requestRender();
           if (typeof options.index === "number") {
@@ -371,7 +498,7 @@ export function BoardScrollController() {
         },
         onInterrupt: () => {
           scrollTween = null;
-          document.documentElement.style.scrollBehavior = inlineScrollBehavior;
+          restoreScrollBehavior();
         },
       });
     };
@@ -380,6 +507,7 @@ export function BoardScrollController() {
       index: number,
       behavior: ScrollBehavior,
       updateHash = false,
+      duration = SCROLL_TRANSITION_DURATION,
     ) => {
       if (index < 0 || index >= panels.length) return;
       measure();
@@ -387,12 +515,36 @@ export function BoardScrollController() {
         index,
         immediate: behavior === "auto",
         updateHash,
+        duration,
+      });
+    };
+
+    const directZoomToSection = (index: number) => {
+      if (index < 0 || index >= panels.length) return;
+      measure();
+
+      if (reducedMotion.matches) {
+        navigateToSection(index, "auto");
+        return;
+      }
+
+      // Do not scrub past unrelated boards after an explicit click. We jump to the
+      // selected board's master-view frame before the browser paints, then animate
+      // only that section's zoom/header/chit sequence.
+      window.cancelAnimationFrame(directZoomFrame);
+      setWindowScrollImmediate(sectionZoomStartTop(index));
+      directZoomFrame = window.requestAnimationFrame(() => {
+        animateWindowTo(sectionScrollTop(index), {
+          index,
+          duration: CLICK_ZOOM_DURATION,
+          ease: "power2.inOut",
+        });
       });
     };
 
     const leaveStoryUpward = () => {
       const destination = Math.max(0, storyTop - Math.min(window.innerHeight * 0.88, storyTop));
-      animateWindowTo(destination);
+      animateWindowTo(destination, { duration: LEAVE_STORY_DURATION });
     };
 
     const navigateByDirection = (direction: -1 | 1, updateHash = true) => {
@@ -437,7 +589,7 @@ export function BoardScrollController() {
       targetIndex = clamp(targetIndex, 0, panels.length - 1);
       const destination = sectionScrollTop(targetIndex);
       if (Math.abs(currentY - destination) < 3) return;
-      navigateToSection(targetIndex, "smooth", true);
+      navigateToSection(targetIndex, "smooth", true, MANUAL_SNAP_DURATION);
     };
 
     const navigateToHash = (hash: string, behavior: ScrollBehavior) => {
@@ -464,7 +616,7 @@ export function BoardScrollController() {
       if (window.location.hash !== link.hash) {
         window.history.pushState(null, "", link.hash);
       }
-      navigateToSection(index, reducedMotion.matches ? "auto" : "smooth");
+      directZoomToSection(index);
     };
 
     const handleHistoryNavigation = () => {
@@ -499,7 +651,11 @@ export function BoardScrollController() {
       if (window.scrollY < storyTop - 2 || window.scrollY > storyEnd + 2) return;
 
       let direction: -1 | 1 | null = null;
-      if (event.key === "ArrowDown" || event.key === "PageDown" || (event.key === " " && !event.shiftKey)) {
+      if (
+        event.key === "ArrowDown" ||
+        event.key === "PageDown" ||
+        (event.key === " " && !event.shiftKey)
+      ) {
         direction = 1;
       } else if (
         event.key === "ArrowUp" ||
@@ -547,111 +703,6 @@ export function BoardScrollController() {
       navigateByDirection(deltaY > 0 ? 1 : -1);
     };
 
-    const render = () => {
-      frame = 0;
-      masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
-      if (masterBoard && zoomTargets.length === 0) measureZoomTargets();
-
-      const progress = currentStoryProgress();
-      const stages = progress * panels.length;
-      const activeIndex = Math.min(panels.length - 1, Math.floor(stages));
-      const localProgress =
-        activeIndex === panels.length - 1 && progress === 1 ? 1 : stages - activeIndex;
-      const activeSectionId = sectionIds[activeIndex] ?? "";
-
-      if (reducedMotion.matches) {
-        panels.forEach((panel, index) => {
-          const active = index === activeIndex;
-          gsap.set(panel, {
-            autoAlpha: active ? 1 : 0,
-            x: 0,
-            y: 0,
-            scale: 1,
-            zIndex: active ? 5 : 1,
-            pointerEvents: active ? "auto" : "none",
-          });
-          ensurePanelTimeline(index)?.progress(active ? 1 : 0);
-        });
-        if (masterBoard) gsap.set(masterBoard, { autoAlpha: 0 });
-        if (room) gsap.set(room, { opacity: 0.18, scale: 1 });
-      } else {
-        const enter = smoothstep((localProgress - 0.04) / 0.2);
-        const detailEnter = smoothstep((localProgress - 0.13) / 0.14);
-        const exit = smoothstep((localProgress - 0.82) / 0.16);
-        const panelVisibility = detailEnter * (1 - exit);
-        const zoomStrength = enter * (1 - exit);
-        const assemblyProgress = clamp((localProgress - 0.13) / 0.58);
-        const target = zoomTargets[activeIndex] ?? {
-          x: 0,
-          y: 0,
-          originX: 0.5,
-          originY: 0.5,
-        };
-
-        panels.forEach((panel, index) => {
-          const active = index === activeIndex;
-          const visible = active ? panelVisibility : 0;
-          const panelScale = active ? 1.08 - visible * 0.08 : 0.96;
-          const panelY = active ? (1 - visible) * 18 : 0;
-
-          gsap.set(panel, {
-            autoAlpha: visible,
-            y: panelY,
-            scale: panelScale,
-            transformOrigin: "50% 38%",
-            zIndex: active ? 5 : 1,
-            pointerEvents: visible > 0.78 ? "auto" : "none",
-            force3D: true,
-          });
-
-          const timeline = ensurePanelTimeline(index);
-          if (timeline) timeline.progress(active ? assemblyProgress : 0, false);
-        });
-
-        if (masterBoard) {
-          // The camera passes through the master board, but discrete navigation means
-          // this transitional frame can no longer become a resting state.
-          const boardScale = 0.88 + zoomStrength * 3.35;
-          const boardVisibility = Math.max(1 - detailEnter * 0.97, exit);
-
-          gsap.set(masterBoard, {
-            xPercent: -50,
-            yPercent: -50,
-            x: target.x * zoomStrength,
-            y: target.y * zoomStrength,
-            scale: boardScale,
-            transformOrigin: `${target.originX * 100}% ${target.originY * 100}%`,
-            autoAlpha: boardVisibility,
-            filter: `brightness(${0.9 + boardVisibility * 0.1}) saturate(${0.78 + boardVisibility * 0.22})`,
-            force3D: true,
-          });
-        }
-
-        if (room) {
-          gsap.set(room, {
-            opacity: 0.1 + Math.max(1 - detailEnter, exit) * 0.17,
-            scale: 1.04 + zoomStrength * 0.055,
-            force3D: true,
-          });
-        }
-      }
-
-      dots.forEach((dot, index) => {
-        dot.classList.toggle("is-active", index === activeIndex);
-      });
-
-      navigationLinks.forEach((link) => {
-        link.classList.toggle("is-active", link.hash.slice(1) === activeSectionId);
-      });
-
-      document.documentElement.dataset.zoomSection = activeSectionId;
-    };
-
-    const requestRender = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(render);
-    };
-
     const handleScroll = () => {
       const currentY = window.scrollY;
       const delta = currentY - lastWindowY;
@@ -670,7 +721,7 @@ export function BoardScrollController() {
     const handleResize = () => {
       scrollTween?.kill();
       scrollTween = null;
-      document.documentElement.style.scrollBehavior = inlineScrollBehavior;
+      restoreScrollBehavior();
       killPanelTimelines();
       measure();
       requestRender();
@@ -689,7 +740,7 @@ export function BoardScrollController() {
     measure();
     render();
 
-    // The Work portal is a sibling client component and may mount a frame later.
+    // Work CV content is portalled in just after this controller mounts.
     window.requestAnimationFrame(() => {
       if (!panelTimelines[1]) panelTimelines[1] = buildPanelTimeline(1);
       measureZoomTargets();
@@ -718,8 +769,9 @@ export function BoardScrollController() {
       window.clearTimeout(snapTimer);
       window.cancelAnimationFrame(frame);
       window.cancelAnimationFrame(initialNavigationFrame);
+      window.cancelAnimationFrame(directZoomFrame);
       scrollTween?.kill();
-      document.documentElement.style.scrollBehavior = inlineScrollBehavior;
+      restoreScrollBehavior();
       killPanelTimelines();
       gsap.killTweensOf([masterBoard, room, ...panels].filter(Boolean));
       delete document.documentElement.dataset.zoomSection;
