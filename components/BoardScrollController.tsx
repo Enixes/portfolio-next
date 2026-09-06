@@ -11,15 +11,9 @@ const smoothstep = (value: number) => {
   return bounded * bounded * (3 - 2 * bounded);
 };
 
-// Rest only after a section has fully assembled and become interactive.
 const SECTION_STOP_LOCAL_PROGRESS = 0.72;
-// Explicit clicks skip every unrelated section and begin at the chosen section's zoom frame.
 const CLICK_ZOOM_START_LOCAL_PROGRESS = 0.015;
-const SCROLL_TRANSITION_DURATION = 2.9;
 const CLICK_ZOOM_DURATION = 1.95;
-const MANUAL_SNAP_DURATION = 1.55;
-const LEAVE_STORY_DURATION = 1.2;
-const SCROLL_IDLE_SNAP_MS = 130;
 
 const zoomTargetSelectors = [
   ".board-zone-profile",
@@ -39,7 +33,6 @@ type ZoomTarget = {
 type WindowTweenOptions = {
   index?: number;
   immediate?: boolean;
-  updateHash?: boolean;
   duration?: number;
   ease?: string;
   onComplete?: () => void;
@@ -68,7 +61,7 @@ export function BoardScrollController() {
     const heroSource = document.querySelector<HTMLElement>(
       ".preview-hero .evidence-board-frame",
     );
-    let masterBoard = story?.querySelector<HTMLElement>("[data-zoom-master-board]") ?? null;
+    let masterBoard = document.querySelector<HTMLElement>("[data-zoom-master-board]");
     const room = story?.querySelector<HTMLElement>(".board-story-room");
     const stops = story
       ? Array.from(story.querySelectorAll<HTMLElement>("[data-board-stop]"))
@@ -94,17 +87,18 @@ export function BoardScrollController() {
     let frame = 0;
     let initialNavigationFrame = 0;
     let directZoomFrame = 0;
-    let snapTimer = 0;
     let storyTop = 0;
     let travel = 1;
-    let lastWindowY = window.scrollY;
-    let lastScrollDirection = 0;
     let scrollTween: gsap.core.Tween | null = null;
-    let heroHandoffTimeline: gsap.core.Timeline | null = null;
+    let lastWindowY = window.scrollY;
+
     let heroHandoffActive = false;
-    let touchStartY: number | null = null;
-    let touchTarget: EventTarget | null = null;
-    let touchPrevented = false;
+    let heroHandoffStartY = 0;
+    let heroHandoffEndY = 1;
+    let heroHandoffTargetX = 0;
+    let heroHandoffTargetY = 0;
+    let heroHandoffOriginX = 0.5;
+    let heroHandoffOriginY = 0.5;
 
     const restoreScrollBehavior = () => {
       document.documentElement.style.scrollBehavior = originalScrollBehavior;
@@ -119,7 +113,7 @@ export function BoardScrollController() {
 
     const measureZoomTargets = () => {
       masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
-      if (!masterBoard) {
+      if (!masterBoard || heroHandoffActive) {
         zoomTargets = [];
         return;
       }
@@ -161,11 +155,7 @@ export function BoardScrollController() {
       const workHeader = panel.querySelector<HTMLElement>(".work-cv-header");
       const header = workHeader ?? panel.querySelector<HTMLElement>(".story-board-header");
       if (!header) return null;
-
-      if (index === 1 && !workHeader) {
-        // WorkCvBoardPortal mounts one frame after this controller.
-        return null;
-      }
+      if (index === 1 && !workHeader) return null;
 
       const chits = Array.from(
         panel.querySelectorAll<HTMLElement>(
@@ -212,7 +202,6 @@ export function BoardScrollController() {
         0,
       );
 
-      // Let the title own the frame long enough to be read before the board assembles.
       timeline.to(
         header,
         {
@@ -326,30 +315,102 @@ export function BoardScrollController() {
 
     const currentStoryProgress = () => clamp((window.scrollY - storyTop) / travel);
 
-    const nearestSectionIndex = () => {
-      const stages = currentStoryProgress() * panels.length;
-      return Math.round(clamp(stages - SECTION_STOP_LOCAL_PROGRESS, 0, panels.length - 1));
+    const requestRender = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(render);
     };
 
-    const canScrollInsideSection = (target: EventTarget | null, deltaY: number) => {
-      const element = target instanceof Element ? target : null;
-      const surface = element?.closest<HTMLElement>(".story-board-surface");
-      if (!surface || surface.scrollHeight <= surface.clientHeight + 2) return false;
+    const resetHeroHandoff = () => {
+      if (!heroHandoffActive) return;
 
-      if (deltaY > 0) {
-        return surface.scrollTop + surface.clientHeight < surface.scrollHeight - 2;
+      if (masterBoard && stickyHost && masterBoard.parentElement !== stickyHost) {
+        stickyHost.prepend(masterBoard);
       }
-      if (deltaY < 0) return surface.scrollTop > 2;
-      return false;
+
+      if (masterBoard) {
+        gsap.set(masterBoard, {
+          clearProps:
+            "position,top,left,right,bottom,width,height,margin,zIndex,xPercent,yPercent,x,y,scale,transformOrigin,opacity,visibility,filter",
+        });
+      }
+      if (heroSource) gsap.set(heroSource, { clearProps: "opacity,visibility" });
+
+      heroHandoffActive = false;
+      zoomTargets = [];
+      measureZoomTargets();
+      requestRender();
     };
 
-    const updateHashForSection = (index: number) => {
-      const id = sectionIds[index];
-      if (!id || window.location.hash === `#${id}`) return;
-      window.history.replaceState(null, "", `#${id}`);
+    const canBeginHeroHandoff = () => {
+      if (!heroSource || !masterBoard || !stickyHost || heroHandoffActive) return false;
+      if (window.scrollY >= storyTop) return false;
+
+      const rect = heroSource.getBoundingClientRect();
+      const closeEnough = storyTop - window.scrollY <= window.innerHeight * 1.08;
+      const boardVisible = rect.bottom > window.innerHeight * 0.16 && rect.top < window.innerHeight * 0.84;
+      return closeEnough && boardVisible && rect.width > 10 && rect.height > 10;
     };
 
-    const render = () => {
+    const beginHeroHandoff = () => {
+      masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
+      if (!heroSource || !masterBoard || !stickyHost || reducedMotion.matches) return false;
+
+      measure();
+      const sourceRect = heroSource.getBoundingClientRect();
+      if (
+        sourceRect.width <= 10 ||
+        sourceRect.height <= 10 ||
+        sourceRect.bottom <= 0 ||
+        sourceRect.top >= window.innerHeight
+      ) {
+        return false;
+      }
+
+      scrollTween?.kill();
+      scrollTween = null;
+      heroHandoffActive = true;
+      heroHandoffStartY = window.scrollY;
+      heroHandoffEndY = Math.max(heroHandoffStartY + 1, sectionScrollTop(0));
+
+      document.body.appendChild(masterBoard);
+      gsap.set(masterBoard, {
+        position: "fixed",
+        top: sourceRect.top,
+        left: sourceRect.left,
+        right: "auto",
+        bottom: "auto",
+        width: sourceRect.width,
+        height: sourceRect.height,
+        margin: 0,
+        zIndex: 35,
+        xPercent: 0,
+        yPercent: 0,
+        x: 0,
+        y: 0,
+        scale: 1,
+        autoAlpha: 1,
+        filter: "none",
+        force3D: true,
+      });
+      gsap.set(heroSource, { autoAlpha: 0 });
+
+      const profileTarget = masterBoard.querySelector<HTMLElement>(zoomTargetSelectors[0]);
+      const point = profileTarget
+        ? offsetWithin(profileTarget, masterBoard)
+        : { x: sourceRect.width * 0.2, y: sourceRect.height * 0.27 };
+
+      heroHandoffOriginX = clamp(point.x / Math.max(1, sourceRect.width));
+      heroHandoffOriginY = clamp(point.y / Math.max(1, sourceRect.height));
+      heroHandoffTargetX = window.innerWidth / 2 - (sourceRect.left + point.x);
+      heroHandoffTargetY = window.innerHeight / 2 - (sourceRect.top + point.y);
+
+      gsap.set(masterBoard, {
+        transformOrigin: `${heroHandoffOriginX * 100}% ${heroHandoffOriginY * 100}%`,
+      });
+      return true;
+    };
+
+    function render() {
       frame = 0;
       masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
       if (masterBoard && zoomTargets.length === 0 && !heroHandoffActive) measureZoomTargets();
@@ -410,7 +471,27 @@ export function BoardScrollController() {
           if (timeline) timeline.progress(active ? assemblyProgress : 0, false);
         });
 
-        if (masterBoard && !heroHandoffActive) {
+        if (heroHandoffActive && masterBoard) {
+          const rawHandoffProgress = clamp(
+            (window.scrollY - heroHandoffStartY) /
+              Math.max(1, heroHandoffEndY - heroHandoffStartY),
+          );
+          const handoffProgress = smoothstep(rawHandoffProgress);
+          const fade = smoothstep((rawHandoffProgress - 0.34) / 0.34);
+
+          gsap.set(masterBoard, {
+            x: heroHandoffTargetX * handoffProgress,
+            y: heroHandoffTargetY * handoffProgress,
+            scale: 1 + handoffProgress * 3.23,
+            autoAlpha: 1 - fade,
+            filter: `brightness(${1 - fade * 0.08}) saturate(${1 - fade * 0.18})`,
+            force3D: true,
+          });
+
+          if (window.scrollY < heroHandoffStartY - 3 || rawHandoffProgress >= 0.995) {
+            resetHeroHandoff();
+          }
+        } else if (masterBoard) {
           const boardScale = 0.88 + zoomStrength * 3.35;
           const boardVisibility = Math.max(1 - detailEnter * 0.97, exit);
 
@@ -445,38 +526,10 @@ export function BoardScrollController() {
       });
 
       document.documentElement.dataset.zoomSection = activeSectionId;
-    };
-
-    const requestRender = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(render);
-    };
-
-    const resetHeroHandoff = () => {
-      heroHandoffTimeline?.kill();
-      heroHandoffTimeline = null;
-
-      if (masterBoard && stickyHost && masterBoard.parentElement !== stickyHost) {
-        stickyHost.prepend(masterBoard);
-      }
-
-      if (masterBoard) {
-        gsap.set(masterBoard, {
-          clearProps:
-            "position,top,left,right,bottom,width,height,margin,zIndex,xPercent,yPercent,x,y,scale,transformOrigin,opacity,visibility,filter",
-        });
-      }
-      if (heroSource) gsap.set(heroSource, { clearProps: "opacity,visibility" });
-
-      heroHandoffActive = false;
-      zoomTargets = [];
-      measureZoomTargets();
-      requestRender();
-    };
+    }
 
     const setWindowScrollImmediate = (destination: number) => {
       const targetY = Math.max(0, destination);
-      window.clearTimeout(snapTimer);
       scrollTween?.kill();
       scrollTween = null;
       document.documentElement.style.scrollBehavior = "auto";
@@ -489,17 +542,14 @@ export function BoardScrollController() {
     const animateWindowTo = (destination: number, options: WindowTweenOptions = {}) => {
       const targetY = Math.max(0, destination);
       const startY = window.scrollY;
-      const distance = Math.abs(targetY - startY);
-      const immediate = options.immediate || reducedMotion.matches || distance < 2;
+      const immediate = options.immediate || reducedMotion.matches || Math.abs(targetY - startY) < 2;
 
-      window.clearTimeout(snapTimer);
       scrollTween?.kill();
       scrollTween = null;
 
       if (immediate) {
         setWindowScrollImmediate(targetY);
         if (typeof options.index === "number") {
-          if (options.updateHash) updateHashForSection(options.index);
           window.requestAnimationFrame(() => panels[options.index!]?.focus({ preventScroll: true }));
         }
         options.onComplete?.();
@@ -511,19 +561,16 @@ export function BoardScrollController() {
 
       scrollTween = gsap.to(state, {
         y: targetY,
-        duration: options.duration ?? SCROLL_TRANSITION_DURATION,
+        duration: options.duration ?? CLICK_ZOOM_DURATION,
         ease: options.ease ?? "power2.inOut",
         overwrite: true,
-        onUpdate: () => {
-          window.scrollTo(0, state.y);
-        },
+        onUpdate: () => window.scrollTo(0, state.y),
         onComplete: () => {
           scrollTween = null;
           restoreScrollBehavior();
           lastWindowY = window.scrollY;
           requestRender();
           if (typeof options.index === "number") {
-            if (options.updateHash) updateHashForSection(options.index);
             panels[options.index]?.focus({ preventScroll: true });
           }
           options.onComplete?.();
@@ -536,144 +583,15 @@ export function BoardScrollController() {
       });
     };
 
-    const navigateToSection = (
-      index: number,
-      behavior: ScrollBehavior,
-      updateHash = false,
-      duration = SCROLL_TRANSITION_DURATION,
-    ) => {
-      if (index < 0 || index >= panels.length) return;
-      measure();
-      animateWindowTo(sectionScrollTop(index), {
-        index,
-        immediate: behavior === "auto",
-        updateHash,
-        duration,
-      });
-    };
-
-    const canBeginHeroHandoff = () => {
-      if (!heroSource || !masterBoard || !stickyHost || heroHandoffActive) return false;
-      if (window.scrollY >= storyTop) return false;
-
-      const rect = heroSource.getBoundingClientRect();
-      const closeEnough = storyTop - window.scrollY <= window.innerHeight * 1.08;
-      const boardVisible = rect.bottom > window.innerHeight * 0.16 && rect.top < window.innerHeight * 0.84;
-      return closeEnough && boardVisible && rect.width > 10 && rect.height > 10;
-    };
-
-    const enterProfileFromHero = (updateHash = true) => {
-      if (!heroSource || !stickyHost) {
-        navigateToSection(0, "smooth", updateHash);
-        return;
-      }
-
-      masterBoard ??= document.querySelector<HTMLElement>("[data-zoom-master-board]");
-      if (!masterBoard || reducedMotion.matches) {
-        navigateToSection(0, reducedMotion.matches ? "auto" : "smooth", updateHash);
-        return;
-      }
-
-      measure();
-      const sourceRect = heroSource.getBoundingClientRect();
-      if (
-        sourceRect.width <= 10 ||
-        sourceRect.height <= 10 ||
-        sourceRect.bottom <= 0 ||
-        sourceRect.top >= window.innerHeight
-      ) {
-        navigateToSection(0, "smooth", updateHash);
-        return;
-      }
-
-      window.clearTimeout(snapTimer);
-      scrollTween?.kill();
-      scrollTween = null;
-      heroHandoffTimeline?.kill();
-
-      heroHandoffActive = true;
-      document.body.appendChild(masterBoard);
-
-      gsap.set(masterBoard, {
-        position: "fixed",
-        top: sourceRect.top,
-        left: sourceRect.left,
-        right: "auto",
-        bottom: "auto",
-        width: sourceRect.width,
-        height: sourceRect.height,
-        margin: 0,
-        zIndex: 35,
-        xPercent: 0,
-        yPercent: 0,
-        x: 0,
-        y: 0,
-        scale: 1,
-        autoAlpha: 1,
-        filter: "none",
-        force3D: true,
-      });
-      gsap.set(heroSource, { autoAlpha: 0 });
-
-      const profileTarget = masterBoard.querySelector<HTMLElement>(zoomTargetSelectors[0]);
-      const point = profileTarget
-        ? offsetWithin(profileTarget, masterBoard)
-        : { x: sourceRect.width * 0.2, y: sourceRect.height * 0.27 };
-      const originX = clamp(point.x / Math.max(1, sourceRect.width));
-      const originY = clamp(point.y / Math.max(1, sourceRect.height));
-      const targetX = window.innerWidth / 2 - (sourceRect.left + point.x);
-      const targetY = window.innerHeight / 2 - (sourceRect.top + point.y);
-      const destination = sectionScrollTop(0);
-      const panelRevealY = sectionProgressTop(0, 0.11);
-      const travelToSection = Math.max(1, destination - window.scrollY);
-      const revealFraction = clamp((panelRevealY - window.scrollY) / travelToSection, 0.32, 0.58);
-      const zoomDuration = SCROLL_TRANSITION_DURATION * revealFraction;
-      const fadeDuration = SCROLL_TRANSITION_DURATION * 0.24;
-
-      gsap.set(masterBoard, {
-        transformOrigin: `${originX * 100}% ${originY * 100}%`,
-      });
-
-      heroHandoffTimeline = gsap.timeline({ defaults: { overwrite: true } });
-      heroHandoffTimeline.to(masterBoard, {
-        x: targetX,
-        y: targetY,
-        scale: 4.23,
-        duration: zoomDuration,
-        ease: "power3.inOut",
-      });
-      heroHandoffTimeline.to(
-        masterBoard,
-        {
-          autoAlpha: 0,
-          duration: fadeDuration,
-          ease: "power2.out",
-        },
-        Math.max(0, zoomDuration - SCROLL_TRANSITION_DURATION * 0.04),
-      );
-
-      animateWindowTo(destination, {
-        index: 0,
-        updateHash,
-        duration: SCROLL_TRANSITION_DURATION,
-        ease: "power2.inOut",
-        onComplete: resetHeroHandoff,
-        onInterrupt: resetHeroHandoff,
-      });
-    };
-
     const directZoomToSection = (index: number) => {
       if (index < 0 || index >= panels.length) return;
       measure();
 
       if (reducedMotion.matches) {
-        navigateToSection(index, "auto");
+        setWindowScrollImmediate(sectionScrollTop(index));
         return;
       }
 
-      // Do not scrub past unrelated boards after an explicit click. We jump to the
-      // selected board's master-view frame before the browser paints, then animate
-      // only that section's zoom/header/chit sequence.
       window.cancelAnimationFrame(directZoomFrame);
       setWindowScrollImmediate(sectionZoomStartTop(index));
       directZoomFrame = window.requestAnimationFrame(() => {
@@ -685,63 +603,27 @@ export function BoardScrollController() {
       });
     };
 
-    const leaveStoryUpward = () => {
-      const destination = Math.max(0, storyTop - Math.min(window.innerHeight * 0.88, storyTop));
-      animateWindowTo(destination, { duration: LEAVE_STORY_DURATION });
-    };
-
-    const navigateByDirection = (direction: -1 | 1, updateHash = true) => {
+    const directProfileFromHero = () => {
       measure();
-      const firstStop = sectionScrollTop(0);
-      const currentY = window.scrollY;
-
-      if (direction > 0 && currentY < firstStop - 10) {
-        if (currentY < storyTop && canBeginHeroHandoff()) {
-          enterProfileFromHero(updateHash);
-        } else {
-          navigateToSection(0, "smooth", updateHash);
-        }
+      if (!canBeginHeroHandoff() || !beginHeroHandoff()) {
+        directZoomToSection(0);
         return;
       }
 
-      const currentIndex = nearestSectionIndex();
-      if (direction < 0 && currentIndex === 0 && currentY <= firstStop + 10) {
-        leaveStoryUpward();
-        return;
-      }
-
-      const nextIndex = clamp(currentIndex + direction, 0, panels.length - 1);
-      if (nextIndex === currentIndex) return;
-      navigateToSection(nextIndex, "smooth", updateHash);
+      animateWindowTo(sectionScrollTop(0), {
+        index: 0,
+        duration: CLICK_ZOOM_DURATION,
+        ease: "power2.inOut",
+        onComplete: resetHeroHandoff,
+        onInterrupt: resetHeroHandoff,
+      });
     };
 
-    const snapToSectionAfterManualScroll = () => {
-      if (scrollTween || heroHandoffActive) return;
-      const storyEnd = storyTop + travel;
-      const currentY = window.scrollY;
-      if (currentY < storyTop || currentY > storyEnd) return;
-
-      const stages = currentStoryProgress() * panels.length;
-      const rawIndex = stages - SECTION_STOP_LOCAL_PROGRESS;
-      let targetIndex: number;
-
-      if (lastScrollDirection > 0) {
-        targetIndex = Math.ceil(rawIndex - 0.015);
-      } else if (lastScrollDirection < 0) {
-        targetIndex = Math.floor(rawIndex + 0.015);
-      } else {
-        targetIndex = Math.round(rawIndex);
-      }
-
-      targetIndex = clamp(targetIndex, 0, panels.length - 1);
-      const destination = sectionScrollTop(targetIndex);
-      if (Math.abs(currentY - destination) < 3) return;
-      navigateToSection(targetIndex, "smooth", true, MANUAL_SNAP_DURATION);
-    };
-
-    const navigateToHash = (hash: string, behavior: ScrollBehavior) => {
+    const navigateToHash = (hash: string) => {
       const index = sectionIds.indexOf(hash.replace(/^#/, ""));
-      if (index >= 0) navigateToSection(index, behavior);
+      if (index < 0) return;
+      measure();
+      setWindowScrollImmediate(sectionScrollTop(index));
     };
 
     const handleNavigation = (event: MouseEvent) => {
@@ -764,133 +646,33 @@ export function BoardScrollController() {
         window.history.pushState(null, "", link.hash);
       }
 
-      if (index === 0 && window.scrollY < storyTop && canBeginHeroHandoff()) {
-        enterProfileFromHero(false);
+      if (index === 0 && window.scrollY < storyTop) {
+        directProfileFromHero();
       } else {
         directZoomToSection(index);
       }
     };
 
     const handleHistoryNavigation = () => {
-      navigateToHash(window.location.hash, "auto");
-    };
-
-    const handleWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) < 2) return;
-      const storyEnd = storyTop + travel;
-      const currentY = window.scrollY;
-
-      if (currentY < storyTop - 2) {
-        if (event.deltaY > 0 && canBeginHeroHandoff()) {
-          event.preventDefault();
-          if (!scrollTween) enterProfileFromHero(true);
-        }
-        return;
-      }
-
-      if (currentY > storyEnd + 2) return;
-      if (canScrollInsideSection(event.target, event.deltaY)) return;
-
-      event.preventDefault();
-      if (scrollTween) return;
-      navigateByDirection(event.deltaY > 0 ? 1 : -1);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target instanceof HTMLElement ? event.target : null;
-      if (
-        target?.isContentEditable ||
-        target?.matches("input, textarea, select, button") ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey
-      ) {
-        return;
-      }
-
-      const storyEnd = storyTop + travel;
-      if (window.scrollY < storyTop - 2 || window.scrollY > storyEnd + 2) return;
-
-      let direction: -1 | 1 | null = null;
-      if (
-        event.key === "ArrowDown" ||
-        event.key === "PageDown" ||
-        (event.key === " " && !event.shiftKey)
-      ) {
-        direction = 1;
-      } else if (
-        event.key === "ArrowUp" ||
-        event.key === "PageUp" ||
-        (event.key === " " && event.shiftKey)
-      ) {
-        direction = -1;
-      }
-
-      if (!direction) return;
-      event.preventDefault();
-      if (!scrollTween) navigateByDirection(direction);
-    };
-
-    const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return;
-      touchStartY = event.touches[0]?.clientY ?? null;
-      touchTarget = event.target;
-      touchPrevented = false;
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      if (touchStartY === null || event.touches.length !== 1) return;
-      const storyEnd = storyTop + travel;
-      const currentY = window.scrollY;
-
-      const deltaY = touchStartY - (event.touches[0]?.clientY ?? touchStartY);
-
-      if (currentY < storyTop - 2) {
-        if (deltaY > 5 && canBeginHeroHandoff()) {
-          event.preventDefault();
-          touchPrevented = true;
-        }
-        return;
-      }
-
-      if (currentY > storyEnd + 2) return;
-      if (Math.abs(deltaY) < 5 || canScrollInsideSection(touchTarget, deltaY)) return;
-      event.preventDefault();
-      touchPrevented = true;
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      if (touchStartY === null) return;
-      const endY = event.changedTouches[0]?.clientY ?? touchStartY;
-      const deltaY = touchStartY - endY;
-      const shouldNavigate = touchPrevented && Math.abs(deltaY) >= 34;
-      const beforeStory = window.scrollY < storyTop - 2;
-
-      touchStartY = null;
-      touchTarget = null;
-      touchPrevented = false;
-
-      if (!shouldNavigate || scrollTween) return;
-      if (beforeStory && deltaY > 0 && canBeginHeroHandoff()) {
-        enterProfileFromHero(true);
-        return;
-      }
-      navigateByDirection(deltaY > 0 ? 1 : -1);
+      navigateToHash(window.location.hash);
     };
 
     const handleScroll = () => {
       const currentY = window.scrollY;
       const delta = currentY - lastWindowY;
-      if (Math.abs(delta) > 0.5) lastScrollDirection = delta > 0 ? 1 : -1;
       lastWindowY = currentY;
-      requestRender();
 
-      if (scrollTween || heroHandoffActive) return;
-      window.clearTimeout(snapTimer);
-      const storyEnd = storyTop + travel;
-      if (currentY >= storyTop && currentY <= storyEnd) {
-        snapTimer = window.setTimeout(snapToSectionAfterManualScroll, SCROLL_IDLE_SNAP_MS);
+      if (
+        !scrollTween &&
+        !heroHandoffActive &&
+        delta > 0.5 &&
+        currentY < storyTop &&
+        canBeginHeroHandoff()
+      ) {
+        beginHeroHandoff();
       }
+
+      requestRender();
     };
 
     const handleResize = () => {
@@ -906,17 +688,11 @@ export function BoardScrollController() {
     navigationLinks.forEach((link) => link.addEventListener("click", handleNavigation));
     window.addEventListener("popstate", handleHistoryNavigation);
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
 
     measure();
     render();
 
-    // Work CV content is portalled in just after this controller mounts.
     window.requestAnimationFrame(() => {
       if (!panelTimelines[1]) panelTimelines[1] = buildPanelTimeline(1);
       if (!heroHandoffActive) measureZoomTargets();
@@ -925,7 +701,7 @@ export function BoardScrollController() {
 
     if (window.location.hash) {
       initialNavigationFrame = window.requestAnimationFrame(() => {
-        navigateToHash(window.location.hash, "auto");
+        navigateToHash(window.location.hash);
       });
     }
 
@@ -936,18 +712,11 @@ export function BoardScrollController() {
       });
       window.removeEventListener("popstate", handleHistoryNavigation);
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
       window.removeEventListener("resize", handleResize);
-      window.clearTimeout(snapTimer);
       window.cancelAnimationFrame(frame);
       window.cancelAnimationFrame(initialNavigationFrame);
       window.cancelAnimationFrame(directZoomFrame);
       scrollTween?.kill();
-      heroHandoffTimeline?.kill();
       if (masterBoard && stickyHost && masterBoard.parentElement !== stickyHost) {
         stickyHost.prepend(masterBoard);
       }
