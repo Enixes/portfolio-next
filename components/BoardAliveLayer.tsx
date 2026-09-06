@@ -23,8 +23,8 @@ const styles = `
   --marker: "Marker Felt", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
 }
 
-/* Marker-written hierarchy: keep explanatory copy mono/readable, but make anything
-   that looks physically written on the board feel like thick felt-marker ink. */
+/* Marker-written hierarchy: explanatory copy remains mono/readable. Anything that
+   feels physically written on the board gets thicker felt-marker character. */
 .story-board-header h2,
 .story-case h3,
 .story-case strong,
@@ -59,7 +59,7 @@ const styles = `
   font-size: clamp(12px, 1.05vw, 16px) !important;
 }
 
-/* Animated rough marker emphasis. Important phrases highlight, hold, erase, redraw. */
+/* Animated rough highlighter strokes. They draw, hold, erase, and redraw. */
 .story-case strong,
 .profile-project-card h3,
 .profile-now-card h3,
@@ -78,27 +78,29 @@ const styles = `
 
 .scroll-board-panel[style*="opacity: 1"] .story-case:nth-child(1) strong,
 .scroll-board-panel[style*="opacity: 1"] .profile-project-tailcache h3,
-.scroll-board-panel[style*="opacity: 1"] .work-evidence-chit:nth-of-type(1) strong {
+.scroll-board-panel[style*="opacity: 1"] .ion-evidence-a strong {
   animation: aliveMarkerHighlight 7.4s cubic-bezier(.2,.72,.22,1) .35s infinite;
 }
 .scroll-board-panel[style*="opacity: 1"] .story-case:nth-child(2) strong,
 .scroll-board-panel[style*="opacity: 1"] .profile-project-agent h3,
-.scroll-board-panel[style*="opacity: 1"] .work-evidence-chit:nth-of-type(2) strong {
+.scroll-board-panel[style*="opacity: 1"] .ion-evidence-b strong {
   animation: aliveMarkerHighlight 8.1s cubic-bezier(.2,.72,.22,1) 1.4s infinite;
 }
 .scroll-board-panel[style*="opacity: 1"] .story-case:nth-child(3) strong,
 .scroll-board-panel[style*="opacity: 1"] .profile-project-game h3,
-.scroll-board-panel[style*="opacity: 1"] .work-evidence-chit:nth-of-type(3) strong {
+.scroll-board-panel[style*="opacity: 1"] .ion-evidence-c strong {
   animation: aliveMarkerHighlight 8.8s cubic-bezier(.2,.72,.22,1) 2.3s infinite;
 }
 .scroll-board-panel[style*="opacity: 1"] .profile-now-card h3,
-.scroll-board-panel[style*="opacity: 1"] .work-evidence-chit:nth-of-type(4) strong {
+.scroll-board-panel[style*="opacity: 1"] .ion-evidence-d strong {
   animation: aliveMarkerHighlightBlue 9.2s cubic-bezier(.2,.72,.22,1) 3.1s infinite;
 }
-.scroll-board-panel[style*="opacity: 1"] .work-evidence-chit:nth-of-type(5) strong {
+.scroll-board-panel[style*="opacity: 1"] .ion-evidence-e strong,
+.scroll-board-panel[style*="opacity: 1"] .holisol-evidence-a strong {
   animation: aliveMarkerHighlight 9.6s cubic-bezier(.2,.72,.22,1) 4s infinite;
 }
-.scroll-board-panel[style*="opacity: 1"] .work-evidence-chit:nth-of-type(6) strong {
+.scroll-board-panel[style*="opacity: 1"] .ion-evidence-f strong,
+.scroll-board-panel[style*="opacity: 1"] .holisol-evidence-b strong {
   animation: aliveMarkerHighlightBlue 10.2s cubic-bezier(.2,.72,.22,1) 4.8s infinite;
 }
 
@@ -132,9 +134,12 @@ const styles = `
   animation: aliveUnderline 6.8s cubic-bezier(.18,.76,.24,1) .4s infinite;
 }
 
+/* Doodles live behind the pinned evidence, like marks already on the board. */
+.profile-live-board,
+.work-cv-board { z-index: 1; }
 .board-alive-layer {
   position: absolute;
-  z-index: 3;
+  z-index: 0 !important;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -201,7 +206,7 @@ const styles = `
 .alive-blog .note-a { right:9%; top:33%; --note-r:5deg; --note-delay:1.5s; }
 .alive-blog .note-b { left:7%; bottom:22%; --note-ink:#9b302a; --note-r:-4deg; --note-delay:3.3s; }
 
-/* Life gets the architectural sketch — personal, deliberately rough, repeatedly redrawn. */
+/* Life gets a deliberately loose architectural sketch, repeatedly redrawn. */
 .alive-life .doodle-building { right:3%; top:8%; width:28%; --doodle-ink:#315d72; --delay:.3s; --dur:11.2s; transform:rotate(1.5deg); opacity:.86; }
 .alive-life .doodle-b { left:4%; bottom:4%; width:17%; --doodle-ink:#9f302a; --delay:3s; --dur:9.8s; transform:rotate(-4deg); }
 .alive-life .note-a { right:8%; top:39%; --note-r:3deg; --note-delay:1.1s; font-size:clamp(15px,1.55vw,23px); }
