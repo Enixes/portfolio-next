@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import gsap from "gsap";
 
 const clamp = (value: number, minimum = 0, maximum = 1) =>
   Math.min(maximum, Math.max(minimum, value));
@@ -10,13 +11,34 @@ const smoothstep = (value: number) => {
   return bounded * bounded * (3 - 2 * bounded);
 };
 
-const zoomOrigins = [
-  { x: 0.2, y: 0.27 },
-  { x: 0.52, y: 0.3 },
-  { x: 0.68, y: 0.67 },
-  { x: 0.82, y: 0.7 },
-  { x: 0.5, y: 0.5 },
+const zoomTargetSelectors = [
+  ".board-zone-profile",
+  ".board-zone-work",
+  ".board-zone-blog",
+  ".board-zone-life",
+  ".board-caption",
 ] as const;
+
+type ZoomTarget = {
+  x: number;
+  y: number;
+  originX: number;
+  originY: number;
+};
+
+function offsetWithin(element: HTMLElement, ancestor: HTMLElement) {
+  let x = element.offsetWidth / 2;
+  let y = element.offsetHeight / 2;
+  let node: HTMLElement | null = element;
+
+  while (node && node !== ancestor) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent as HTMLElement | null;
+  }
+
+  return { x, y };
+}
 
 export function BoardScrollController() {
   useEffect(() => {
@@ -42,22 +64,202 @@ export function BoardScrollController() {
       document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'),
     ).filter((link) => sectionIds.includes(link.hash.slice(1)));
 
+    const panelTimelines: Array<gsap.core.Timeline | null> = new Array(panels.length).fill(null);
+    let zoomTargets: ZoomTarget[] = [];
     let frame = 0;
     let initialNavigationFrame = 0;
     let storyTop = 0;
     let travel = 1;
 
+    const killPanelTimelines = () => {
+      panelTimelines.forEach((timeline, index) => {
+        timeline?.kill();
+        panelTimelines[index] = null;
+      });
+    };
+
+    const measureZoomTargets = () => {
+      masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
+      if (!masterBoard) {
+        zoomTargets = [];
+        return;
+      }
+
+      const width = Math.max(1, masterBoard.offsetWidth);
+      const height = Math.max(1, masterBoard.offsetHeight);
+
+      zoomTargets = zoomTargetSelectors.map((selector, index) => {
+        const target = masterBoard?.querySelector<HTMLElement>(selector) ?? null;
+        const fallback = [
+          { x: width * 0.2, y: height * 0.27 },
+          { x: width * 0.52, y: height * 0.3 },
+          { x: width * 0.68, y: height * 0.67 },
+          { x: width * 0.82, y: height * 0.7 },
+          { x: width * 0.5, y: height * 0.82 },
+        ][index];
+        const point = target ? offsetWithin(target, masterBoard!) : fallback;
+
+        return {
+          x: width / 2 - point.x,
+          y: height / 2 - point.y,
+          originX: clamp(point.x / width),
+          originY: clamp(point.y / height),
+        };
+      });
+    };
+
     const measure = () => {
       const bounds = story.getBoundingClientRect();
       storyTop = window.scrollY + bounds.top;
       travel = Math.max(1, story.offsetHeight - window.innerHeight);
+      measureZoomTargets();
+    };
+
+    const buildPanelTimeline = (index: number) => {
+      const panel = panels[index];
+      if (!panel) return null;
+
+      const workHeader = panel.querySelector<HTMLElement>(".work-cv-header");
+      const header = workHeader ?? panel.querySelector<HTMLElement>(".story-board-header");
+      if (!header) return null;
+
+      if (index === 1 && !workHeader) {
+        // The Work CV portal mounts just after this controller. Waiting one frame
+        // keeps the real CV header as the zoom anchor instead of the hidden fallback.
+        return null;
+      }
+
+      const chits = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          ".story-case, .work-company-chit, .work-evidence-chit, .work-tenure-tag, .work-cv-pencil, .work-cv-legend",
+        ),
+      );
+      const indexLabel = panel.querySelector<HTMLElement>(".story-board-index");
+      const footnote = panel.querySelector<HTMLElement>(".story-board-footnote, .work-cv-footnote");
+      const threadPaths = Array.from(
+        panel.querySelectorAll<SVGPathElement>(".work-cv-thread .thread-main, .work-cv-thread .thread-branch"),
+      );
+
+      const compact = window.innerWidth <= 760;
+      const introX = compact ? 0 : Math.min(window.innerWidth * 0.09, 150);
+      const introY = compact ? Math.min(window.innerHeight * 0.1, 70) : Math.min(window.innerHeight * 0.17, 150);
+      const introScale = compact ? 1.22 : 1.62;
+
+      const timeline = gsap.timeline({ paused: true, defaults: { overwrite: "auto" } });
+
+      gsap.set(header, { transformOrigin: "0% 0%", force3D: true });
+      if (indexLabel) gsap.set(indexLabel, { transformOrigin: "0% 50%" });
+
+      timeline.fromTo(
+        header,
+        {
+          autoAlpha: 0,
+          x: introX,
+          y: introY,
+          scale: introScale * 0.88,
+          rotation: -1.2,
+        },
+        {
+          autoAlpha: 1,
+          x: introX,
+          y: introY,
+          scale: introScale,
+          rotation: 0,
+          duration: 0.16,
+          ease: "power3.out",
+        },
+        0,
+      );
+
+      // Deliberate hold: the section title owns the frame before the board assembles.
+      timeline.to(header, {
+        x: introX,
+        y: introY,
+        scale: introScale,
+        duration: 0.24,
+        ease: "none",
+      }, 0.16);
+
+      timeline.to(header, {
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotation: 0,
+        duration: 0.24,
+        ease: "power3.inOut",
+      }, 0.4);
+
+      if (indexLabel && !workHeader) {
+        timeline.from(indexLabel, {
+          autoAlpha: 0,
+          x: -28,
+          duration: 0.16,
+          ease: "power2.out",
+        }, 0.42);
+      }
+
+      if (chits.length) {
+        timeline.from(chits, {
+          autoAlpha: 0,
+          x: (itemIndex) => {
+            const direction = itemIndex % 2 === 0 ? -1 : 1;
+            return direction * Math.min(window.innerWidth * (0.055 + (itemIndex % 3) * 0.012), 120);
+          },
+          y: (itemIndex) => {
+            const lane = (itemIndex % 3) - 1;
+            return 68 + lane * Math.min(window.innerHeight * 0.085, 72);
+          },
+          scale: (itemIndex) => 0.68 + (itemIndex % 3) * 0.035,
+          rotation: (itemIndex) => (itemIndex % 2 === 0 ? -7 : 7),
+          duration: 0.33,
+          stagger: { each: 0.038, from: "start" },
+          ease: "back.out(1.35)",
+          force3D: true,
+        }, 0.49);
+      }
+
+      threadPaths.forEach((path, pathIndex) => {
+        const length = Math.max(1, path.getTotalLength());
+        timeline.fromTo(
+          path,
+          { strokeDasharray: length, strokeDashoffset: length },
+          {
+            strokeDasharray: length,
+            strokeDashoffset: 0,
+            duration: 0.28,
+            ease: "power2.out",
+          },
+          0.56 + pathIndex * 0.025,
+        );
+      });
+
+      if (footnote) {
+        timeline.from(footnote, {
+          autoAlpha: 0,
+          y: 18,
+          duration: 0.2,
+          ease: "power2.out",
+        }, 0.78);
+      }
+
+      timeline.duration(1);
+      timeline.progress(0);
+      return timeline;
+    };
+
+    const ensurePanelTimeline = (index: number) => {
+      if (!panelTimelines[index]) {
+        panelTimelines[index] = buildPanelTimeline(index);
+      }
+      return panelTimelines[index];
     };
 
     const navigateToSection = (index: number, behavior: ScrollBehavior) => {
       if (index < 0 || index >= panels.length) return;
 
       measure();
-      const focusProgress = (index + 0.38) / panels.length;
+      // Land inside the title-hold phase so navbar clicks visibly complete the zoom.
+      const focusProgress = (index + 0.32) / panels.length;
       window.scrollTo({
         top: storyTop + travel * focusProgress,
         behavior: reducedMotion.matches ? "auto" : behavior,
@@ -98,6 +300,7 @@ export function BoardScrollController() {
     const render = () => {
       frame = 0;
       masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
+      if (masterBoard && zoomTargets.length === 0) measureZoomTargets();
 
       const progress = clamp((window.scrollY - storyTop) / travel);
       const stages = progress * panels.length;
@@ -110,49 +313,76 @@ export function BoardScrollController() {
       if (reducedMotion.matches) {
         panels.forEach((panel, index) => {
           const active = index === activeIndex;
-          panel.style.opacity = active ? "1" : "0";
-          panel.style.transform = "translate3d(0,0,0) scale(1)";
-          panel.style.zIndex = active ? "5" : "1";
-          panel.style.pointerEvents = active ? "auto" : "none";
+          gsap.set(panel, {
+            autoAlpha: active ? 1 : 0,
+            x: 0,
+            y: 0,
+            scale: 1,
+            zIndex: active ? 5 : 1,
+            pointerEvents: active ? "auto" : "none",
+          });
+          ensurePanelTimeline(index)?.progress(active ? 1 : 0);
         });
-        if (masterBoard) masterBoard.style.opacity = "0";
-        if (room) room.style.opacity = ".18";
+        if (masterBoard) gsap.set(masterBoard, { autoAlpha: 0 });
+        if (room) gsap.set(room, { opacity: 0.18, scale: 1 });
       } else {
-        const enter = smoothstep(localProgress / 0.18);
-        const exit = smoothstep((localProgress - 0.68) / 0.18);
-        const focus = clamp(enter * (1 - exit));
-        const origin = zoomOrigins[Math.min(activeIndex, zoomOrigins.length - 1)];
+        const enter = smoothstep((localProgress - 0.04) / 0.2);
+        const detailEnter = smoothstep((localProgress - 0.13) / 0.14);
+        const exit = smoothstep((localProgress - 0.82) / 0.16);
+        const panelVisibility = detailEnter * (1 - exit);
+        const zoomStrength = enter * (1 - exit);
+        const assemblyProgress = clamp((localProgress - 0.13) / 0.58);
+        const target = zoomTargets[activeIndex] ?? {
+          x: 0,
+          y: 0,
+          originX: 0.5,
+          originY: 0.5,
+        };
 
         panels.forEach((panel, index) => {
           const active = index === activeIndex;
-          const panelFocus = active ? focus : 0;
-          const panelScale = 0.72 + panelFocus * 0.28 + exit * (active ? 0.1 : 0);
-          const driftX = active ? (0.5 - origin.x) * 7 * (1 - panelFocus) : 0;
-          const driftY = active ? (0.5 - origin.y) * 6 * (1 - panelFocus) : 0;
+          const visible = active ? panelVisibility : 0;
+          const panelScale = active ? 1.08 - visible * 0.08 : 0.96;
+          const panelY = active ? (1 - visible) * 18 : 0;
 
-          panel.style.opacity = `${panelFocus}`;
-          panel.style.transform = `translate3d(${driftX}vw, ${driftY}vh, 0) scale(${panelScale})`;
-          panel.style.transformOrigin = `${origin.x * 100}% ${origin.y * 100}%`;
-          panel.style.zIndex = active ? "5" : "1";
-          panel.style.pointerEvents = panelFocus > 0.72 ? "auto" : "none";
+          gsap.set(panel, {
+            autoAlpha: visible,
+            y: panelY,
+            scale: panelScale,
+            transformOrigin: "50% 38%",
+            zIndex: active ? 5 : 1,
+            pointerEvents: visible > 0.78 ? "auto" : "none",
+            force3D: true,
+          });
+
+          const timeline = ensurePanelTimeline(index);
+          if (timeline) timeline.progress(active ? assemblyProgress : 0, false);
         });
 
         if (masterBoard) {
-          const boardVisibility = Math.max(1 - enter, exit);
-          const zoomIn = localProgress < 0.5 ? enter : 1 - exit;
-          const boardScale = 0.88 + zoomIn * 1.72;
-          const translateX = (0.5 - origin.x) * window.innerWidth * 0.62 * zoomIn;
-          const translateY = (0.5 - origin.y) * window.innerHeight * 0.62 * zoomIn;
+          // Much stronger camera move: focus the actual section marker/header on the master board.
+          const boardScale = 0.88 + zoomStrength * 3.35;
+          const boardVisibility = Math.max(1 - detailEnter * 0.97, exit);
 
-          masterBoard.style.opacity = `${boardVisibility}`;
-          masterBoard.style.transform = `translate3d(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px), 0) scale(${boardScale})`;
-          masterBoard.style.transformOrigin = `${origin.x * 100}% ${origin.y * 100}%`;
-          masterBoard.style.filter = `brightness(${0.92 + boardVisibility * 0.08}) saturate(${0.82 + boardVisibility * 0.18})`;
+          gsap.set(masterBoard, {
+            xPercent: -50,
+            yPercent: -50,
+            x: target.x * zoomStrength,
+            y: target.y * zoomStrength,
+            scale: boardScale,
+            transformOrigin: `${target.originX * 100}% ${target.originY * 100}%`,
+            autoAlpha: boardVisibility,
+            filter: `brightness(${0.9 + boardVisibility * 0.1}) saturate(${0.78 + boardVisibility * 0.22})`,
+            force3D: true,
+          });
         }
 
         if (room) {
-          room.style.opacity = `${0.12 + Math.max(1 - enter, exit) * 0.16}`;
-          room.style.transform = `scale(${1.04 + focus * 0.035})`;
+          gsap.set(room, {
+            opacity: 0.1 + Math.max(1 - detailEnter, exit) * 0.17,
+            scale: 1.04 + zoomStrength * 0.055,
+            force3D: true,
+          });
         }
       }
 
@@ -173,6 +403,7 @@ export function BoardScrollController() {
     };
 
     const handleResize = () => {
+      killPanelTimelines();
       measure();
       requestRender();
     };
@@ -184,6 +415,13 @@ export function BoardScrollController() {
 
     measure();
     render();
+
+    // The Work portal is a sibling client component and may mount a frame later.
+    window.requestAnimationFrame(() => {
+      if (!panelTimelines[1]) panelTimelines[1] = buildPanelTimeline(1);
+      measureZoomTargets();
+      requestRender();
+    });
 
     if (window.location.hash) {
       initialNavigationFrame = window.requestAnimationFrame(() => {
@@ -201,6 +439,8 @@ export function BoardScrollController() {
       window.removeEventListener("resize", handleResize);
       window.cancelAnimationFrame(frame);
       window.cancelAnimationFrame(initialNavigationFrame);
+      killPanelTimelines();
+      gsap.killTweensOf([masterBoard, room, ...panels].filter(Boolean));
       delete document.documentElement.dataset.zoomSection;
     };
   }, []);
