@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 const styles = `
-/* The shared story surface stays fixed. The dossier itself owns scrolling. */
+/* The shared story surface stays fixed. The dossier itself owns its viewport. */
 .work-cv-mounted {
   display:block!important;
   width:100%!important;
@@ -26,19 +26,26 @@ const styles = `
   grid-row:auto!important;
   grid-column:auto!important;
   overscroll-behavior-y:auto!important;
-  touch-action:pan-y;
+  touch-action:pan-x pinch-zoom;
   -webkit-overflow-scrolling:touch;
   scrollbar-gutter:stable;
   scroll-behavior:auto;
   scrollbar-width:thin;
   scrollbar-color:#9b302a rgba(99,78,53,.08);
+  cursor:grab;
 }
+.work-cv-mounted > .work-cv-board.is-dragging {
+  cursor:grabbing!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+}
+.work-cv-mounted > .work-cv-board a,
+.work-cv-mounted > .work-cv-board button { cursor:pointer; }
 .work-cv-mounted > .work-cv-board::-webkit-scrollbar{width:8px}
 .work-cv-mounted > .work-cv-board::-webkit-scrollbar-track{background:rgba(99,78,53,.08)}
 .work-cv-mounted > .work-cv-board::-webkit-scrollbar-thumb{background:#9b302a;border-radius:999px}
 
-/* Animation is enhancement-only. Nothing on the board is allowed to disappear
-   just because a timeline or observer has not fired yet. */
+/* Animation is enhancement-only. Nothing on the board is allowed to disappear. */
 .work-cv-mounted .work-cv-header > *,
 .work-cv-mounted .work-company-chit,
 .work-cv-mounted .work-evidence-chit,
@@ -70,7 +77,7 @@ const styles = `
 }
 `;
 
-const EDGE_EPSILON = 3;
+const EDGE_EPSILON = 1;
 const WORK_PANEL_SELECTOR = ".scroll-board-red";
 
 type WorkContext = {
@@ -95,7 +102,7 @@ function visibleWorkContext(): WorkContext | null {
   );
   const hitInsideWork = centreHit?.closest(WORK_PANEL_SELECTOR) === panel;
   const visiblyInteractive =
-    style.pointerEvents !== "none" && opacity >= 0.55 && coversViewportCenter;
+    style.pointerEvents !== "none" && opacity >= 0.5 && coversViewportCenter;
 
   return hitInsideWork || visiblyInteractive ? { panel, surface } : null;
 }
@@ -104,13 +111,25 @@ function maxScroll(surface: HTMLElement) {
   return Math.max(0, surface.scrollHeight - surface.clientHeight);
 }
 
-function canConsume(surface: HTMLElement, deltaY: number) {
-  if (Math.abs(deltaY) < 0.5) return false;
+/*
+ * Route one vertical gesture through two scroll domains. The dossier consumes
+ * as much as it physically can. Any remainder is applied to the outer page in
+ * the same frame, so reaching an edge can never trap the user in Systems.
+ */
+function routeDelta(surface: HTMLElement, deltaY: number) {
+  if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.1) return;
+
   const maximum = maxScroll(surface);
-  if (maximum <= EDGE_EPSILON) return false;
-  return deltaY > 0
-    ? surface.scrollTop < maximum - EDGE_EPSILON
-    : surface.scrollTop > EDGE_EPSILON;
+  const start = surface.scrollTop;
+  const next = Math.max(0, Math.min(maximum, start + deltaY));
+  const consumed = next - start;
+  const remainder = deltaY - consumed;
+
+  if (Math.abs(consumed) > 0.1) surface.scrollTop = next;
+
+  if (Math.abs(remainder) > EDGE_EPSILON) {
+    window.scrollBy({ top: remainder, left: 0, behavior: "auto" });
+  }
 }
 
 function normalizedWheelDelta(event: WheelEvent, surface: HTMLElement) {
@@ -121,63 +140,27 @@ function normalizedWheelDelta(event: WheelEvent, surface: HTMLElement) {
   return event.deltaY;
 }
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return target instanceof Element && Boolean(
+    target.closest("a,button,input,textarea,select,summary,[contenteditable='true']"),
+  );
+}
+
 export function WorkCaseBoardPolish() {
   useEffect(() => {
     let lastTouchY: number | null = null;
-    let lockedWindowY: number | null = null;
-    let lockedDirection = 0;
-    let restoringWindow = false;
-
-    const releaseWindow = () => {
-      lockedWindowY = null;
-      lockedDirection = 0;
-    };
-
-    const lockWindow = (deltaY: number) => {
-      if (lockedWindowY === null) lockedWindowY = window.scrollY;
-      lockedDirection = Math.sign(deltaY);
-    };
-
-    const consume = (surface: HTMLElement, deltaY: number) => {
-      if (!canConsume(surface, deltaY)) return false;
-      lockWindow(deltaY);
-      const maximum = maxScroll(surface);
-      surface.scrollTop = Math.max(0, Math.min(maximum, surface.scrollTop + deltaY));
-      return true;
-    };
+    let dragPointerId: number | null = null;
+    let dragLastY = 0;
+    let dragSurface: HTMLElement | null = null;
 
     const onWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
       const context = visibleWorkContext();
-      if (!context) {
-        releaseWindow();
-        return;
-      }
-
-      const deltaY = normalizedWheelDelta(event, context.surface);
-      if (!consume(context.surface, deltaY)) {
-        releaseWindow();
-        return;
-      }
+      if (!context) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
-    };
-
-    const onWindowScroll = () => {
-      if (restoringWindow || lockedWindowY === null || lockedDirection === 0) return;
-      const context = visibleWorkContext();
-      if (!context || !canConsume(context.surface, lockedDirection)) {
-        releaseWindow();
-        return;
-      }
-
-      if (Math.abs(window.scrollY - lockedWindowY) <= 0.5) return;
-      restoringWindow = true;
-      window.scrollTo(0, lockedWindowY);
-      window.requestAnimationFrame(() => {
-        restoringWindow = false;
-      });
+      routeDelta(context.surface, normalizedWheelDelta(event, context.surface));
     };
 
     const onTouchStart = (event: TouchEvent) => {
@@ -191,7 +174,6 @@ export function WorkCaseBoardPolish() {
       const context = visibleWorkContext();
       if (!context || lastTouchY === null || event.touches.length !== 1) {
         lastTouchY = null;
-        releaseWindow();
         return;
       }
 
@@ -199,18 +181,47 @@ export function WorkCaseBoardPolish() {
       const deltaY = lastTouchY - currentY;
       lastTouchY = currentY;
 
-      if (!consume(context.surface, deltaY)) {
-        releaseWindow();
-        return;
-      }
-
       event.preventDefault();
       event.stopImmediatePropagation();
+      routeDelta(context.surface, deltaY);
     };
 
     const onTouchEnd = () => {
       lastTouchY = null;
-      releaseWindow();
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "touch" || event.button !== 0 || isInteractiveTarget(event.target)) return;
+      const context = visibleWorkContext();
+      if (!context || !context.surface.contains(event.target as Node)) return;
+
+      dragPointerId = event.pointerId;
+      dragLastY = event.clientY;
+      dragSurface = context.surface;
+      dragSurface.classList.add("is-dragging");
+      dragSurface.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (dragPointerId !== event.pointerId || !dragSurface) return;
+      const deltaY = dragLastY - event.clientY;
+      dragLastY = event.clientY;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      routeDelta(dragSurface, deltaY);
+    };
+
+    const finishPointerDrag = (event?: PointerEvent) => {
+      if (dragSurface) {
+        dragSurface.classList.remove("is-dragging");
+        if (event && dragSurface.hasPointerCapture?.(event.pointerId)) {
+          dragSurface.releasePointerCapture?.(event.pointerId);
+        }
+      }
+      dragPointerId = null;
+      dragSurface = null;
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -233,30 +244,34 @@ export function WorkCaseBoardPolish() {
         default: return;
       }
 
-      if (!consume(context.surface, deltaY)) {
-        releaseWindow();
-        return;
-      }
       event.preventDefault();
       event.stopImmediatePropagation();
+      routeDelta(context.surface, deltaY);
     };
 
     window.addEventListener("wheel", onWheel, { passive: false, capture: true });
-    window.addEventListener("scroll", onWindowScroll, { passive: true, capture: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
     window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
+    window.addEventListener("pointerdown", onPointerDown, { capture: true });
+    window.addEventListener("pointermove", onPointerMove, { passive: false, capture: true });
+    window.addEventListener("pointerup", finishPointerDrag, { capture: true });
+    window.addEventListener("pointercancel", finishPointerDrag, { capture: true });
     window.addEventListener("keydown", onKeyDown, { capture: true });
 
     return () => {
       window.removeEventListener("wheel", onWheel, true);
-      window.removeEventListener("scroll", onWindowScroll, true);
       window.removeEventListener("touchstart", onTouchStart, true);
       window.removeEventListener("touchmove", onTouchMove, true);
       window.removeEventListener("touchend", onTouchEnd, true);
       window.removeEventListener("touchcancel", onTouchEnd, true);
+      window.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("pointermove", onPointerMove, true);
+      window.removeEventListener("pointerup", finishPointerDrag, true);
+      window.removeEventListener("pointercancel", finishPointerDrag, true);
       window.removeEventListener("keydown", onKeyDown, true);
+      dragSurface?.classList.remove("is-dragging");
     };
   }, []);
 
