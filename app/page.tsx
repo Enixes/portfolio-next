@@ -3,6 +3,7 @@ import { HeroPreview } from "@/components/HeroPreview";
 import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
 import { ProfileLiveBoardPortal } from "@/components/ProfileLiveBoardPortal";
 import { ProfileLiveBoardAnimations } from "@/components/ProfileLiveBoardAnimations";
+import { BoardAliveLayer } from "@/components/BoardAliveLayer";
 import { BoardZoomBridge } from "@/components/BoardZoomBridge";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function Home() {
       <ProfileLiveBoardAnimations />
       <ProfileLiveBoardPortal />
       <WorkCvBoardPortal />
+      <BoardAliveLayer />
     </>
   );
 }
