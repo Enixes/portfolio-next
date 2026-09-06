@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { HeroPreview } from "@/components/HeroPreview";
 import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
+import { ProfileLiveBoardPortal } from "@/components/ProfileLiveBoardPortal";
+import { ProfileLiveBoardAnimations } from "@/components/ProfileLiveBoardAnimations";
 import { BoardZoomBridge } from "@/components/BoardZoomBridge";
 
 export const metadata: Metadata = {
@@ -15,6 +17,8 @@ export default function Home() {
     <>
       <HeroPreview />
       <BoardZoomBridge />
+      <ProfileLiveBoardAnimations />
+      <ProfileLiveBoardPortal />
       <WorkCvBoardPortal />
     </>
   );
