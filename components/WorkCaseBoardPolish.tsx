@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect } from "react";
+
 const styles = `
 /*
  * The story-board surface is normally a fixed-height CSS grid. A long dossier
@@ -16,6 +20,7 @@ const styles = `
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
+  scroll-behavior: auto;
 }
 
 .work-cv-mounted > .work-cv-board {
@@ -84,6 +89,111 @@ const styles = `
 }
 `;
 
+const EDGE_EPSILON = 2;
+
+function activeWorkSurface() {
+  if (document.documentElement.dataset.zoomSection !== "work-board") return null;
+  return document.querySelector<HTMLElement>(".scroll-board-red .work-cv-mounted");
+}
+
+function canConsume(surface: HTMLElement, deltaY: number) {
+  if (Math.abs(deltaY) < 0.5) return false;
+  const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
+  if (maxScroll <= EDGE_EPSILON) return false;
+
+  if (deltaY > 0) return surface.scrollTop < maxScroll - EDGE_EPSILON;
+  return surface.scrollTop > EDGE_EPSILON;
+}
+
+function normalizedWheelDelta(event: WheelEvent, surface: HTMLElement) {
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return event.deltaY * 18;
+  if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) return event.deltaY * surface.clientHeight * 0.88;
+  return event.deltaY;
+}
+
 export function WorkCaseBoardPolish() {
+  useEffect(() => {
+    let lastTouchY: number | null = null;
+
+    const onWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      const surface = activeWorkSurface();
+      if (!surface) return;
+
+      const deltaY = normalizedWheelDelta(event, surface);
+      if (!canConsume(surface, deltaY)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      surface.scrollTop += deltaY;
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      const surface = activeWorkSurface();
+      lastTouchY = surface && event.touches.length === 1 ? event.touches[0].clientY : null;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const surface = activeWorkSurface();
+      if (!surface || lastTouchY === null || event.touches.length !== 1) {
+        lastTouchY = null;
+        return;
+      }
+
+      const currentY = event.touches[0].clientY;
+      const deltaY = lastTouchY - currentY;
+      lastTouchY = currentY;
+      if (!canConsume(surface, deltaY)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      surface.scrollTop += deltaY;
+    };
+
+    const onTouchEnd = () => {
+      lastTouchY = null;
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
+
+      const surface = activeWorkSurface();
+      if (!surface) return;
+
+      let deltaY = 0;
+      switch (event.key) {
+        case "ArrowDown": deltaY = 72; break;
+        case "ArrowUp": deltaY = -72; break;
+        case "PageDown": deltaY = surface.clientHeight * 0.82; break;
+        case "PageUp": deltaY = -surface.clientHeight * 0.82; break;
+        case " ": deltaY = (event.shiftKey ? -1 : 1) * surface.clientHeight * 0.82; break;
+        default: return;
+      }
+
+      if (!canConsume(surface, deltaY)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      surface.scrollTop += deltaY;
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+
+    return () => {
+      window.removeEventListener("wheel", onWheel, true);
+      window.removeEventListener("touchstart", onTouchStart, true);
+      window.removeEventListener("touchmove", onTouchMove, true);
+      window.removeEventListener("touchend", onTouchEnd, true);
+      window.removeEventListener("touchcancel", onTouchEnd, true);
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, []);
+
   return <style dangerouslySetInnerHTML={{ __html: styles }} />;
 }
