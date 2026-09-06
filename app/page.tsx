@@ -4,6 +4,7 @@ import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
 import { ProfileLiveBoardPortal } from "@/components/ProfileLiveBoardPortal";
 import { ProfileLiveBoardAnimations } from "@/components/ProfileLiveBoardAnimations";
 import { BoardAliveLayer } from "@/components/BoardAliveLayer";
+import { BoardDoodlePolish } from "@/components/BoardDoodlePolish";
 import { BoardZoomBridge } from "@/components/BoardZoomBridge";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function Home() {
       <ProfileLiveBoardPortal />
       <WorkCvBoardPortal />
       <BoardAliveLayer />
+      <BoardDoodlePolish />
     </>
   );
 }
