@@ -22,7 +22,7 @@ export function BoardScrollController() {
   useEffect(() => {
     const story = document.querySelector<HTMLElement>("[data-board-story]");
     const track = story?.querySelector<HTMLElement>("[data-board-track]");
-    const masterBoard = story?.querySelector<HTMLElement>("[data-zoom-master-board]");
+    let masterBoard = story?.querySelector<HTMLElement>("[data-zoom-master-board]") ?? null;
     const room = story?.querySelector<HTMLElement>(".board-story-room");
     const stops = story
       ? Array.from(story.querySelectorAll<HTMLElement>("[data-board-stop]"))
@@ -97,6 +97,7 @@ export function BoardScrollController() {
 
     const render = () => {
       frame = 0;
+      masterBoard ??= story.querySelector<HTMLElement>("[data-zoom-master-board]");
 
       const progress = clamp((window.scrollY - storyTop) / travel);
       const stages = progress * panels.length;
@@ -104,6 +105,7 @@ export function BoardScrollController() {
       const localProgress = activeIndex === panels.length - 1 && progress === 1
         ? 1
         : stages - activeIndex;
+      const activeSectionId = sectionIds[activeIndex] ?? "";
 
       if (reducedMotion.matches) {
         panels.forEach((panel, index) => {
@@ -158,7 +160,11 @@ export function BoardScrollController() {
         dot.classList.toggle("is-active", index === activeIndex);
       });
 
-      document.documentElement.dataset.zoomSection = sectionIds[activeIndex] ?? "";
+      navigationLinks.forEach((link) => {
+        link.classList.toggle("is-active", link.hash.slice(1) === activeSectionId);
+      });
+
+      document.documentElement.dataset.zoomSection = activeSectionId;
     };
 
     const requestRender = () => {
@@ -186,7 +192,10 @@ export function BoardScrollController() {
     }
 
     return () => {
-      navigationLinks.forEach((link) => link.removeEventListener("click", handleNavigation));
+      navigationLinks.forEach((link) => {
+        link.removeEventListener("click", handleNavigation);
+        link.classList.remove("is-active");
+      });
       window.removeEventListener("popstate", handleHistoryNavigation);
       window.removeEventListener("scroll", requestRender);
       window.removeEventListener("resize", handleResize);
