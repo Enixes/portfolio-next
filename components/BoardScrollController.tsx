@@ -10,10 +10,20 @@ const smoothstep = (value: number) => {
   return bounded * bounded * (3 - 2 * bounded);
 };
 
+const zoomOrigins = [
+  { x: 0.2, y: 0.27 },
+  { x: 0.52, y: 0.3 },
+  { x: 0.68, y: 0.67 },
+  { x: 0.82, y: 0.7 },
+  { x: 0.5, y: 0.5 },
+] as const;
+
 export function BoardScrollController() {
   useEffect(() => {
     const story = document.querySelector<HTMLElement>("[data-board-story]");
     const track = story?.querySelector<HTMLElement>("[data-board-track]");
+    const masterBoard = story?.querySelector<HTMLElement>("[data-zoom-master-board]");
+    const room = story?.querySelector<HTMLElement>(".board-story-room");
     const stops = story
       ? Array.from(story.querySelectorAll<HTMLElement>("[data-board-stop]"))
       : [];
@@ -46,18 +56,14 @@ export function BoardScrollController() {
     const navigateToSection = (index: number, behavior: ScrollBehavior) => {
       if (index < 0 || index >= panels.length) return;
 
-      if (reducedMotion.matches) {
-        panels[index].scrollIntoView({ behavior: "auto", block: "start", inline: "center" });
-      } else {
-        measure();
-        const focusProgress = (index + .42) / panels.length;
-        window.scrollTo({
-          top: storyTop + travel * focusProgress,
-          behavior,
-        });
-      }
+      measure();
+      const focusProgress = (index + 0.38) / panels.length;
+      window.scrollTo({
+        top: storyTop + travel * focusProgress,
+        behavior: reducedMotion.matches ? "auto" : behavior,
+      });
 
-      panels[index].focus({ preventScroll: true });
+      window.requestAnimationFrame(() => panels[index]?.focus({ preventScroll: true }));
     };
 
     const navigateToHash = (hash: string, behavior: ScrollBehavior) => {
@@ -98,34 +104,61 @@ export function BoardScrollController() {
       const localProgress = activeIndex === panels.length - 1 && progress === 1
         ? 1
         : stages - activeIndex;
-      const slideProgress = smoothstep((localProgress - .6) / .4);
-      const trackPosition = Math.min(
-        panels.length - 1,
-        activeIndex + (activeIndex < panels.length - 1 ? slideProgress : 0),
-      );
 
-      track.style.transform = `translate3d(${-trackPosition * window.innerWidth}px, 0, 0)`;
+      if (reducedMotion.matches) {
+        panels.forEach((panel, index) => {
+          const active = index === activeIndex;
+          panel.style.opacity = active ? "1" : "0";
+          panel.style.transform = "translate3d(0,0,0) scale(1)";
+          panel.style.zIndex = active ? "5" : "1";
+          panel.style.pointerEvents = active ? "auto" : "none";
+        });
+        if (masterBoard) masterBoard.style.opacity = "0";
+        if (room) room.style.opacity = ".18";
+      } else {
+        const enter = smoothstep(localProgress / 0.18);
+        const exit = smoothstep((localProgress - 0.68) / 0.18);
+        const focus = clamp(enter * (1 - exit));
+        const origin = zoomOrigins[Math.min(activeIndex, zoomOrigins.length - 1)];
 
-      panels.forEach((panel, index) => {
-        let focus = 0;
+        panels.forEach((panel, index) => {
+          const active = index === activeIndex;
+          const panelFocus = active ? focus : 0;
+          const panelScale = 0.72 + panelFocus * 0.28 + exit * (active ? 0.1 : 0);
+          const driftX = active ? (0.5 - origin.x) * 7 * (1 - panelFocus) : 0;
+          const driftY = active ? (0.5 - origin.y) * 6 * (1 - panelFocus) : 0;
 
-        if (index === activeIndex) {
-          if (localProgress < .25) {
-            focus = smoothstep(localProgress / .25);
-          } else if (localProgress < .62) {
-            focus = 1;
-          } else {
-            focus = 1 - smoothstep((localProgress - .62) / .38);
-          }
+          panel.style.opacity = `${panelFocus}`;
+          panel.style.transform = `translate3d(${driftX}vw, ${driftY}vh, 0) scale(${panelScale})`;
+          panel.style.transformOrigin = `${origin.x * 100}% ${origin.y * 100}%`;
+          panel.style.zIndex = active ? "5" : "1";
+          panel.style.pointerEvents = panelFocus > 0.72 ? "auto" : "none";
+        });
+
+        if (masterBoard) {
+          const boardVisibility = Math.max(1 - enter, exit);
+          const zoomIn = localProgress < 0.5 ? enter : 1 - exit;
+          const boardScale = 0.88 + zoomIn * 1.72;
+          const translateX = (0.5 - origin.x) * window.innerWidth * 0.62 * zoomIn;
+          const translateY = (0.5 - origin.y) * window.innerHeight * 0.62 * zoomIn;
+
+          masterBoard.style.opacity = `${boardVisibility}`;
+          masterBoard.style.transform = `translate3d(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px), 0) scale(${boardScale})`;
+          masterBoard.style.transformOrigin = `${origin.x * 100}% ${origin.y * 100}%`;
+          masterBoard.style.filter = `brightness(${0.92 + boardVisibility * 0.08}) saturate(${0.82 + boardVisibility * 0.18})`;
         }
 
-        panel.style.transform = `scale(${.84 + focus * .16})`;
-        panel.style.opacity = `${.34 + focus * .66}`;
-      });
+        if (room) {
+          room.style.opacity = `${0.12 + Math.max(1 - enter, exit) * 0.16}`;
+          room.style.transform = `scale(${1.04 + focus * 0.035})`;
+        }
+      }
 
       dots.forEach((dot, index) => {
         dot.classList.toggle("is-active", index === activeIndex);
       });
+
+      document.documentElement.dataset.zoomSection = sectionIds[activeIndex] ?? "";
     };
 
     const requestRender = () => {
@@ -140,13 +173,11 @@ export function BoardScrollController() {
 
     navigationLinks.forEach((link) => link.addEventListener("click", handleNavigation));
     window.addEventListener("popstate", handleHistoryNavigation);
+    window.addEventListener("scroll", requestRender, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
 
-    if (!reducedMotion.matches) {
-      measure();
-      render();
-      window.addEventListener("scroll", requestRender, { passive: true });
-      window.addEventListener("resize", handleResize, { passive: true });
-    }
+    measure();
+    render();
 
     if (window.location.hash) {
       initialNavigationFrame = window.requestAnimationFrame(() => {
@@ -161,6 +192,7 @@ export function BoardScrollController() {
       window.removeEventListener("resize", handleResize);
       window.cancelAnimationFrame(frame);
       window.cancelAnimationFrame(initialNavigationFrame);
+      delete document.documentElement.dataset.zoomSection;
     };
   }, []);
 
