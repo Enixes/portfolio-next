@@ -6,6 +6,34 @@ import gsap from "gsap";
 const SECTION_STOP_LOCAL_PROGRESS = 0.72;
 const NAV_TRANSITION_DURATION = 1.72;
 
+const styles = `
+/* The spatial camera positions every detail board itself. Flatten the legacy
+   horizontal flex track so there is no hidden 100vw base offset underneath
+   our camera transforms. */
+html[data-spatial-camera="true"] .board-scroll-track {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+html[data-spatial-camera="true"] .scroll-board-panel {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  flex: none !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+html[data-spatial-camera="true"] .board-scroll-sticky {
+  background: #171614;
+}
+`;
+
 const clamp = (value: number, minimum: number, maximum: number) =>
   Math.min(maximum, Math.max(minimum, value));
 
@@ -17,22 +45,23 @@ const smoothstep = (value: number) => {
 type Point = { x: number; y: number };
 
 /*
- * A virtual map of the corkboard. Adjacent detail boards are deliberately not
- * arranged in a straight vertical stack: moving through the site should feel
- * like the camera is travelling across one physical planning board.
+ * A virtual map of the corkboard. We zig-zag through it instead of repeatedly
+ * backing out to the overview board.
  *
  * Profile ───── Work
- *                 ╲
- *                  Blog ───── Life
- *                                ╲
- *                                 Contact
+ *             ╱
+ *          Blog ───── Life
+ *                    ╲
+ *                     Contact
+ *
+ * The important correction here is Work -> Blog: down + LEFT.
  */
 const boardMap: Point[] = [
   { x: 0, y: 0 },
   { x: 1, y: 0 },
-  { x: 2, y: 0.72 },
-  { x: 3, y: 0.72 },
-  { x: 4, y: 1.34 },
+  { x: 0, y: 0.72 },
+  { x: 1, y: 0.72 },
+  { x: 0.42, y: 1.34 },
 ];
 
 function interpolateCamera(position: number) {
@@ -72,6 +101,8 @@ export function BoardSpatialCamera() {
 
     if (!story || panels.length === 0 || stops.length !== panels.length) return;
 
+    document.documentElement.dataset.spatialCamera = "true";
+
     const sectionIds = stops.map((stop) => stop.id);
     let storyTop = 0;
     let travel = 1;
@@ -107,26 +138,31 @@ export function BoardSpatialCamera() {
       const position = cameraPosition();
       const camera = interpolateCamera(position);
       const settledIndex = clamp(Math.round(position), 0, panels.length - 1);
-      const xStride = window.innerWidth * (window.innerWidth <= 760 ? 0.94 : 0.88);
-      const yStride = window.innerHeight * (window.innerWidth <= 760 ? 0.68 : 0.76);
+      const distanceFromStop = Math.abs(position - settledIndex);
+      const transitioning = distanceFromStop > 0.025;
+      const compact = window.innerWidth <= 760;
+      const xStride = window.innerWidth * (compact ? 1.02 : 0.98);
+      const yStride = window.innerHeight * (compact ? 0.72 : 0.79);
 
       panels.forEach((panel, index) => {
         const point = boardMap[index] ?? { x: index, y: 0 };
         const dx = (point.x - camera.x) * xStride;
         const dy = (point.y - camera.y) * yStride;
         const indexDistance = Math.abs(index - position);
-        const nearby = indexDistance <= 1.08;
-        const settled = index === settledIndex && Math.abs(position - settledIndex) < 0.12;
+        const participating = transitioning
+          ? indexDistance <= 1.04
+          : index === settledIndex;
+        const settled = index === settledIndex && !transitioning;
 
-        if (nearby) clearIntroTransforms(panel);
+        if (participating) clearIntroTransforms(panel);
 
         gsap.set(panel, {
           x: dx,
           y: dy,
           scale: 1,
           rotation: 0,
-          autoAlpha: nearby ? 1 : 0,
-          zIndex: nearby ? Math.max(2, 8 - Math.round(indexDistance * 3)) : 1,
+          autoAlpha: participating ? 1 : 0,
+          zIndex: participating ? Math.max(2, 8 - Math.round(indexDistance * 3)) : 1,
           pointerEvents: settled ? "auto" : "none",
           transformOrigin: "50% 50%",
           force3D: true,
@@ -144,10 +180,10 @@ export function BoardSpatialCamera() {
 
       if (room) {
         gsap.set(room, {
-          x: -camera.x * 22,
-          y: -camera.y * 16,
-          scale: 1.035,
-          opacity: 0.13,
+          x: -camera.x * 18,
+          y: -camera.y * 14,
+          scale: 1.055,
+          opacity: 0.15,
           force3D: true,
         });
       }
@@ -232,10 +268,11 @@ export function BoardSpatialCamera() {
       window.cancelAnimationFrame(frame);
       navTween?.kill();
       document.documentElement.style.scrollBehavior = originalScrollBehavior;
+      delete document.documentElement.dataset.spatialCamera;
       panels.forEach((panel) => gsap.set(panel, { clearProps: "transform,opacity,visibility,zIndex,pointerEvents" }));
       if (room) gsap.set(room, { clearProps: "transform,opacity" });
     };
   }, []);
 
-  return null;
+  return <style dangerouslySetInnerHTML={{ __html: styles }} />;
 }
