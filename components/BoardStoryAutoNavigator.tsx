@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import gsap from "gsap";
 
 const SECTION_STOP_LOCAL_PROGRESS = 0.72;
-const BOARD_TRANSITION_DURATION = 1.65;
+const BOARD_TRANSITION_DURATION = 1.8;
 const WORK_SCROLL_DURATION = 0.72;
 const WORK_SCROLL_STEP = 0.76;
 const FRESH_GESTURE_GAP = 190;
@@ -116,6 +116,8 @@ export function BoardStoryAutoNavigator() {
     let touchStartY: number | null = null;
     let touchLastY: number | null = null;
     let touchStartedInWork = false;
+    let touchMovedWork = false;
+    let touchEdgeTravel = 0;
 
     let dragPointerId: number | null = null;
     let dragLastY = 0;
@@ -317,6 +319,8 @@ export function BoardStoryAutoNavigator() {
       if (!storyIsRelevant() || event.touches.length !== 1) return;
       touchStartY = event.touches[0].clientY;
       touchLastY = touchStartY;
+      touchMovedWork = false;
+      touchEdgeTravel = 0;
       const board = workBoard();
       touchStartedInWork = Boolean(
         board && event.target instanceof Node && board.contains(event.target),
@@ -333,9 +337,21 @@ export function BoardStoryAutoNavigator() {
 
       const index = nearestIndex();
       const board = index === 1 ? workBoard() : null;
-      if (touchStartedInWork && board && workCanMove(board, Math.sign(delta))) {
+      if (touchStartedInWork && board) {
+        const direction = Math.sign(delta);
+        const before = board.scrollTop;
+        const maximum = workMaxScroll(board);
+        board.scrollTop = clamp(before + delta, 0, maximum);
+        const consumed = board.scrollTop - before;
+
+        if (Math.abs(consumed) > 0.1) touchMovedWork = true;
+        if (direction && Math.abs(consumed) < Math.abs(delta) * 0.35 && workAtEdge(board, direction)) {
+          touchEdgeTravel += delta - consumed;
+        } else if (Math.abs(consumed) > 0.1) {
+          touchEdgeTravel = 0;
+        }
+
         event.preventDefault();
-        board.scrollTop = clamp(board.scrollTop + delta, 0, workMaxScroll(board));
         return;
       }
 
@@ -348,16 +364,29 @@ export function BoardStoryAutoNavigator() {
         touchStartY = null;
         touchLastY = null;
         touchStartedInWork = false;
+        touchMovedWork = false;
+        touchEdgeTravel = 0;
         return;
       }
 
-      const distance = touchStartY - touchLastY;
-      const direction = Math.abs(distance) >= 44 ? Math.sign(distance) : 0;
-      if (direction) triggerDirection(direction, true);
+      if (touchStartedInWork && (touchMovedWork || Math.abs(touchEdgeTravel) > 0.1)) {
+        if (Math.abs(touchEdgeTravel) >= 58) {
+          const direction = Math.sign(touchEdgeTravel);
+          const index = nearestIndex();
+          const next = index + direction;
+          if (next >= 0 && next < panels.length) transitionTo(next);
+        }
+      } else {
+        const distance = touchStartY - touchLastY;
+        const direction = Math.abs(distance) >= 44 ? Math.sign(distance) : 0;
+        if (direction) triggerDirection(direction, true);
+      }
 
       touchStartY = null;
       touchLastY = null;
       touchStartedInWork = false;
+      touchMovedWork = false;
+      touchEdgeTravel = 0;
     };
 
     const onPointerDown = (event: PointerEvent) => {
