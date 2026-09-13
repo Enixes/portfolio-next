@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HeroPreview } from "@/components/HeroPreview";
 import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
+import { WorkExperienceStory } from "@/components/WorkExperienceStory";
 import { BoardStoryAutoNavigator } from "@/components/BoardStoryAutoNavigator";
 import { BoardSpatialCamera } from "@/components/BoardSpatialCamera";
 import { ProfileLiveBoardPortal } from "@/components/ProfileLiveBoardPortal";
@@ -24,6 +25,7 @@ export default function Home() {
       <ProfileLiveBoardAnimations />
       <ProfileLiveBoardPortal />
       <WorkCvBoardPortal />
+      <WorkExperienceStory />
       <BoardStoryAutoNavigator />
       <BoardSpatialCamera />
       <BoardAliveLayer />
