@@ -3,6 +3,7 @@ import { HeroPreview } from "@/components/HeroPreview";
 import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
 import { WorkExperienceStory } from "@/components/WorkExperienceStory";
 import { LifeBoardPortal } from "@/components/LifeBoardPortal";
+import { LifeBoardDoodles } from "@/components/LifeBoardDoodles";
 import { BoardStoryAutoNavigator } from "@/components/BoardStoryAutoNavigator";
 import { BoardSpatialCamera } from "@/components/BoardSpatialCamera";
 import { ProfileLiveBoardPortal } from "@/components/ProfileLiveBoardPortal";
@@ -28,6 +29,7 @@ export default function Home() {
       <WorkCvBoardPortal />
       <WorkExperienceStory />
       <LifeBoardPortal />
+      <LifeBoardDoodles />
       <BoardStoryAutoNavigator />
       <BoardSpatialCamera />
       <BoardAliveLayer />
