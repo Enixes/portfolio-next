@@ -7,6 +7,8 @@ const SECTION_STOP_LOCAL_PROGRESS = 0.72;
 const BOARD_TRANSITION_DURATION = 1.8;
 const WORK_SCROLL_DURATION = 0.72;
 const WORK_SCROLL_STEP = 0.76;
+const LIFE_SCROLL_DURATION = 0.62;
+const LIFE_SCROLL_STEP = 0.82;
 const FRESH_GESTURE_GAP = 190;
 const EDGE_EPSILON = 3;
 
@@ -42,6 +44,16 @@ const styles = `
 }
 .work-cv-mounted > .work-cv-board a,
 .work-cv-mounted > .work-cv-board button { cursor: pointer; }
+
+.life-live-board {
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-x pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto !important;
+  scrollbar-gutter: stable;
+}
+
+.blog-live-board { touch-action: pan-x pinch-zoom !important; }
 
 /* Content visibility must never depend on an observer/timeline firing. */
 .work-cv-mounted .work-cv-header > *,
@@ -112,17 +124,24 @@ export function BoardStoryAutoNavigator() {
     let travel = 1;
     let boardTween: gsap.core.Tween | null = null;
     let workTween: gsap.core.Tween | null = null;
+    let lifeTween: gsap.core.Tween | null = null;
     let lastWheelAt = -Infinity;
     let touchStartY: number | null = null;
     let touchLastY: number | null = null;
     let touchStartedInWork = false;
     let touchMovedWork = false;
     let touchEdgeTravel = 0;
+    let touchStartedInLife = false;
+    let touchLifeStartedAtEdge = false;
+    let touchLifeEdgeTravel = 0;
 
     let dragPointerId: number | null = null;
     let dragLastY = 0;
     let dragSurface: HTMLElement | null = null;
     let dragEdgeTravel = 0;
+    let dragStartedInLife = false;
+    let dragLifeStartedAtEdge = false;
+    let dragLifeEdgeTravel = 0;
 
     const measure = () => {
       const bounds = story.getBoundingClientRect();
@@ -148,6 +167,10 @@ export function BoardStoryAutoNavigator() {
 
     const workBoard = () => panels[1]?.querySelector<HTMLElement>(".work-cv-board") ?? null;
 
+    // Blog shares Life's internal scrolling and fresh-edge gesture state.
+    const lifeBoard = (index = nearestIndex()) =>
+      panels[index]?.querySelector<HTMLElement>(".life-live-board, .blog-live-board") ?? null;
+
     const workMaxScroll = (board: HTMLElement) =>
       Math.max(0, board.scrollHeight - board.clientHeight);
 
@@ -161,6 +184,20 @@ export function BoardStoryAutoNavigator() {
 
     const workAtEdge = (board: HTMLElement, direction: number) =>
       !workCanMove(board, direction);
+
+    const lifeMaxScroll = (board: HTMLElement) =>
+      Math.max(0, board.scrollHeight - board.clientHeight);
+
+    const lifeCanMove = (board: HTMLElement, direction: number) => {
+      const maximum = lifeMaxScroll(board);
+      if (maximum <= EDGE_EPSILON) return false;
+      return direction > 0
+        ? board.scrollTop < maximum - EDGE_EPSILON
+        : board.scrollTop > EDGE_EPSILON;
+    };
+
+    const lifeAtEdge = (board: HTMLElement, direction: number) =>
+      !lifeCanMove(board, direction);
 
     const storyIsRelevant = () => {
       const y = window.scrollY;
@@ -178,7 +215,9 @@ export function BoardStoryAutoNavigator() {
 
       boardTween?.kill();
       workTween?.kill();
+      lifeTween?.kill();
       workTween = null;
+      lifeTween = null;
       document.documentElement.style.scrollBehavior = "auto";
 
       if (reducedMotion.matches) {
@@ -232,9 +271,34 @@ export function BoardStoryAutoNavigator() {
       });
     };
 
+    const stepLife = (board: HTMLElement, direction: number) => {
+      const maximum = lifeMaxScroll(board);
+      const step = Math.max(180, board.clientHeight * LIFE_SCROLL_STEP);
+      const destination = clamp(
+        board.scrollTop + direction * step,
+        0,
+        maximum,
+      );
+
+      lifeTween?.kill();
+      if (reducedMotion.matches) {
+        board.scrollTop = destination;
+        return;
+      }
+
+      lifeTween = gsap.to(board, {
+        scrollTop: destination,
+        duration: LIFE_SCROLL_DURATION,
+        ease: "power2.inOut",
+        overwrite: true,
+        onComplete: () => { lifeTween = null; },
+        onInterrupt: () => { lifeTween = null; },
+      });
+    };
+
     const triggerDirection = (direction: number, freshGesture: boolean) => {
       if (!direction || !storyIsRelevant()) return false;
-      if (boardTween || workTween) return true;
+      if (boardTween || workTween || lifeTween) return true;
 
       measure();
 
@@ -272,11 +336,29 @@ export function BoardStoryAutoNavigator() {
         }
       }
 
+      if (index === 2 || index === 3) {
+        const board = lifeBoard(index);
+        if (board && lifeMaxScroll(board) > EDGE_EPSILON) {
+          if (lifeCanMove(board, direction)) {
+            if (freshGesture) stepLife(board, direction);
+            return true;
+          }
+
+          // A wheel stream that reaches the internal edge is consumed. The next
+          // fresh wheel gesture is the one allowed to leave the board.
+          if (!freshGesture) return true;
+        }
+      }
+
       const next = index + direction;
       if (next < 0 || next >= panels.length) return false;
       if (freshGesture) transitionTo(next);
       return true;
     };
+
+    // Field Notes keeps native keyboard scrolling until the requested edge.
+    const isInsideBlog = (target: EventTarget | null) =>
+      target instanceof Element && Boolean(target.closest(".blog-live-board"));
 
     const onWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
@@ -310,7 +392,13 @@ export function BoardStoryAutoNavigator() {
         default: return;
       }
 
-      if (!triggerDirection(direction, true)) return;
+      const insideBlog = isInsideBlog(event.target);
+      if (insideBlog) {
+        const board = lifeBoard(2);
+        if (board && lifeCanMove(board, direction)) return;
+      }
+
+      if (!triggerDirection(direction, !insideBlog || !event.repeat)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
     };
@@ -321,10 +409,22 @@ export function BoardStoryAutoNavigator() {
       touchLastY = touchStartY;
       touchMovedWork = false;
       touchEdgeTravel = 0;
+      touchStartedInLife = false;
+      touchLifeStartedAtEdge = false;
+      touchLifeEdgeTravel = 0;
       const board = workBoard();
       touchStartedInWork = Boolean(
         board && event.target instanceof Node && board.contains(event.target),
       );
+      const life = lifeBoard();
+      touchStartedInLife = Boolean(
+        life && event.target instanceof Node && life.contains(event.target),
+      );
+      if (touchStartedInLife && life) {
+        const maximum = lifeMaxScroll(life);
+        touchLifeStartedAtEdge = maximum > EDGE_EPSILON &&
+          (life.scrollTop <= EDGE_EPSILON || life.scrollTop >= maximum - EDGE_EPSILON);
+      }
     };
 
     const onTouchMove = (event: TouchEvent) => {
@@ -355,6 +455,25 @@ export function BoardStoryAutoNavigator() {
         return;
       }
 
+      const life = index === 2 || index === 3 ? lifeBoard(index) : null;
+      if (touchStartedInLife && life) {
+        const direction = Math.sign(delta);
+        const before = life.scrollTop;
+        const maximum = lifeMaxScroll(life);
+        life.scrollTop = clamp(before + delta, 0, maximum);
+        const consumed = life.scrollTop - before;
+
+        if (direction && Math.abs(consumed) < Math.abs(delta) * 0.35 && lifeAtEdge(life, direction)) {
+          if (touchLifeStartedAtEdge) touchLifeEdgeTravel += delta - consumed;
+        } else if (Math.abs(consumed) > 0.1) {
+          touchLifeEdgeTravel = 0;
+          touchLifeStartedAtEdge = false;
+        }
+
+        event.preventDefault();
+        return;
+      }
+
       // Outside the Systems dossier, prevent partial native story scrolling.
       event.preventDefault();
     };
@@ -366,12 +485,22 @@ export function BoardStoryAutoNavigator() {
         touchStartedInWork = false;
         touchMovedWork = false;
         touchEdgeTravel = 0;
+        touchStartedInLife = false;
+        touchLifeStartedAtEdge = false;
+        touchLifeEdgeTravel = 0;
         return;
       }
 
       if (touchStartedInWork && (touchMovedWork || Math.abs(touchEdgeTravel) > 0.1)) {
         if (Math.abs(touchEdgeTravel) >= 58) {
           const direction = Math.sign(touchEdgeTravel);
+          const index = nearestIndex();
+          const next = index + direction;
+          if (next >= 0 && next < panels.length) transitionTo(next);
+        }
+      } else if (touchStartedInLife) {
+        if (touchLifeStartedAtEdge && Math.abs(touchLifeEdgeTravel) >= 58) {
+          const direction = Math.sign(touchLifeEdgeTravel);
           const index = nearestIndex();
           const next = index + direction;
           if (next >= 0 && next < panels.length) transitionTo(next);
@@ -387,18 +516,30 @@ export function BoardStoryAutoNavigator() {
       touchStartedInWork = false;
       touchMovedWork = false;
       touchEdgeTravel = 0;
+      touchStartedInLife = false;
+      touchLifeStartedAtEdge = false;
+      touchLifeEdgeTravel = 0;
     };
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.pointerType === "touch" || event.button !== 0 || isInteractiveTarget(event.target)) return;
-      if (nearestIndex() !== 1 || Math.abs(window.scrollY - sectionTop(1)) > 12) return;
-      const board = workBoard();
+      const index = nearestIndex();
+      if ((index !== 1 && index !== 2 && index !== 3) || Math.abs(window.scrollY - sectionTop(index)) > 12) return;
+      const board = index === 1 ? workBoard() : lifeBoard(index);
       if (!board || !(event.target instanceof Node) || !board.contains(event.target)) return;
 
       dragPointerId = event.pointerId;
       dragLastY = event.clientY;
       dragSurface = board;
       dragEdgeTravel = 0;
+      dragStartedInLife = index === 2 || index === 3;
+      dragLifeEdgeTravel = 0;
+      dragLifeStartedAtEdge = false;
+      if (dragStartedInLife) {
+        const maximum = lifeMaxScroll(board);
+        dragLifeStartedAtEdge = maximum > EDGE_EPSILON &&
+          (board.scrollTop <= EDGE_EPSILON || board.scrollTop >= maximum - EDGE_EPSILON);
+      }
       board.classList.add("is-dragging");
       board.setPointerCapture?.(event.pointerId);
       event.preventDefault();
@@ -410,14 +551,23 @@ export function BoardStoryAutoNavigator() {
       dragLastY = event.clientY;
       const direction = Math.sign(delta);
       const before = dragSurface.scrollTop;
-      const maximum = workMaxScroll(dragSurface);
+      const maximum = dragStartedInLife ? lifeMaxScroll(dragSurface) : workMaxScroll(dragSurface);
       dragSurface.scrollTop = clamp(before + delta, 0, maximum);
       const consumed = dragSurface.scrollTop - before;
 
-      if (Math.abs(consumed) < Math.abs(delta) * 0.35 && workAtEdge(dragSurface, direction)) {
-        dragEdgeTravel += delta - consumed;
+      if (dragStartedInLife) {
+        if (Math.abs(consumed) < Math.abs(delta) * 0.35 && lifeAtEdge(dragSurface, direction)) {
+          if (dragLifeStartedAtEdge) dragLifeEdgeTravel += delta - consumed;
+        } else if (Math.abs(consumed) > 0.1) {
+          dragLifeEdgeTravel = 0;
+          dragLifeStartedAtEdge = false;
+        }
       } else {
-        dragEdgeTravel = 0;
+        if (Math.abs(consumed) < Math.abs(delta) * 0.35 && workAtEdge(dragSurface, direction)) {
+          dragEdgeTravel += delta - consumed;
+        } else {
+          dragEdgeTravel = 0;
+        }
       }
 
       event.preventDefault();
@@ -428,6 +578,8 @@ export function BoardStoryAutoNavigator() {
       if (!dragSurface) return;
       const board = dragSurface;
       const edgeTravel = dragEdgeTravel;
+      const lifeEdgeTravel = dragLifeEdgeTravel;
+      const startedInLife = dragStartedInLife;
       const pointerId = dragPointerId;
 
       board.classList.remove("is-dragging");
@@ -438,8 +590,16 @@ export function BoardStoryAutoNavigator() {
       dragPointerId = null;
       dragSurface = null;
       dragEdgeTravel = 0;
+      dragStartedInLife = false;
+      dragLifeStartedAtEdge = false;
+      dragLifeEdgeTravel = 0;
 
-      if (Math.abs(edgeTravel) >= 72) {
+      if (startedInLife && Math.abs(lifeEdgeTravel) >= 72) {
+        const direction = Math.sign(lifeEdgeTravel);
+        const index = nearestIndex();
+        const next = index + direction;
+        if (next >= 0 && next < panels.length) transitionTo(next);
+      } else if (!startedInLife && Math.abs(edgeTravel) >= 72) {
         const direction = Math.sign(edgeTravel);
         const index = nearestIndex();
         const next = index + direction;
@@ -450,8 +610,10 @@ export function BoardStoryAutoNavigator() {
     const onResize = () => {
       boardTween?.kill();
       workTween?.kill();
+      lifeTween?.kill();
       boardTween = null;
       workTween = null;
+      lifeTween = null;
       restoreScrollBehavior();
       measure();
     };
@@ -484,6 +646,7 @@ export function BoardStoryAutoNavigator() {
       window.removeEventListener("resize", onResize);
       boardTween?.kill();
       workTween?.kill();
+      lifeTween?.kill();
       dragSurface?.classList.remove("is-dragging");
       restoreScrollBehavior();
     };

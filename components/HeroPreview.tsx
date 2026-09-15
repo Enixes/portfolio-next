@@ -449,7 +449,7 @@ export function HeroPreview() {
                 aria-labelledby={`${section.id}-story-title`}
               >
                 <div className="story-board-frame">
-                  <div className="story-board-surface">
+                  <div className="story-board-surface" data-blog-board-host={section.id === "blog-board" ? "" : undefined}>
                     <p className="story-board-index">Case board / {section.number}</p>
                     <header className="story-board-header">
                       <span>{section.eyebrow}</span>
