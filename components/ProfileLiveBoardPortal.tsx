@@ -30,11 +30,17 @@ const styles = `
 .profile-now-list { display:grid; gap:8px; margin:16px 0 0; padding:0; list-style:none; }
 .profile-now-list li { position:relative; padding-left:15px; color:#302f2c; font:800 8px/1.4 var(--mono); }
 .profile-now-list li:before { content:"↳"; position:absolute; left:0; color:#9d302a; font-family:var(--hand); }
+.profile-proof-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:17px; }
+.profile-proof-grid div { min-height:58px; padding:10px 9px 9px; border:1px solid rgba(93,74,41,.12); background:rgba(255,255,255,.38); transform:rotate(var(--proof-r,-.4deg)); }
+.profile-proof-grid div:nth-child(2){--proof-r:.6deg}.profile-proof-grid div:nth-child(3){--proof-r:.45deg}.profile-proof-grid div:nth-child(4){--proof-r:-.7deg}
+.profile-proof-grid strong { display:block; color:#282622; font:900 clamp(17px,1.55vw,24px)/.95 var(--hand); }
+.profile-proof-grid span { display:block; margin-top:6px; color:#6d665c; font:800 6px/1.2 var(--mono); letter-spacing:.07em; text-transform:uppercase; }
 .profile-project-card { width:22%; min-width:185px; padding:17px 18px 15px; background:#fffdf5; border:1px solid rgba(86,72,52,.08); }
 .profile-project-card h3 { margin:9px 0 5px; font:800 clamp(20px,2vw,30px)/.95 var(--hand); }
 .profile-project-card p { margin:0; color:#555149; font:8px/1.48 var(--mono); }
 .profile-project-card .profile-stack { display:block; margin-top:11px; color:#645f56; font:800 6px/1.45 var(--mono); letter-spacing:.05em; text-transform:uppercase; }
 .profile-project-card .profile-state { position:absolute; top:12px; right:12px; padding:4px 6px; border:1px solid currentColor; border-radius:999px; color:#9e312b; background:rgba(255,255,255,.68); font:800 6px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; transform:rotate(3deg); }
+.profile-case-link { display:inline-block; margin-top:11px; color:#8f302a; font:900 7px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid currentColor; }
 .profile-project-tailcache { left:39%; top:23%; width:25%; background:#e5f1f4; --r:1.4deg; }
 .profile-project-agent { right:7%; top:31%; width:23%; background:#e8f0d5; --r:-1.6deg; }
 .profile-project-game { left:47%; top:62%; width:23%; background:#f2dfe8; --r:1.8deg; }
@@ -89,6 +95,9 @@ const styles = `
  .profile-brief-chit { margin-top:18px; margin-right:56px; }
  .profile-offclock-chit { margin-top:18px; margin-left:54px; }
  .profile-live-footnote { right:20px; bottom:18px; }
+ .profile-proof-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ .profile-proof-grid div { min-height:52px; }
+ .profile-case-link { font-size:6.5px; }
 }
 @media (prefers-reduced-motion:reduce){ .profile-signal:before { animation:none; } }
 `;
@@ -109,11 +118,11 @@ export function ProfileLiveBoardPortal() {
   }, []);
 
   const board = target ? createPortal(
-    <div className="profile-live-board" aria-label="Asu Singh live profile and current projects">
+    <div className="profile-live-board" aria-label="Asu Singh selected systems and engineering evidence">
       <header className="profile-live-header">
-        <span>Case board / 00 · live profile</span>
-        <h2>Asu, in motion.</h2>
-        <p>Senior software engineer in Noida. I like systems that are fast, observable, recoverable — and weird side projects that force me to learn something new.</p>
+        <span>Case board / 00 · selected systems</span>
+        <h2>Selected systems.</h2>
+        <p>Six years in production fintech systems — Java, concurrency, recovery, caching, observability, and research where the claims can be measured.</p>
       </header>
 
       <figure className="profile-live-photo profile-animate">
@@ -122,7 +131,7 @@ export function ProfileLiveBoardPortal() {
         <figcaption>{cv.name} / system owner</figcaption>
       </figure>
 
-      <span className="profile-status-stamp profile-animate">6+ yrs shipping</span>
+      <span className="profile-status-stamp profile-animate">6 yrs production</span>
 
       <svg className="profile-thread" viewBox="0 0 1400 820" preserveAspectRatio="none" aria-hidden="true">
         <path className="profile-thread-shadow" d="M405 358 C520 314 589 300 687 308 C804 319 882 364 1010 351 C1118 340 1187 364 1284 420" />
@@ -134,67 +143,70 @@ export function ProfileLiveBoardPortal() {
 
       <article className="profile-now-card profile-animate">
         <span className="board-pin pin-blue" aria-hidden="true" />
-        <small>Now / Sep 2026</small>
-        <h3>What I’m up to</h3>
-        <p>Still shipping production trading systems by day. Outside that loop, I’m deliberately stretching into benchmarking, open source, AI agents, and simulation-heavy game architecture.</p>
-        <ul className="profile-now-list">
-          <li>Senior SDE @ ION Trading</li>
-          <li>TailCache benchmarks + Chronicle Map upstream work</li>
-          <li>Production-grade agentic AI experiments</li>
-          <li>System design, performance, and deterministic simulation</li>
-        </ul>
+        <small>Profile / signal</small>
+        <h3>Systems, not slogans.</h3>
+        <p>The recurring pattern across the work: make it faster, make recovery boring, then prove it with numbers.</p>
+        <div className="profile-proof-grid" aria-label="Career proof points">
+          <div><strong>6 yrs</strong><span>production</span></div>
+          <div><strong>Fintech</strong><span>systems</span></div>
+          <div><strong>Java</strong><span>+ concurrency</span></div>
+          <div><strong>~100</strong><span>citations</span></div>
+        </div>
       </article>
 
       <article className="profile-project-card profile-project-tailcache profile-animate">
         <span className="board-pin pin-blue" aria-hidden="true" />
-        <small>Project / active research build</small>
-        <span className="profile-state">building</span>
-        <h3>TailCache</h3>
-        <p>Measuring tail-latency trade-offs between on-heap Caffeine and off-heap Chronicle Map under deterministic workloads — with the benchmark rig designed to make negative results publishable too.</p>
-        <span className="profile-stack">Java 21 · JMH · Caffeine · Chronicle Map · issue #533</span>
+        <small>Selected system / 01</small>
+        <span className="profile-state">production</span>
+        <h3>Trading engine</h3>
+        <p>Java multithreading refactor for XTP end-of-day trade processing increased throughput by 20×.</p>
+        <span className="profile-stack">20× throughput · Java · multithreading · XTP</span>
+        <a className="profile-case-link" href="#work-board">Open case →</a>
       </article>
 
       <article className="profile-project-card profile-project-agent profile-animate">
         <span className="board-pin pin-green" aria-hidden="true" />
-        <small>Project / deployed</small>
-        <span className="profile-state">running</span>
-        <h3>24/7 Agent</h3>
-        <p>A personal agentic assistant built to survive constrained hardware, asynchronous messages, persistent state, failures, and actual day-to-day use — not just a demo loop.</p>
-        <span className="profile-stack">AI agents · NVIDIA models · Docker · Prometheus · Grafana</span>
+        <small>Selected system / 02</small>
+        <span className="profile-state">production</span>
+        <h3>Recovery system</h3>
+        <p>Automatic recovery for halted end-of-day processing cut downtime by 90% and eliminated after-hours operator calls.</p>
+        <span className="profile-stack">-90% downtime · recovery · production operations</span>
+        <a className="profile-case-link" href="#work-board">Open case →</a>
       </article>
 
       <article className="profile-project-card profile-project-game profile-animate">
         <span className="board-pin" aria-hidden="true" />
-        <small>Project / side quest</small>
-        <span className="profile-state">prototyping</span>
-        <h3>Maze Tank</h3>
-        <p>A multiplayer tank prototype built around deterministic fixed-step simulation, strict presentation/simulation separation, and readable combat inside detailed environments.</p>
-        <span className="profile-stack">Godot · fixed timestep · deterministic simulation · networking</span>
+        <small>Selected system / 03</small>
+        <span className="profile-state">research</span>
+        <h3>TailCache</h3>
+        <p>Controlled JMH study of Caffeine vs Chronicle Map, focused on p99 tail latency and heap ↔ off-heap trade-offs.</p>
+        <span className="profile-stack">Java 21 · JMH · Caffeine · Chronicle Map</span>
+        <a className="profile-case-link" href="https://github.com/Enixes/TailCache" target="_blank" rel="noreferrer">Benchmarks →</a>
       </article>
 
       <article className="profile-mini-chit profile-brief-chit profile-animate">
         <span className="board-pin pin-yellow" aria-hidden="true" />
-        <small>Brief / operating principle</small>
-        <strong>Make the failure path boring.</strong>
-        <span>Measure first. Isolate state. Design recovery before the pager goes off.</span>
+        <small>Research</small>
+        <strong>Springer · ~100 citations</strong>
+        <span>ML optimisation applied to chest X-ray classification in Cognitive Computation.</span>
       </article>
 
       <div className="profile-signal profile-animate">
-        <strong>Current signal</strong>
-        <span>distributed systems → performance → agentic AI → whatever looks difficult next</span>
+        <strong>Open source</strong>
+        <span>TailCache · Chronicle Map issue #533 work · Astra Skills</span>
       </div>
 
       <article className="profile-mini-chit profile-offclock-chit profile-animate">
         <span className="board-pin pin-green" aria-hidden="true" />
-        <small>Off-clock</small>
-        <strong>Football + side quests</strong>
-        <span>Travel, reading, games, and building things that probably did not need to exist.</span>
+        <small>Field notes / life</small>
+        <strong>Systems + off the clock</strong>
+        <span>Writing on systems and AI; football, books, anime, and games.</span>
       </article>
 
-      <span className="profile-pencil profile-pencil-one">benchmark the claim →</span>
-      <span className="profile-pencil profile-pencil-two">live systems &gt; slideware</span>
-      <span className="profile-pencil profile-pencil-three">keep one weird project alive</span>
-      <p className="profile-live-footnote">This board changes when the work changes.</p>
+      <span className="profile-pencil profile-pencil-one">20× throughput →</span>
+      <span className="profile-pencil profile-pencil-two">90% downtime ↓</span>
+      <span className="profile-pencil profile-pencil-three">p99: measure the tail →</span>
+      <p className="profile-live-footnote">Production evidence first. Everything else earns its pin.</p>
     </div>,
     target,
   ) : null;
