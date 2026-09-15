@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HeroPreview } from "@/components/HeroPreview";
+import { ResumeDownloadButton } from "@/components/ResumeDownloadButton";
 import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
 import { WorkExperienceStory } from "@/components/WorkExperienceStory";
 import { LifeBoardPortal } from "@/components/LifeBoardPortal";
@@ -24,6 +25,7 @@ export default function Home() {
   return (
     <>
       <HeroPreview />
+      <ResumeDownloadButton />
       <BoardZoomBridge />
       <ProfileLiveBoardAnimations />
       <ProfileLiveBoardPortal />
