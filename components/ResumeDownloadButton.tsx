@@ -19,7 +19,7 @@ const RESUME_PARTS = [
 const styles = `
 .preview-status.preview-status-cycle {
   position: relative;
-  min-width: 205px;
+  min-width: 206px;
   height: 34px;
   justify-content: flex-start;
   gap: 10px;
@@ -32,111 +32,129 @@ const styles = `
   cursor: pointer;
   transition: border-color .18s ease, background-color .18s ease, color .18s ease, transform .18s ease;
 }
-.preview-status.preview-status-cycle::after {
-  content: "";
-  position: absolute;
-  right: 8px;
-  bottom: 5px;
-  left: 29px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(238,230,216,.28), transparent);
-  opacity: 0;
-  transform: translateX(-115%);
-}
-.preview-status.preview-status-cycle:hover,
-.preview-status.preview-status-cycle:focus-visible {
-  border-color: rgba(238,230,216,.42);
-  background: rgba(238,229,213,.09);
-  color: #fff9ef;
-  transform: translateY(-1px);
-}
-.preview-status.preview-status-cycle:hover::after,
-.preview-status.preview-status-cycle:focus-visible::after {
-  opacity: 1;
-  animation: resume-status-scan 1.05s ease-in-out infinite;
-}
-.resume-status-light {
+
+/* Important: HeroPreview has a global .preview-status > span rule that turns every direct span
+   into a status dot. Keep exactly one direct child span here; text lives inside a div. */
+.preview-status.preview-status-cycle > .resume-status-light {
   width: 8px;
   height: 8px;
   flex: 0 0 auto;
   border-radius: 50%;
   background: #81cc66;
-  box-shadow: inset -1px -1px 2px rgba(0,0,0,.5), 0 0 0 0 rgba(129,204,102,.28);
-  animation: resume-status-pulse 2.7s ease-in-out infinite;
+  box-shadow: inset -1px -1px 2px rgba(0,0,0,.5);
   transition: background-color .2s ease, box-shadow .2s ease;
+  animation: resume-status-pulse 2.8s ease-in-out infinite;
 }
-.preview-status-cycle[data-mode="resume"] .resume-status-light {
+
+.preview-status-cycle[data-mode="resume"] > .resume-status-light {
   background: #d7aa3a;
-  box-shadow: inset -1px -1px 2px rgba(0,0,0,.48), 0 0 0 0 rgba(215,170,58,.24);
 }
-.preview-status-cycle:hover .resume-status-light,
-.preview-status-cycle:focus-visible .resume-status-light,
-.preview-status-cycle[data-downloading="true"] .resume-status-light {
+
+.preview-status-cycle:hover > .resume-status-light,
+.preview-status-cycle:focus-visible > .resume-status-light,
+.preview-status-cycle[data-downloading="true"] > .resume-status-light {
   background: #d84138;
   animation: none;
-  box-shadow: inset -1px -1px 2px rgba(0,0,0,.48), 0 0 0 3px rgba(216,65,56,.13);
+  box-shadow: inset -1px -1px 2px rgba(0,0,0,.48), 0 0 0 3px rgba(216,65,56,.12);
 }
+
 .resume-status-copy {
   position: relative;
   display: grid;
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   align-items: center;
   white-space: nowrap;
 }
+
 .resume-status-copy > span {
   grid-area: 1 / 1;
-  transition: opacity .22s ease, transform .24s cubic-bezier(.2,.75,.2,1);
-}
-.resume-status-available,
-.resume-status-ready,
-.resume-status-hover,
-.resume-status-preparing {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   opacity: 0;
-  transform: translateY(7px);
+  transform: translateY(6px);
+  transition: opacity .2s ease, transform .24s cubic-bezier(.2,.75,.2,1);
 }
+
 .preview-status-cycle[data-mode="available"] .resume-status-available,
 .preview-status-cycle[data-mode="resume"] .resume-status-ready {
   opacity: 1;
   transform: translateY(0);
 }
+
 .preview-status-cycle:hover .resume-status-copy > span,
-.preview-status-cycle:focus-visible .resume-status-copy > span {
+.preview-status-cycle:focus-visible .resume-status-copy > span,
+.preview-status-cycle[data-downloading="true"] .resume-status-copy > span {
   opacity: 0;
-  transform: translateY(-7px);
+  transform: translateY(-6px);
 }
+
 .preview-status-cycle:hover .resume-status-hover,
 .preview-status-cycle:focus-visible .resume-status-hover {
   opacity: 1;
   transform: translateY(0);
 }
-.preview-status-cycle[data-downloading="true"] .resume-status-copy > span {
-  opacity: 0;
-  transform: translateY(-7px);
-}
+
 .preview-status-cycle[data-downloading="true"] .resume-status-preparing {
   opacity: 1;
   transform: translateY(0);
 }
+
 .resume-status-glyph {
+  flex: 0 0 auto;
   color: #c9bda9;
-  font-size: 10px;
+  font: 700 10px/1 var(--mono);
   transition: transform .18s ease, color .18s ease;
 }
+
+.preview-status.preview-status-cycle:hover,
+.preview-status.preview-status-cycle:focus-visible {
+  border-color: rgba(238,230,216,.38);
+  background: rgba(238,229,213,.08);
+  color: #fff9ef;
+  transform: translateY(-1px);
+}
+
 .preview-status-cycle:hover .resume-status-glyph,
 .preview-status-cycle:focus-visible .resume-status-glyph {
   color: #f1d270;
   transform: translateY(1px);
 }
+
+.preview-status-cycle::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 5px;
+  left: 30px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(238,230,216,.26), transparent);
+  opacity: 0;
+  transform: translateX(-110%);
+}
+
+.preview-status-cycle:hover::after,
+.preview-status-cycle:focus-visible::after {
+  opacity: 1;
+  animation: resume-status-scan 1.15s ease-in-out infinite;
+}
+
 .resume-mobile-link { display: none; }
+
 @keyframes resume-status-pulse {
-  0%, 70%, 100% { box-shadow: inset -1px -1px 2px rgba(0,0,0,.5), 0 0 0 0 rgba(129,204,102,.28); }
-  82% { box-shadow: inset -1px -1px 2px rgba(0,0,0,.5), 0 0 0 4px rgba(129,204,102,0); }
+  0%, 72%, 100% { box-shadow: inset -1px -1px 2px rgba(0,0,0,.5), 0 0 0 0 rgba(129,204,102,.24); }
+  84% { box-shadow: inset -1px -1px 2px rgba(0,0,0,.5), 0 0 0 4px rgba(129,204,102,0); }
 }
+
 @keyframes resume-status-scan {
-  from { transform: translateX(-115%); }
-  to { transform: translateX(115%); }
+  from { transform: translateX(-110%); }
+  to { transform: translateX(110%); }
 }
+
 @media (max-width: 900px) {
   .resume-mobile-link {
     display: inline-flex;
@@ -153,12 +171,14 @@ const styles = `
     color: #25221e !important;
   }
 }
+
 @media (max-width: 520px) {
   .resume-mobile-link { padding-inline: 6px !important; }
   .resume-mobile-long { display: none; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .resume-status-light,
+  .preview-status-cycle > .resume-status-light,
   .preview-status-cycle::after { animation: none !important; }
   .resume-status-copy > span,
   .preview-status-cycle,
@@ -206,6 +226,7 @@ export function ResumeDownloadButton() {
 
     const originalHtml = status.innerHTML;
     const originalHref = status.getAttribute("href");
+    const originalAria = status.getAttribute("aria-label");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     status.classList.add("preview-status-cycle");
@@ -215,19 +236,18 @@ export function ResumeDownloadButton() {
     status.dataset.downloading = "false";
     status.innerHTML = `
       <span class="resume-status-light" aria-hidden="true"></span>
-      <span class="resume-status-copy" aria-hidden="true">
+      <div class="resume-status-copy" aria-hidden="true">
         <span class="resume-status-available">Available for hard problems</span>
         <span class="resume-status-ready">Resume ready · 1 page</span>
         <span class="resume-status-hover">Download resume</span>
         <span class="resume-status-preparing">Preparing PDF…</span>
-      </span>
-      <span class="resume-status-glyph" aria-hidden="true">↓</span>
+      </div>
+      <b class="resume-status-glyph" aria-hidden="true">↓</b>
     `;
 
-    let hovered = false;
-    const setHovered = (value: boolean) => { hovered = value; };
+    let activeInteraction = false;
     const cycle = () => {
-      if (hovered || status.dataset.downloading === "true") return;
+      if (activeInteraction || status.dataset.downloading === "true") return;
       status.dataset.mode = status.dataset.mode === "available" ? "resume" : "available";
     };
     const timer = reducedMotion.matches ? null : window.setInterval(cycle, 3600);
@@ -236,8 +256,9 @@ export function ResumeDownloadButton() {
       event.preventDefault();
       void triggerResumeDownload(status);
     };
-    const onEnter = () => setHovered(true);
-    const onLeave = () => setHovered(false);
+    const onEnter = () => { activeInteraction = true; };
+    const onLeave = () => { activeInteraction = false; };
+
     status.addEventListener("click", onClick);
     status.addEventListener("mouseenter", onEnter);
     status.addEventListener("mouseleave", onLeave);
@@ -267,7 +288,8 @@ export function ResumeDownloadButton() {
       status.innerHTML = originalHtml;
       if (originalHref) status.setAttribute("href", originalHref);
       else status.removeAttribute("href");
-      status.removeAttribute("aria-label");
+      if (originalAria) status.setAttribute("aria-label", originalAria);
+      else status.removeAttribute("aria-label");
       delete status.dataset.mode;
       delete status.dataset.downloading;
       mobile.removeEventListener("click", onMobileClick);
