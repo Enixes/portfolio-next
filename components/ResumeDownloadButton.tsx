@@ -3,11 +3,17 @@
 import { useEffect } from "react";
 
 const RESUME_PARTS = [
-  "/resume/asu-singh-0.b64",
-  "/resume/asu-singh-1.b64",
-  "/resume/asu-singh-2.b64",
-  "/resume/asu-singh-3.b64",
-  "/resume/asu-singh-4.b64",
+  "/resume/v2/part-00.b64",
+  "/resume/v2/part-01.b64",
+  "/resume/v2/part-02.b64",
+  "/resume/v2/part-03.b64",
+  "/resume/v2/part-04.b64",
+  "/resume/v2/part-05.b64",
+  "/resume/v2/part-06.b64",
+  "/resume/v2/part-07.b64",
+  "/resume/v2/part-08.b64",
+  "/resume/v2/part-09.b64",
+  "/resume/v2/part-10.b64",
 ] as const;
 
 const styles = `
