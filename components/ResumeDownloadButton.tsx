@@ -33,8 +33,8 @@ const styles = `
   transition: border-color .18s ease, background-color .18s ease, color .18s ease, transform .18s ease;
 }
 
-/* Important: HeroPreview has a global .preview-status > span rule that turns every direct span
-   into a status dot. Keep exactly one direct child span here; text lives inside a div. */
+/* HeroPreview has a global .preview-status > span rule that renders direct spans as dots.
+   Keep exactly one direct span here: the real signal light. */
 .preview-status.preview-status-cycle > .resume-status-light {
   width: 8px;
   height: 8px;
@@ -46,9 +46,7 @@ const styles = `
   animation: resume-status-pulse 2.8s ease-in-out infinite;
 }
 
-.preview-status-cycle[data-mode="resume"] > .resume-status-light {
-  background: #d7aa3a;
-}
+.preview-status-cycle[data-mode="resume"] > .resume-status-light { background: #d7aa3a; }
 
 .preview-status-cycle:hover > .resume-status-light,
 .preview-status-cycle:focus-visible > .resume-status-light,
@@ -144,6 +142,7 @@ const styles = `
 }
 
 .resume-mobile-link { display: none; }
+.resume-mobile-short { display: none; }
 
 @keyframes resume-status-pulse {
   0%, 72%, 100% { box-shadow: inset -1px -1px 2px rgba(0,0,0,.5), 0 0 0 0 rgba(129,204,102,.24); }
@@ -175,6 +174,7 @@ const styles = `
 @media (max-width: 520px) {
   .resume-mobile-link { padding-inline: 6px !important; }
   .resume-mobile-long { display: none; }
+  .resume-mobile-short { display: inline; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -269,7 +269,7 @@ export function ResumeDownloadButton() {
     mobile.className = "resume-mobile-link";
     mobile.href = "#resume";
     mobile.setAttribute("aria-label", "Download Asu Singh resume as a PDF");
-    mobile.innerHTML = `<span class="resume-mobile-long">Resume</span><span aria-hidden="true">↓</span>`;
+    mobile.innerHTML = `<span class="resume-mobile-long">Resume</span><span class="resume-mobile-short">CV</span><span aria-hidden="true">↓</span>`;
     const onMobileClick = (event: Event) => {
       event.preventDefault();
       void triggerResumeDownload(mobile);
