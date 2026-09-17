@@ -90,13 +90,13 @@ const styles = `
   transform: translateY(-6px);
 }
 
-.preview-status-cycle:hover .resume-status-hover,
-.preview-status-cycle:focus-visible .resume-status-hover {
+.preview-status-cycle:not([data-downloading="true"]):hover .resume-status-copy > .resume-status-hover,
+.preview-status-cycle:not([data-downloading="true"]):focus-visible .resume-status-copy > .resume-status-hover {
   opacity: 1;
   transform: translateY(0);
 }
 
-.preview-status-cycle[data-downloading="true"] .resume-status-preparing {
+.preview-status-cycle[data-downloading="true"] .resume-status-copy > .resume-status-preparing {
   opacity: 1;
   transform: translateY(0);
 }
