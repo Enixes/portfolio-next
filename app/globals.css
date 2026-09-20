@@ -521,20 +521,71 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   --tilt: -2.2deg;
 }
 
-.system-map {
-  bottom: 9%;
-  left: 6.5%;
-  width: 24%;
-  padding: clamp(13px,1.65vw,22px);
-  --tilt: 1.3deg;
-}
 .paper-tape { position: absolute; top: -12px; left: 32%; width: 38%; height: 24px; background: rgba(217,200,149,.68); rotate: -3deg; }
-.system-map p { margin: 0 0 12px; font: 700 clamp(8px,.9vw,13px)/1.3 var(--hand); }
-.system-map small { display: block; margin-top: 9px; color: #326986; font: clamp(7px,.7vw,10px)/1 var(--mono); }
-.map-symbols { display: flex; align-items: center; gap: 7px; }
-.map-symbols i { width: clamp(20px,2.8vw,40px); aspect-ratio: 1; border: 3px solid #316f8c; border-radius: 50%; }
-.map-symbols i:last-of-type { border-radius: 3px; }
-.map-symbols b { color: #aa2d27; font: clamp(14px,1.8vw,25px)/1 var(--hand); }
+
+.research-proof {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: clamp(11px,1.35vw,18px);
+  border: 1px solid rgba(43,79,92,.16);
+  background:
+    linear-gradient(102deg, rgba(104,165,78,.08), transparent 38%),
+    #fffef8;
+  --tilt: -1.4deg;
+}
+.research-proof > p {
+  margin: 0;
+  color: #58686d;
+  font: 700 clamp(6px,.58vw,8px)/1 var(--mono);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.research-proof > strong {
+  position: relative;
+  width: max-content;
+  color: #9e2c26;
+  font: 700 clamp(17px,1.8vw,26px)/.95 var(--hand);
+}
+.research-proof > strong::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  bottom: -5px;
+  left: -7px;
+  border-bottom: 3px solid #2d7591;
+  border-radius: 50%;
+  opacity: .68;
+  transform: rotate(-2deg) scaleX(.18);
+  transform-origin: left;
+  transition: transform .28s cubic-bezier(.2,.72,.22,1);
+}
+.research-proof:hover > strong::after,
+.research-proof:focus-within > strong::after { transform: rotate(-2deg) scaleX(1); }
+.research-journal {
+  color: #324b54;
+  font: 700 clamp(7px,.66vw,9px)/1.2 var(--mono);
+}
+.research-title {
+  color: #646b6d;
+  font: clamp(6px,.56vw,8px)/1.35 var(--mono);
+}
+.research-mark {
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  color: #4f873c;
+  font: 700 clamp(18px,1.6vw,24px)/1 var(--hand);
+  font-style: normal;
+  rotate: -9deg;
+  opacity: .72;
+  transition: transform .22s ease, opacity .22s ease;
+}
+.research-proof:hover .research-mark,
+.research-proof:focus-within .research-mark {
+  opacity: 1;
+  transform: translate(2px,-2px);
+}
 
 .war-note {
   display: grid;
@@ -1527,10 +1578,7 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   .failure-note { top: 46%; right: auto; bottom: auto; left: 65.5%; width: 9.5%; }
   .partition-note { top: 46%; right: auto; left: 76%; width: 9.5%; }
   .latency-ring { display: none; }
-  .system-map { top: 59.5%; right: auto; bottom: auto; left: 59%; width: 15%; padding: 10px; }
-  .system-map p { margin-bottom: 6px; }
-  .system-map small { margin-top: 5px; }
-  .map-symbols i { width: 28px; }
+  .research-proof { top: 59%; right: auto; bottom: auto; left: 49.5%; width: 13%; min-height: 12%; }
   .blueprint-arrow { display: none; }
   .diagram-fanout { top: 55%; left: 4%; width: 27%; height: 13%; }
   .diagram-circuit { top: 60%; right: 2.5%; width: 13%; height: 12%; }
@@ -1569,7 +1617,9 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   .metric-recovery { top: 59%; min-height: 7%; }
   .idempotency-note { top: 59%; left: 36%; display: grid; width: 28%; min-height: 7%; }
   .autoscale-note { top: 59%; right: 4%; left: auto; display: grid; width: 28%; min-height: 7%; }
-  .system-map,
+  .research-proof { top: 66.2%; right: auto; bottom: auto; left: 4%; width: 43%; min-height: 4.8%; padding: 10px 12px; }
+  .research-proof > strong { font-size: clamp(17px,3.2vw,22px); }
+  .research-proof .research-title { display: none; }
   .latency-ring { display: none; }
 
   .blog-note { top: 72%; right: auto; bottom: auto; left: 4%; width: 43%; min-height: 8%; }
@@ -1625,7 +1675,11 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   .idempotency-note { left: 36%; }
   .autoscale-note { right: 4%; left: auto; }
   .latency-ring { top: 65%; }
-  .system-map { top: 65%; }
+  .research-proof { top: 68.5%; left: 4%; width: 92%; min-height: 4.2%; grid-template-columns: auto 1fr; column-gap: 12px; }
+  .research-proof > p { grid-column: 1; }
+  .research-proof > strong { grid-column: 1; }
+  .research-proof .research-journal { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .research-proof .research-title { display: none; }
 
   .blog-note { top: 74%; right: auto; bottom: auto; left: 4%; width: 43%; min-height: 7%; }
   .blog-topic-one { top: 74%; right: 4%; left: auto; width: 45%; min-height: 3.5%; }
@@ -1705,9 +1759,9 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 
 /* Continue the existing bottom-row board rhythm: notes, life, then contact. */
 .board-zone-contact { color: #9a6a24; }
-/* Keep the Contact label readable while letting the paper sit as the physical foreground object. */
-.board-zone-contact > span { top: 0; left: 4%; }
-.board-zone-contact .zone-mark-contact { top: -8px; left: 1%; }
+/* Keep Contact navigation attached to its own cluster instead of shared systems whitespace. */
+.board-zone-contact > span { top: 0; left: 52%; }
+.board-zone-contact .zone-mark-contact { top: -8px; left: 48%; }
 .zone-mark-contact { width: clamp(118px, 62%, 165px); }
 .zone-mark-contact path { animation-delay: 10.8s; }
 .zone-mark-contact path + path { animation-delay: 10.98s; }
@@ -1748,7 +1802,7 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 
 @media (max-width: 900px) {
   .board-zone-contact > span { top: -18%; left: 4%; }
-  .board-zone-contact .zone-mark-contact { top: -30px; width: 120px; height: 44px; }
+  .board-zone-contact .zone-mark-contact { top: -30px; left: 1%; width: 120px; height: 44px; }
   .failure-note { bottom: auto; }
   .board-zone-blog { top: 70%; height: 9%; }
   .board-zone-life { top: 80%; left: 2%; width: 96%; height: 9%; }
@@ -1786,8 +1840,8 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (max-width: 760px) {
-  .board-zone-contact > span { top: -8%; }
-  .board-zone-contact .zone-mark-contact { top: -20px; width: 120px; height: 44px; }
+  .board-zone-contact > span { top: -8%; left: 4%; }
+  .board-zone-contact .zone-mark-contact { top: -20px; left: 1%; width: 120px; height: 44px; }
   .partition-note,.idempotency-note,.autoscale-note { top: 63%; }
 }
 
