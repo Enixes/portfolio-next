@@ -1705,9 +1705,9 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 
 /* Continue the existing bottom-row board rhythm: notes, life, then contact. */
 .board-zone-contact { color: #9a6a24; }
-/* Keep the Contact section label/marker clear of the paper chit below it. */
-.board-zone-contact > span { top: -4%; left: 4%; }
-.board-zone-contact .zone-mark-contact { top: -22px; left: 1%; }
+/* Keep the Contact label readable while letting the paper sit as the physical foreground object. */
+.board-zone-contact > span { top: 0; left: 4%; }
+.board-zone-contact .zone-mark-contact { top: -8px; left: 1%; }
 .zone-mark-contact { width: clamp(118px, 62%, 165px); }
 .zone-mark-contact path { animation-delay: 10.8s; }
 .zone-mark-contact path + path { animation-delay: 10.98s; }
@@ -1733,7 +1733,7 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   .life-note { top: 76%; right: auto; bottom: auto; left: 37%; width: 16%; min-height: 17%; }
   .life-topic-one { top: 76%; right: auto; left: 54%; width: 10%; }
   .life-topic-two { top: 87%; right: auto; left: 54%; width: 10%; }
-  .contact-note { top: 76%; right: auto; left: 70%; width: 16%; min-height: 17%; }
+  .contact-note { top: 78%; right: auto; left: 69%; width: 16%; min-height: 17%; }
   .contact-topic-one { top: 76%; right: auto; left: 87%; width: 10%; }
   .contact-topic-two { top: 87%; right: auto; left: 87%; width: 10%; }
   .blog-topic-one,.blog-topic-two,.life-topic-one,.life-topic-two,.contact-topic-one,.contact-topic-two {
@@ -1747,8 +1747,8 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (max-width: 900px) {
-  .board-zone-contact > span { top: -10%; left: 4%; }
-  .board-zone-contact .zone-mark-contact { top: -24px; }
+  .board-zone-contact > span { top: -18%; left: 4%; }
+  .board-zone-contact .zone-mark-contact { top: -30px; width: 120px; height: 44px; }
   .failure-note { bottom: auto; }
   .board-zone-blog { top: 70%; height: 9%; }
   .board-zone-life { top: 80%; left: 2%; width: 96%; height: 9%; }
@@ -1767,8 +1767,6 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (min-width: 761px) and (max-width: 900px) {
-  .board-zone-contact > span { top: -18%; }
-  .board-zone-contact .zone-mark-contact { top: -52px; }
   .profile-photo { top: 2.5%; }
   .metric-throughput { top: 48%; right: auto; left: 4%; width: 28%; min-height: 8%; }
   .api-gateway-note { top: 48%; right: auto; left: 36%; width: 28%; min-height: 8%; }
@@ -1779,8 +1777,8 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (max-width: 760px) {
-  .board-zone-contact > span { top: -16%; }
-  .board-zone-contact .zone-mark-contact { top: -28px; }
+  .board-zone-contact > span { top: -8%; }
+  .board-zone-contact .zone-mark-contact { top: -20px; width: 120px; height: 44px; }
   .partition-note,.idempotency-note,.autoscale-note { top: 63%; }
 }
 
