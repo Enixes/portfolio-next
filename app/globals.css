@@ -1767,6 +1767,7 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (min-width: 761px) and (max-width: 900px) {
+  .evidence-board { min-height: 1000px; }
   .profile-photo { top: 2.5%; }
   .metric-throughput { top: 48%; right: auto; left: 4%; width: 28%; min-height: 8%; }
   .api-gateway-note { top: 48%; right: auto; left: 36%; width: 28%; min-height: 8%; }
@@ -1774,6 +1775,14 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   .failure-note { top: 58%; right: auto; left: 4%; width: 28%; min-height: 7%; }
   .idempotency-note { top: 58%; left: 36%; width: 28%; min-height: 7%; }
   .autoscale-note { top: 58%; right: 4%; left: auto; width: 28%; min-height: 7%; }
+
+  /* The stacked board is tall enough here to separate Life and Contact cleanly.
+     The paper already labels Contact, so drop the redundant zone scribble at this breakpoint. */
+  .board-zone-contact > span,
+  .board-zone-contact .zone-mark-contact { display: none; }
+  .contact-note { top: 91%; }
+  .contact-topic-one { top: 91%; right: auto; left: 50%; width: 20%; }
+  .contact-topic-two { top: 91%; right: 4%; left: auto; width: 24%; }
 }
 
 @media (max-width: 760px) {
