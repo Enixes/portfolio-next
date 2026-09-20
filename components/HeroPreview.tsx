@@ -218,13 +218,13 @@ export function HeroPreview() {
                 <span>downtime removed</span>
               </article>
 
-              <article className="board-paper system-map">
+              <article className="board-paper research-proof">
                 <span className="paper-tape" aria-hidden="true" />
-                <p>XTP → measure → improve</p>
-                <div className="map-symbols" aria-hidden="true">
-                  <i /><b>→</b><i /><b>→</b><i />
-                </div>
-                <small>throughput · cache · recovery</small>
+                <p>Research / published</p>
+                <strong>~100 citations</strong>
+                <span className="research-journal">Springer · Cognitive Computation</span>
+                <span className="research-title">COVID-19 infection detection · ML optimisation</span>
+                <i className="research-mark" aria-hidden="true">↗</i>
               </article>
 
               <aside className="war-note api-gateway-note">
