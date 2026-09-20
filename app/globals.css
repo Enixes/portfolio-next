@@ -1840,8 +1840,13 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (max-width: 760px) {
+  .evidence-board { min-height: 1700px; }
+  .board-zone-contact { top: 88.5%; }
   .board-zone-contact > span { top: -8%; left: 4%; }
   .board-zone-contact .zone-mark-contact { top: -20px; left: 1%; width: 120px; height: 44px; }
+  .contact-note { top: 90.5%; }
+  .contact-topic-one { top: 90.5%; }
+  .contact-topic-two { top: 94.2%; }
   .partition-note,.idempotency-note,.autoscale-note { top: 63%; }
 }
 
