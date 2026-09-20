@@ -1675,7 +1675,7 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
   .idempotency-note { left: 36%; }
   .autoscale-note { right: 4%; left: auto; }
   .latency-ring { top: 65%; }
-  .research-proof { top: 68.5%; left: 4%; width: 92%; min-height: 4.2%; grid-template-columns: auto 1fr; column-gap: 12px; }
+  .research-proof { top: 69.2%; left: 4%; width: 92%; min-height: 4.2%; grid-template-columns: auto 1fr; column-gap: 12px; }
   .research-proof > p { grid-column: 1; }
   .research-proof > strong { grid-column: 1; }
   .research-proof .research-journal { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
@@ -1759,9 +1759,9 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 
 /* Continue the existing bottom-row board rhythm: notes, life, then contact. */
 .board-zone-contact { color: #9a6a24; }
-/* Keep Contact navigation attached to its own cluster instead of shared systems whitespace. */
-.board-zone-contact > span { top: 0; left: 52%; }
-.board-zone-contact .zone-mark-contact { top: -8px; left: 48%; }
+/* The removed systems-map chit leaves this edge clear for the Contact navigation mark. */
+.board-zone-contact > span { top: 0; left: 4%; }
+.board-zone-contact .zone-mark-contact { top: -8px; left: 1%; }
 .zone-mark-contact { width: clamp(118px, 62%, 165px); }
 .zone-mark-contact path { animation-delay: 10.8s; }
 .zone-mark-contact path + path { animation-delay: 10.98s; }
