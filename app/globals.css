@@ -1705,6 +1705,9 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 
 /* Continue the existing bottom-row board rhythm: notes, life, then contact. */
 .board-zone-contact { color: #9a6a24; }
+/* Keep the Contact section label/marker clear of the paper chit below it. */
+.board-zone-contact > span { top: -4%; left: 4%; }
+.board-zone-contact .zone-mark-contact { top: -18px; left: 1%; }
 .zone-mark-contact { width: clamp(118px, 62%, 165px); }
 .zone-mark-contact path { animation-delay: 10.8s; }
 .zone-mark-contact path + path { animation-delay: 10.98s; }
@@ -1744,6 +1747,8 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (max-width: 900px) {
+  .board-zone-contact > span { top: -10%; left: 4%; }
+  .board-zone-contact .zone-mark-contact { top: -24px; }
   .failure-note { bottom: auto; }
   .board-zone-blog { top: 70%; height: 9%; }
   .board-zone-life { top: 80%; left: 2%; width: 96%; height: 9%; }
@@ -1772,6 +1777,8 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 }
 
 @media (max-width: 760px) {
+  .board-zone-contact > span { top: -16%; }
+  .board-zone-contact .zone-mark-contact { top: -28px; }
   .partition-note,.idempotency-note,.autoscale-note { top: 63%; }
 }
 
