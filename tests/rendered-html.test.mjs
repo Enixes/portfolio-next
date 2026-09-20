@@ -90,7 +90,7 @@ test("keeps the intro and scroll story lightweight, explorable, and motion-safe"
   assert.doesNotMatch(component, /framer-motion|@react-three|<canvas/i);
   assert.match(controller, /requestAnimationFrame/);
   assert.match(controller, /addEventListener\("scroll", handleScroll, \{ passive: true \}\)/);
-  assert.match(controller, /SECTION_STOP_LOCAL_PROGRESS/);
+  assert.match(controller, /boardGeometry/);
   assert.match(controller, /\.board-zone-contact/);
   assert.match(controller, /window\.history\.pushState/);
   assert.match(controller, /window\.history\.replaceState/);

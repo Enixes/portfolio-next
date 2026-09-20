@@ -103,6 +103,7 @@ export function HeroPreview() {
         </a>
 
         <nav className="preview-nav">
+          <a className="preview-overview" href="#top">Board</a>
           <a href="#work-board">Work</a>
           <a href="#blog-board">Blog</a>
           <a href="#life-board">Life</a>
@@ -433,7 +434,7 @@ export function HeroPreview() {
             key={`${section.id}-stop`}
             className="board-story-stop"
             data-board-stop
-            style={{ top: `${((index + .42) / sectionBoards.length) * 100}%` }}
+            style={{ top: `calc((100% - 100svh) * ${index / (sectionBoards.length - 1)})` }}
             aria-hidden="true"
           />
         ))}

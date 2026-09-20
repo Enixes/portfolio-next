@@ -2,10 +2,7 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
-
-export const SECTION_STOP_LOCAL_PROGRESS = 0.72;
-export const BOARD_NAVIGATE_EVENT = "board:navigate";
-export type BoardNavigation = { index: number; immediate?: boolean; reset?: boolean };
+import { BOARD_NAVIGATE_EVENT, boardGeometry, boardSurface, type BoardNavigation } from "./board-navigation";
 
 const zoomTargetSelectors = [
   ".board-zone-profile", ".board-zone-work", ".board-zone-blog",
@@ -24,12 +21,15 @@ export function BoardScrollController() {
     const root = document.documentElement;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const originalScrollBehavior = root.style.scrollBehavior;
+    // This controller animates the window. Native smooth fragment scrolling
+    // would otherwise start a second animation after a Back/hash event.
+    root.style.scrollBehavior = "auto";
     const sectionIds = stops.map((stop) => stop.id);
     const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))
       .filter((link) => sectionIds.includes(link.hash.slice(1)));
     const dots = Array.from(story.querySelectorAll<HTMLElement>("[data-board-dot]"));
     let storyTop = 0;
-    let travel = 1;
+    let step = 1;
     let frame = 0;
     let initialFrame = 0;
     let tween: gsap.core.Tween | gsap.core.Timeline | null = null;
@@ -38,13 +38,13 @@ export function BoardScrollController() {
     let lastIndex = 0;
 
     const measure = () => {
-      storyTop = window.scrollY + story.getBoundingClientRect().top;
-      travel = Math.max(1, story.offsetHeight - window.innerHeight);
+      const geometry = boardGeometry(story, panels.length);
+      storyTop = geometry.top;
+      step = geometry.step;
     };
-    const sectionTop = (index: number) =>
-      storyTop + travel * ((index + SECTION_STOP_LOCAL_PROGRESS) / panels.length);
+    const sectionTop = (index: number) => storyTop + step * index;
     const currentIndex = () => Math.max(0, Math.min(panels.length - 1,
-      Math.round((window.scrollY - storyTop) / travel * panels.length - SECTION_STOP_LOCAL_PROGRESS)));
+      Math.round((window.scrollY - storyTop) / step)));
 
     function render() {
       frame = 0;
@@ -60,10 +60,8 @@ export function BoardScrollController() {
         if (active) link.setAttribute("aria-current", "location");
         else link.removeAttribute("aria-current");
       });
-      // Preserve the requested hash while the camera crosses intermediate stops.
-      if (inside && !tween && window.location.hash !== "#" + activeId) {
-        window.history.replaceState(null, "", "#" + activeId);
-      }
+      // Commit hashes only when navigation finishes. A queued scroll frame can
+      // run after Back changes the URL but before popstate restores its board.
       lastIndex = index;
     }
     const handleScroll = () => {
@@ -76,13 +74,13 @@ export function BoardScrollController() {
       overlay = null;
       delete root.dataset.boardNavigating;
       delete root.dataset.boardDestination;
-      root.style.scrollBehavior = originalScrollBehavior;
     };
 
     const navigate = (options: BoardNavigation) => {
       const index = options.index;
-      if (!Number.isInteger(index) || index < 0 || index >= panels.length) return;
+      if (!Number.isInteger(index) || index < -1 || index >= panels.length) return;
       measure();
+      const toHero = index === -1;
       const fromHero = window.scrollY < storyTop - 4;
       const previous = currentIndex();
       clearNavigation();
@@ -90,12 +88,11 @@ export function BoardScrollController() {
       root.dataset.boardNavigating = "true";
       root.dataset.boardDestination = String(index);
       root.style.scrollBehavior = "auto";
-      const surface = panels[index].querySelector<HTMLElement>(
-        ".work-cv-board,.life-live-board,.blog-live-board,.profile-live-mounted",
-      ) ?? panels[index].querySelector<HTMLElement>(".story-board-surface");
-      if (surface) surface.scrollTop = options.reset || fromHero || index >= previous
-        ? 0 : Math.max(0, surface.scrollHeight - surface.clientHeight);
-      const destination = sectionTop(index);
+      // Every board arrives at its header in either direction. Internal reading
+      // belongs to the gesture navigator, never to the camera's transition.
+      const surface = toHero ? null : boardSurface(panels[index]);
+      if (surface && (options.reset || index !== previous || fromHero)) surface.scrollTop = 0;
+      const destination = toHero ? 0 : sectionTop(index);
       const finish = () => {
         tween = null;
         window.scrollTo(0, destination);
@@ -103,9 +100,9 @@ export function BoardScrollController() {
         overlay = null;
         delete root.dataset.boardNavigating;
         delete root.dataset.boardDestination;
-        root.style.scrollBehavior = originalScrollBehavior;
-        window.history.replaceState(null, "", "#" + sectionIds[index]);
-        panels[options.index]?.focus({ preventScroll: true });
+        window.history.replaceState(null, "", toHero ? "#top" : "#" + sectionIds[index]);
+        if (toHero) document.querySelector<HTMLElement>(".preview-brand")?.focus({ preventScroll: true });
+        else panels[options.index]?.focus({ preventScroll: true });
         render();
       };
       if (options.immediate || reducedMotion.matches) {
@@ -115,7 +112,7 @@ export function BoardScrollController() {
 
       const source = document.querySelector<HTMLElement>(".preview-hero .evidence-board-frame");
       const sourceRect = source?.getBoundingClientRect();
-      if (fromHero && source && sourceRect && sourceRect.bottom > 0) {
+      if ((fromHero || toHero) && source && sourceRect) {
         // Freeze the actual hero, then zoom into the chosen chit. An opaque
         // white veil masks the scroll jump while the detail board takes over.
         overlay = document.createElement("div");
@@ -129,21 +126,31 @@ export function BoardScrollController() {
         clone.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
         overlay.append(veil, clone);
         document.body.append(overlay);
-        gsap.set(clone, { position: "absolute", left: sourceRect.left, top: sourceRect.top,
+        const sourceTop = sourceRect.top + (toHero ? window.scrollY : 0);
+        gsap.set(clone, { position: "absolute", left: sourceRect.left, top: sourceTop,
           width: sourceRect.width, height: sourceRect.height, margin: 0, x: 0, y: 0 });
-        const rect = clone.querySelector<HTMLElement>(zoomTargetSelectors[index])?.getBoundingClientRect() ?? sourceRect;
+        const rect = clone.querySelector<HTMLElement>(zoomTargetSelectors[toHero ? previous : index])?.getBoundingClientRect() ?? sourceRect;
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
-        gsap.set(clone, { transformOrigin: (x - sourceRect.left) + "px " + (y - sourceRect.top) + "px" });
+        gsap.set(clone, { transformOrigin: (x - sourceRect.left) + "px " + (y - sourceTop) + "px" });
         const timeline = gsap.timeline({ onComplete: finish });
         tween = timeline;
-        timeline.to(veil, { opacity: 1, duration: .42, ease: "power2.inOut" }, 0)
-          .to(clone, { x: window.innerWidth / 2 - x, y: window.innerHeight / 2 - y,
-            scale: Math.max(3.4, window.innerWidth / Math.max(1, rect.width) * 1.3),
-            duration: 1.1, ease: "power3.inOut" }, 0)
-          .call(() => window.scrollTo(0, destination), [], .52)
-          .to(clone, { opacity: 0, duration: .4, ease: "power2.in" }, .7)
-          .to(veil, { opacity: 0, duration: .38, ease: "power2.out" }, .97);
+        const zoom = { x: window.innerWidth / 2 - x, y: window.innerHeight / 2 - y,
+          scale: Math.max(3.4, window.innerWidth / Math.max(1, rect.width) * 1.3) };
+        if (toHero) {
+          gsap.set(clone, { ...zoom, opacity: 0 });
+          timeline.to(veil, { opacity: 1, duration: .24 }, 0)
+            .to(clone, { opacity: 1, duration: .3 }, .08)
+            .call(() => window.scrollTo(0, destination), [], .25)
+            .to(clone, { x: 0, y: 0, scale: 1, duration: 1.05, ease: "power3.inOut" }, .12)
+            .to(veil, { opacity: 0, duration: .4 }, .8);
+        } else {
+          timeline.to(veil, { opacity: 1, duration: .42, ease: "power2.inOut" }, 0)
+            .to(clone, { ...zoom, duration: 1.1, ease: "power3.inOut" }, 0)
+            .call(() => window.scrollTo(0, destination), [], .52)
+            .to(clone, { opacity: 0, duration: .4, ease: "power2.in" }, .7)
+            .to(veil, { opacity: 0, duration: .38, ease: "power2.out" }, .97);
+        }
       } else {
         const state = { y: window.scrollY };
         tween = gsap.to(state, { y: destination, duration: 1.22, ease: "power3.inOut",
@@ -158,7 +165,11 @@ export function BoardScrollController() {
       if (!link) return;
       const index = sectionIds.indexOf(link.hash.slice(1));
       if (index < 0) {
-        if (link.hash === "#top") clearNavigation();
+        if (link.hash === "#top") {
+          event.preventDefault();
+          if (window.location.hash !== "#top") window.history.pushState(null, "", "#top");
+          navigate({ index: -1 });
+        }
         return;
       }
       event.preventDefault();
@@ -169,8 +180,7 @@ export function BoardScrollController() {
       const index = sectionIds.indexOf(window.location.hash.slice(1));
       if (index >= 0) navigate({ index, immediate: true, reset: true });
       else {
-        clearNavigation();
-        if (!window.location.hash || window.location.hash === "#top") window.scrollTo(0, 0);
+        if (!window.location.hash || window.location.hash === "#top") navigate({ index: -1, immediate: true });
       }
     };
     const onResize = () => {
@@ -183,6 +193,8 @@ export function BoardScrollController() {
     };
 
     measure();
+    const originalRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
     initialFrame = window.requestAnimationFrame(() => {
       const index = sectionIds.indexOf(window.location.hash.slice(1));
       if (index >= 0) navigate({ index, immediate: true, reset: true });
@@ -196,6 +208,8 @@ export function BoardScrollController() {
     window.addEventListener("resize", onResize);
     return () => {
       clearNavigation();
+      window.history.scrollRestoration = originalRestoration;
+      root.style.scrollBehavior = originalScrollBehavior;
       window.cancelAnimationFrame(frame);
       window.cancelAnimationFrame(initialFrame);
       document.removeEventListener("click", onClick);

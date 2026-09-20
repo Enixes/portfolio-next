@@ -2,13 +2,12 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
-import { BOARD_NAVIGATE_EVENT, SECTION_STOP_LOCAL_PROGRESS } from "./BoardScrollController";
+import { BOARD_NAVIGATE_EVENT, boardGeometry, boardSurface, readingDestination } from "./board-navigation";
 
 const styles = `
 /*
- * The outer story owns board-to-board motion. Systems is the one exception:
- * once zoomed in, the dossier gets a real internal viewport and owns vertical
- * movement until its top/bottom edge is reached.
+ * The outer story owns board-to-board motion. Each board keeps its own reading
+ * viewport until its edge is reached by a fresh gesture.
  */
 .work-cv-mounted {
   overflow: hidden !important;
@@ -101,23 +100,21 @@ export function BoardStoryAutoNavigator() {
     if (!story || !panels.length) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let storyTop = 0;
-    let travel = 1;
+    let step = 1;
     let lastWheelAt = -Infinity;
     let internalTween: gsap.core.Tween | null = null;
     let gesture: { startY: number; lastY: number; surface: HTMLElement | null;
       top: boolean; bottom: boolean; pointerId?: number } | null = null;
     const measure = () => {
-      storyTop = window.scrollY + story.getBoundingClientRect().top;
-      travel = Math.max(1, story.offsetHeight - window.innerHeight);
+      const geometry = boardGeometry(story, panels.length);
+      storyTop = geometry.top;
+      step = geometry.step;
     };
-    const sectionTop = (index: number) =>
-      storyTop + travel * ((index + SECTION_STOP_LOCAL_PROGRESS) / panels.length);
-    const position = () => (window.scrollY - storyTop) / travel * panels.length - SECTION_STOP_LOCAL_PROGRESS;
+    const sectionTop = (index: number) => storyTop + step * index;
+    const position = () => (window.scrollY - storyTop) / step;
     const indexNow = () => Math.max(0, Math.min(panels.length - 1, Math.round(position())));
     const busy = () => document.documentElement.dataset.boardNavigating === "true";
-    const surfaceFor = (index: number) => panels[index]?.querySelector<HTMLElement>(
-      ".work-cv-board,.life-live-board,.blog-live-board,.profile-live-mounted",
-    ) ?? panels[index]?.querySelector<HTMLElement>(".story-board-surface") ?? null;
+    const surfaceFor = (index: number) => boardSurface(panels[index]);
     const maximum = (surface: HTMLElement) => Math.max(0, surface.scrollHeight - surface.clientHeight);
     const canMove = (surface: HTMLElement, direction: number) => direction > 0
       ? surface.scrollTop < maximum(surface) - 3 : surface.scrollTop > 3;
@@ -131,28 +128,33 @@ export function BoardStoryAutoNavigator() {
       const contact = document.querySelector<HTMLElement>(".preview-hero .board-zone-contact");
       if (window.scrollY < storyTop && window.innerWidth <= 900 &&
           contact && contact.getBoundingClientRect().bottom > window.innerHeight * .75) return false;
-      return window.scrollY >= storyTop - window.innerHeight * .32 &&
-        window.scrollY <= sectionTop(panels.length - 1) + 16;
+      return window.scrollY <= sectionTop(panels.length - 1) + 16;
     };
     const route = (direction: number, fresh: boolean) => {
       if (!direction || (!busy() && !relevant())) return false;
       if (busy() || internalTween) return true;
+      if (window.scrollY < storyTop - 8) {
+        if (direction < 0) return false;
+        if (fresh) navigate(0);
+        return true;
+      }
       const index = indexNow();
       const surface = surfaceFor(index);
       const atStop = Math.abs(window.scrollY - sectionTop(index)) < 8;
       if (atStop && surface && canMove(surface, direction)) {
         if (fresh) {
-          const destination = Math.max(0, Math.min(maximum(surface),
-            surface.scrollTop + direction * Math.max(180, surface.clientHeight * .78)));
+          const destination = readingDestination(surface, direction);
           if (reducedMotion.matches) surface.scrollTop = destination;
           else internalTween = gsap.to(surface, { scrollTop: destination, duration: .58,
             ease: "power2.inOut", onComplete: () => { internalTween = null; } });
         }
         return true;
       }
-      // At outer boundaries every event is released, including momentum.
-      if ((direction < 0 && window.scrollY <= sectionTop(0) + 8) ||
-          (direction > 0 && window.scrollY >= sectionTop(panels.length - 1) - 8)) return false;
+      if (direction < 0 && window.scrollY <= sectionTop(0) + 8) {
+        if (fresh) navigate(-1);
+        return true;
+      }
+      if (direction > 0 && window.scrollY >= sectionTop(panels.length - 1) - 8) return false;
       const target = atStop ? index + direction :
         direction > 0 ? Math.ceil(position()) : Math.floor(position());
       if (fresh) navigate(Math.max(0, Math.min(panels.length - 1, target)));
@@ -179,7 +181,10 @@ export function BoardStoryAutoNavigator() {
     const beginGesture = (y: number, pointerId?: number) => {
       if (!relevant() && !busy()) return false;
       stopInternal();
-      const surface = surfaceFor(indexNow());
+      // A hero/between-board swipe has no internal reading surface yet.
+      // Otherwise a tall Profile falsely marks that entry gesture as mid-page.
+      const surface = Math.abs(window.scrollY - sectionTop(indexNow())) < 8
+        ? surfaceFor(indexNow()) : null;
       gesture = { startY: y, lastY: y, surface,
         top: !surface || !canMove(surface, -1), bottom: !surface || !canMove(surface, 1), pointerId };
       return true;
@@ -196,9 +201,8 @@ export function BoardStoryAutoNavigator() {
         surface.scrollTop = Math.max(0, Math.min(maximum(surface), surface.scrollTop + delta));
         return true;
       }
-      // Native outer-boundary touch movement must remain available.
-      if ((direction < 0 && window.scrollY <= sectionTop(0) + 8) ||
-          (direction > 0 && window.scrollY >= sectionTop(panels.length - 1) - 8)) return false;
+      if (direction < 0 && window.scrollY < storyTop - 8) return false;
+      if (direction > 0 && window.scrollY >= sectionTop(panels.length - 1) - 8) return false;
       return true;
     };
     const finishGesture = () => {

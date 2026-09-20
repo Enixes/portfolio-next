@@ -78,15 +78,15 @@ const styles = `
 }
 @media (max-width:760px){
  .profile-live-mounted { overflow-y:auto; }
- .profile-live-board { position:relative; min-height:1520px; overflow:hidden; }
+ .profile-live-board { position:relative; min-height:1600px; overflow:hidden; padding-bottom:70px; }
  .profile-live-board:after,.profile-thread { display:none; }
- .profile-live-header { top:28px; left:22px; width:78%; }
+ .profile-live-header { top:28px; left:22px; width:calc(100% - 44px); }
  .profile-live-header h2 { font-size:40px; }
  .profile-live-header p { font-size:8px; }
- .profile-live-photo { top:34px; right:18px; width:84px; min-width:0; padding:5px 5px 20px; }
+ .profile-live-photo { top:186px; right:22px; width:76px; min-width:0; padding:5px 5px 20px; }
  .profile-status-stamp { top:180px; left:22px; }
  .profile-now-card,.profile-project-card,.profile-mini-chit,.profile-signal { position:relative; top:auto!important; right:auto!important; bottom:auto!important; left:auto!important; width:auto!important; min-width:0; margin-left:20px; margin-right:20px; }
- .profile-now-card { margin-top:240px; padding:20px; min-height:0; }
+ .profile-now-card { margin-top:308px; padding:20px; min-height:0; }
  .profile-project-card { margin-top:18px; padding:16px; }
  .profile-project-tailcache { margin-left:42px; }
  .profile-project-agent { margin-right:38px; }
