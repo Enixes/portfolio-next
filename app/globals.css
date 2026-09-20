@@ -1691,3 +1691,72 @@ a { color: inherit; text-decoration: none; }
     transition-duration: .01ms !important;
   }
 }
+
+/* Continue the existing bottom-row board rhythm: notes, life, then contact. */
+.board-zone-contact { color: #9a6a24; }
+.zone-mark-contact { width: clamp(118px, 62%, 165px); }
+.zone-mark-contact path { animation-delay: 10.8s; }
+.zone-mark-contact path + path { animation-delay: 10.98s; }
+.contact-note {
+  display: grid;
+  align-content: center;
+  padding: clamp(11px,1.4vw,19px);
+  border: 1px solid rgba(113,83,34,.2);
+  background: #fff2cd;
+  --tilt: 1.7deg;
+}
+.contact-note > p { margin: 0 0 10px; color: #79643d; font: 700 clamp(7px,.68vw,9px)/1 var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+.contact-note strong { font: 700 clamp(14px,1.6vw,23px)/1.05 var(--hand); }
+.contact-note > span:last-child { margin-top: 9px; color: #5c5648; font: clamp(7px,.72vw,10px)/1.35 var(--mono); }
+.contact-topic-one,.contact-topic-two { z-index: 4; background: #f7e6b8; }
+
+@media (min-width: 901px) {
+  .board-zone-life { right: auto; bottom: 3%; left: 45%; width: 30%; height: 28%; }
+  .board-zone-contact { right: 2%; bottom: 3%; left: auto; width: 23%; height: 28%; }
+  .life-note { top: 76%; right: auto; bottom: auto; left: 47%; width: 15%; min-height: 17%; }
+  .life-topic-one { top: 76%; right: auto; left: 63%; width: 11%; }
+  .life-topic-two { top: 87%; right: auto; left: 63%; width: 11%; }
+  .contact-note { top: 76%; right: auto; left: 76%; width: 13%; min-height: 17%; }
+  .contact-topic-one { top: 76%; right: 2.5%; width: 8.5%; }
+  .contact-topic-two { top: 87%; right: 2.5%; width: 8.5%; }
+}
+
+@media (max-width: 900px) {
+  .failure-note { bottom: auto; }
+  .board-zone-life { top: 81%; left: 2%; width: 96%; height: 9%; }
+  .board-zone-contact { top: 90.5%; right: auto; left: 2%; width: 96%; height: 9%; }
+  .life-note { top: 83.5%; right: auto; bottom: auto; left: 4%; width: 43%; min-height: 6.5%; padding: 10px; }
+  .life-topic-one { top: 83.5%; right: 4%; left: auto; width: 45%; min-height: 3%; }
+  .life-topic-two { top: 87.5%; right: 4%; left: auto; display: grid; width: 45%; min-height: 3%; }
+  .contact-note { top: 93%; right: auto; left: 4%; width: 43%; min-height: 6%; padding: 9px; }
+  .contact-note > p { margin-bottom: 6px; }
+  .contact-note > span:last-child { margin-top: 6px; }
+  .contact-topic-one { top: 93%; right: 4%; width: 45%; min-height: 2.5%; }
+  .contact-topic-two { top: 96.5%; right: 4%; width: 45%; min-height: 2.5%; }
+}
+
+@media (min-width: 761px) and (max-width: 900px) {
+  .profile-photo { top: 2.5%; }
+  .metric-throughput { top: 48%; right: auto; left: 4%; width: 28%; min-height: 8%; }
+  .api-gateway-note { top: 48%; right: auto; left: 36%; width: 28%; min-height: 8%; }
+  .metric-recovery { top: 48%; right: 4%; left: auto; width: 28%; min-height: 8%; }
+  .failure-note { top: 58%; right: auto; left: 4%; width: 28%; min-height: 7%; }
+  .idempotency-note { top: 58%; left: 36%; width: 28%; min-height: 7%; }
+  .autoscale-note { top: 58%; right: 4%; left: auto; width: 28%; min-height: 7%; }
+}
+
+@media (max-width: 760px) {
+  .partition-note,.idempotency-note,.autoscale-note { top: 63%; }
+  .board-zone-life { top: 82%; height: 9%; }
+  .board-zone-contact { top: 91%; height: 8%; }
+  .life-note { top: 84.5%; min-height: 6%; }
+  .life-topic-one { top: 84.5%; min-height: 2.8%; }
+  .life-topic-two { top: 88.2%; min-height: 2.8%; }
+  .contact-note { top: 94%; min-height: 5%; }
+  .contact-topic-one { top: 94%; min-height: 2.2%; }
+  .contact-topic-two { top: 97%; min-height: 2.2%; }
+}
+
+@media (max-width: 520px) {
+  .thesis-role { max-width: 100%; font-size: clamp(18px, 5.2vw, 23px); white-space: normal; }
+}

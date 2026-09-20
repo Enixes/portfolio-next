@@ -2,15 +2,7 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
-
-const SECTION_STOP_LOCAL_PROGRESS = 0.72;
-const BOARD_TRANSITION_DURATION = 1.8;
-const WORK_SCROLL_DURATION = 0.72;
-const WORK_SCROLL_STEP = 0.76;
-const LIFE_SCROLL_DURATION = 0.62;
-const LIFE_SCROLL_STEP = 0.82;
-const FRESH_GESTURE_GAP = 190;
-const EDGE_EPSILON = 3;
+import { BOARD_NAVIGATE_EVENT, SECTION_STOP_LOCAL_PROGRESS } from "./BoardScrollController";
 
 const styles = `
 /*
@@ -95,562 +87,189 @@ const styles = `
 }
 `;
 
+
 function isInteractiveTarget(target: EventTarget | null) {
   return target instanceof Element && Boolean(
     target.closest("a,button,input,textarea,select,summary,[contenteditable='true']"),
   );
 }
 
-function clamp(value: number, minimum: number, maximum: number) {
-  return Math.min(maximum, Math.max(minimum, value));
-}
-
 export function BoardStoryAutoNavigator() {
   useEffect(() => {
     const story = document.querySelector<HTMLElement>("[data-board-story]");
-    const panels = story
-      ? Array.from(story.querySelectorAll<HTMLElement>("[data-board-panel]"))
-      : [];
-    const stops = story
-      ? Array.from(story.querySelectorAll<HTMLElement>("[data-board-stop]"))
-      : [];
-
-    if (!story || panels.length === 0 || stops.length !== panels.length) return;
-
+    const panels = Array.from(story?.querySelectorAll<HTMLElement>("[data-board-panel]") ?? []);
+    if (!story || !panels.length) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-
     let storyTop = 0;
     let travel = 1;
-    let boardTween: gsap.core.Tween | null = null;
-    let workTween: gsap.core.Tween | null = null;
-    let lifeTween: gsap.core.Tween | null = null;
     let lastWheelAt = -Infinity;
-    let touchStartY: number | null = null;
-    let touchLastY: number | null = null;
-    let touchStartedInWork = false;
-    let touchMovedWork = false;
-    let touchEdgeTravel = 0;
-    let touchStartedInLife = false;
-    let touchLifeStartedAtEdge = false;
-    let touchLifeEdgeTravel = 0;
-
-    let dragPointerId: number | null = null;
-    let dragLastY = 0;
-    let dragSurface: HTMLElement | null = null;
-    let dragEdgeTravel = 0;
-    let dragStartedInLife = false;
-    let dragLifeStartedAtEdge = false;
-    let dragLifeEdgeTravel = 0;
-
+    let internalTween: gsap.core.Tween | null = null;
+    let gesture: { startY: number; lastY: number; surface: HTMLElement | null;
+      top: boolean; bottom: boolean; pointerId?: number } | null = null;
     const measure = () => {
-      const bounds = story.getBoundingClientRect();
-      storyTop = window.scrollY + bounds.top;
+      storyTop = window.scrollY + story.getBoundingClientRect().top;
       travel = Math.max(1, story.offsetHeight - window.innerHeight);
     };
-
     const sectionTop = (index: number) =>
       storyTop + travel * ((index + SECTION_STOP_LOCAL_PROGRESS) / panels.length);
-
-    const nearestIndex = () => {
-      let winner = 0;
-      let distance = Number.POSITIVE_INFINITY;
-      panels.forEach((_, index) => {
-        const nextDistance = Math.abs(window.scrollY - sectionTop(index));
-        if (nextDistance < distance) {
-          winner = index;
-          distance = nextDistance;
+    const position = () => (window.scrollY - storyTop) / travel * panels.length - SECTION_STOP_LOCAL_PROGRESS;
+    const indexNow = () => Math.max(0, Math.min(panels.length - 1, Math.round(position())));
+    const busy = () => document.documentElement.dataset.boardNavigating === "true";
+    const surfaceFor = (index: number) => panels[index]?.querySelector<HTMLElement>(
+      ".work-cv-board,.life-live-board,.blog-live-board,.profile-live-mounted",
+    ) ?? panels[index]?.querySelector<HTMLElement>(".story-board-surface") ?? null;
+    const maximum = (surface: HTMLElement) => Math.max(0, surface.scrollHeight - surface.clientHeight);
+    const canMove = (surface: HTMLElement, direction: number) => direction > 0
+      ? surface.scrollTop < maximum(surface) - 3 : surface.scrollTop > 3;
+    const stopInternal = () => { internalTween?.kill(); internalTween = null; };
+    const navigate = (index: number) => {
+      stopInternal();
+      window.dispatchEvent(new CustomEvent(BOARD_NAVIGATE_EVENT, { detail: { index } }));
+    };
+    const relevant = () => {
+      // On tall mobile heroes, do not steal scrolling before the Contact chit.
+      const contact = document.querySelector<HTMLElement>(".preview-hero .board-zone-contact");
+      if (window.scrollY < storyTop && window.innerWidth <= 900 &&
+          contact && contact.getBoundingClientRect().bottom > window.innerHeight * .75) return false;
+      return window.scrollY >= storyTop - window.innerHeight * .32 &&
+        window.scrollY <= sectionTop(panels.length - 1) + 16;
+    };
+    const route = (direction: number, fresh: boolean) => {
+      if (!direction || (!busy() && !relevant())) return false;
+      if (busy() || internalTween) return true;
+      const index = indexNow();
+      const surface = surfaceFor(index);
+      const atStop = Math.abs(window.scrollY - sectionTop(index)) < 8;
+      if (atStop && surface && canMove(surface, direction)) {
+        if (fresh) {
+          const destination = Math.max(0, Math.min(maximum(surface),
+            surface.scrollTop + direction * Math.max(180, surface.clientHeight * .78)));
+          if (reducedMotion.matches) surface.scrollTop = destination;
+          else internalTween = gsap.to(surface, { scrollTop: destination, duration: .58,
+            ease: "power2.inOut", onComplete: () => { internalTween = null; } });
         }
-      });
-      return winner;
-    };
-
-    const workBoard = () => panels[1]?.querySelector<HTMLElement>(".work-cv-board") ?? null;
-
-    // Blog shares Life's internal scrolling and fresh-edge gesture state.
-    const lifeBoard = (index = nearestIndex()) =>
-      panels[index]?.querySelector<HTMLElement>(".life-live-board, .blog-live-board") ?? null;
-
-    const workMaxScroll = (board: HTMLElement) =>
-      Math.max(0, board.scrollHeight - board.clientHeight);
-
-    const workCanMove = (board: HTMLElement, direction: number) => {
-      const maximum = workMaxScroll(board);
-      if (maximum <= EDGE_EPSILON) return false;
-      return direction > 0
-        ? board.scrollTop < maximum - EDGE_EPSILON
-        : board.scrollTop > EDGE_EPSILON;
-    };
-
-    const workAtEdge = (board: HTMLElement, direction: number) =>
-      !workCanMove(board, direction);
-
-    const lifeMaxScroll = (board: HTMLElement) =>
-      Math.max(0, board.scrollHeight - board.clientHeight);
-
-    const lifeCanMove = (board: HTMLElement, direction: number) => {
-      const maximum = lifeMaxScroll(board);
-      if (maximum <= EDGE_EPSILON) return false;
-      return direction > 0
-        ? board.scrollTop < maximum - EDGE_EPSILON
-        : board.scrollTop > EDGE_EPSILON;
-    };
-
-    const lifeAtEdge = (board: HTMLElement, direction: number) =>
-      !lifeCanMove(board, direction);
-
-    const storyIsRelevant = () => {
-      const y = window.scrollY;
-      return y >= storyTop - window.innerHeight * 0.9 &&
-        y <= storyTop + travel + window.innerHeight * 0.45;
-    };
-
-    const restoreScrollBehavior = () => {
-      document.documentElement.style.scrollBehavior = originalScrollBehavior;
-    };
-
-    const transitionTo = (targetIndex: number) => {
-      const index = clamp(targetIndex, 0, panels.length - 1);
-      const destination = sectionTop(index);
-
-      boardTween?.kill();
-      workTween?.kill();
-      lifeTween?.kill();
-      workTween = null;
-      lifeTween = null;
-      document.documentElement.style.scrollBehavior = "auto";
-
-      if (reducedMotion.matches) {
-        window.scrollTo(0, destination);
-        restoreScrollBehavior();
-        panels[index]?.focus({ preventScroll: true });
-        return;
-      }
-
-      const state = { y: window.scrollY };
-      boardTween = gsap.to(state, {
-        y: destination,
-        duration: BOARD_TRANSITION_DURATION,
-        ease: "power3.inOut",
-        overwrite: true,
-        onUpdate: () => window.scrollTo(0, state.y),
-        onComplete: () => {
-          boardTween = null;
-          restoreScrollBehavior();
-          panels[index]?.focus({ preventScroll: true });
-        },
-        onInterrupt: () => {
-          boardTween = null;
-          restoreScrollBehavior();
-        },
-      });
-    };
-
-    const stepWork = (board: HTMLElement, direction: number) => {
-      const maximum = workMaxScroll(board);
-      const step = Math.max(220, board.clientHeight * WORK_SCROLL_STEP);
-      const destination = clamp(
-        board.scrollTop + direction * step,
-        0,
-        maximum,
-      );
-
-      workTween?.kill();
-      if (reducedMotion.matches) {
-        board.scrollTop = destination;
-        return;
-      }
-
-      workTween = gsap.to(board, {
-        scrollTop: destination,
-        duration: WORK_SCROLL_DURATION,
-        ease: "power2.inOut",
-        overwrite: true,
-        onComplete: () => { workTween = null; },
-        onInterrupt: () => { workTween = null; },
-      });
-    };
-
-    const stepLife = (board: HTMLElement, direction: number) => {
-      const maximum = lifeMaxScroll(board);
-      const step = Math.max(180, board.clientHeight * LIFE_SCROLL_STEP);
-      const destination = clamp(
-        board.scrollTop + direction * step,
-        0,
-        maximum,
-      );
-
-      lifeTween?.kill();
-      if (reducedMotion.matches) {
-        board.scrollTop = destination;
-        return;
-      }
-
-      lifeTween = gsap.to(board, {
-        scrollTop: destination,
-        duration: LIFE_SCROLL_DURATION,
-        ease: "power2.inOut",
-        overwrite: true,
-        onComplete: () => { lifeTween = null; },
-        onInterrupt: () => { lifeTween = null; },
-      });
-    };
-
-    const triggerDirection = (direction: number, freshGesture: boolean) => {
-      if (!direction || !storyIsRelevant()) return false;
-      if (boardTween || workTween || lifeTween) return true;
-
-      measure();
-
-      if (window.scrollY < storyTop - 4) {
-        if (direction > 0 && freshGesture) transitionTo(0);
-        return direction > 0;
-      }
-
-      if (window.scrollY > storyTop + travel + 4) {
-        if (direction < 0 && freshGesture) transitionTo(panels.length - 1);
-        return direction < 0;
-      }
-
-      const index = nearestIndex();
-      const stopDistance = Math.abs(window.scrollY - sectionTop(index));
-
-      // If native scrolling or a history restore left us between stops, the
-      // first gesture finishes the nearest intended board before doing anything else.
-      if (stopDistance > 8) {
-        if (freshGesture) transitionTo(index);
         return true;
       }
-
-      if (index === 1) {
-        const board = workBoard();
-        if (board && workMaxScroll(board) > EDGE_EPSILON) {
-          if (workCanMove(board, direction)) {
-            if (freshGesture) stepWork(board, direction);
-            return true;
-          }
-
-          // Reaching the dossier edge never carries momentum into another board.
-          // A fresh gesture at the edge is required to leave Systems.
-          if (!freshGesture) return true;
-        }
-      }
-
-      if (index === 2 || index === 3) {
-        const board = lifeBoard(index);
-        if (board && lifeMaxScroll(board) > EDGE_EPSILON) {
-          if (lifeCanMove(board, direction)) {
-            if (freshGesture) stepLife(board, direction);
-            return true;
-          }
-
-          // A wheel stream that reaches the internal edge is consumed. The next
-          // fresh wheel gesture is the one allowed to leave the board.
-          if (!freshGesture) return true;
-        }
-      }
-
-      const next = index + direction;
-      if (next < 0 || next >= panels.length) return false;
-      if (freshGesture) transitionTo(next);
+      // At outer boundaries every event is released, including momentum.
+      if ((direction < 0 && window.scrollY <= sectionTop(0) + 8) ||
+          (direction > 0 && window.scrollY >= sectionTop(panels.length - 1) - 8)) return false;
+      const target = atStop ? index + direction :
+        direction > 0 ? Math.ceil(position()) : Math.floor(position());
+      if (fresh) navigate(Math.max(0, Math.min(panels.length - 1, target)));
       return true;
     };
-
-    // Field Notes keeps native keyboard scrolling until the requested edge.
-    const isInsideBlog = (target: EventTarget | null) =>
-      target instanceof Element && Boolean(target.closest(".blog-live-board"));
-
     const onWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-      if (!storyIsRelevant()) return;
-
       const now = performance.now();
-      const freshGesture = now - lastWheelAt > FRESH_GESTURE_GAP;
+      const fresh = now - lastWheelAt > 190;
       lastWheelAt = now;
-      const direction = Math.sign(event.deltaY);
-      if (!direction) return;
-
-      const handled = triggerDirection(direction, freshGesture);
-      if (!handled) return;
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
+      if (route(Math.sign(event.deltaY), fresh)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
     };
-
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
-      const target = event.target as HTMLElement | null;
-      if (target?.matches("input,textarea,select,[contenteditable='true']")) return;
-
-      let direction = 0;
-      switch (event.key) {
-        case "ArrowDown":
-        case "PageDown": direction = 1; break;
-        case "ArrowUp":
-        case "PageUp": direction = -1; break;
-        case " ": direction = event.shiftKey ? -1 : 1; break;
-        default: return;
-      }
-
-      const insideBlog = isInsideBlog(event.target);
-      if (insideBlog) {
-        const board = lifeBoard(2);
-        if (board && lifeCanMove(board, direction)) return;
-      }
-
-      if (!triggerDirection(direction, !insideBlog || !event.repeat)) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
+          isInteractiveTarget(event.target)) return;
+      const direction = event.key === "ArrowDown" || event.key === "PageDown" ? 1
+        : event.key === "ArrowUp" || event.key === "PageUp" ? -1
+        : event.key === " " ? event.shiftKey ? -1 : 1 : 0;
+      if (route(direction, !event.repeat)) { event.preventDefault(); event.stopImmediatePropagation(); }
     };
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (!storyIsRelevant() || event.touches.length !== 1) return;
-      touchStartY = event.touches[0].clientY;
-      touchLastY = touchStartY;
-      touchMovedWork = false;
-      touchEdgeTravel = 0;
-      touchStartedInLife = false;
-      touchLifeStartedAtEdge = false;
-      touchLifeEdgeTravel = 0;
-      const board = workBoard();
-      touchStartedInWork = Boolean(
-        board && event.target instanceof Node && board.contains(event.target),
-      );
-      const life = lifeBoard();
-      touchStartedInLife = Boolean(
-        life && event.target instanceof Node && life.contains(event.target),
-      );
-      if (touchStartedInLife && life) {
-        const maximum = lifeMaxScroll(life);
-        touchLifeStartedAtEdge = maximum > EDGE_EPSILON &&
-          (life.scrollTop <= EDGE_EPSILON || life.scrollTop >= maximum - EDGE_EPSILON);
-      }
+    const beginGesture = (y: number, pointerId?: number) => {
+      if (!relevant() && !busy()) return false;
+      stopInternal();
+      const surface = surfaceFor(indexNow());
+      gesture = { startY: y, lastY: y, surface,
+        top: !surface || !canMove(surface, -1), bottom: !surface || !canMove(surface, 1), pointerId };
+      return true;
     };
-
-    const onTouchMove = (event: TouchEvent) => {
-      if (touchStartY === null || touchLastY === null || event.touches.length !== 1) return;
-      if (!storyIsRelevant()) return;
-
-      const currentY = event.touches[0].clientY;
-      const delta = touchLastY - currentY;
-      touchLastY = currentY;
-
-      const index = nearestIndex();
-      const board = index === 1 ? workBoard() : null;
-      if (touchStartedInWork && board) {
-        const direction = Math.sign(delta);
-        const before = board.scrollTop;
-        const maximum = workMaxScroll(board);
-        board.scrollTop = clamp(before + delta, 0, maximum);
-        const consumed = board.scrollTop - before;
-
-        if (Math.abs(consumed) > 0.1) touchMovedWork = true;
-        if (direction && Math.abs(consumed) < Math.abs(delta) * 0.35 && workAtEdge(board, direction)) {
-          touchEdgeTravel += delta - consumed;
-        } else if (Math.abs(consumed) > 0.1) {
-          touchEdgeTravel = 0;
-        }
-
-        event.preventDefault();
-        return;
-      }
-
-      const life = index === 2 || index === 3 ? lifeBoard(index) : null;
-      if (touchStartedInLife && life) {
-        const direction = Math.sign(delta);
-        const before = life.scrollTop;
-        const maximum = lifeMaxScroll(life);
-        life.scrollTop = clamp(before + delta, 0, maximum);
-        const consumed = life.scrollTop - before;
-
-        if (direction && Math.abs(consumed) < Math.abs(delta) * 0.35 && lifeAtEdge(life, direction)) {
-          if (touchLifeStartedAtEdge) touchLifeEdgeTravel += delta - consumed;
-        } else if (Math.abs(consumed) > 0.1) {
-          touchLifeEdgeTravel = 0;
-          touchLifeStartedAtEdge = false;
-        }
-
-        event.preventDefault();
-        return;
-      }
-
-      // Outside the Systems dossier, prevent partial native story scrolling.
-      event.preventDefault();
-    };
-
-    const onTouchEnd = () => {
-      if (touchStartY === null || touchLastY === null) {
-        touchStartY = null;
-        touchLastY = null;
-        touchStartedInWork = false;
-        touchMovedWork = false;
-        touchEdgeTravel = 0;
-        touchStartedInLife = false;
-        touchLifeStartedAtEdge = false;
-        touchLifeEdgeTravel = 0;
-        return;
-      }
-
-      if (touchStartedInWork && (touchMovedWork || Math.abs(touchEdgeTravel) > 0.1)) {
-        if (Math.abs(touchEdgeTravel) >= 58) {
-          const direction = Math.sign(touchEdgeTravel);
-          const index = nearestIndex();
-          const next = index + direction;
-          if (next >= 0 && next < panels.length) transitionTo(next);
-        }
-      } else if (touchStartedInLife) {
-        if (touchLifeStartedAtEdge && Math.abs(touchLifeEdgeTravel) >= 58) {
-          const direction = Math.sign(touchLifeEdgeTravel);
-          const index = nearestIndex();
-          const next = index + direction;
-          if (next >= 0 && next < panels.length) transitionTo(next);
-        }
-      } else {
-        const distance = touchStartY - touchLastY;
-        const direction = Math.abs(distance) >= 44 ? Math.sign(distance) : 0;
-        if (direction) triggerDirection(direction, true);
-      }
-
-      touchStartY = null;
-      touchLastY = null;
-      touchStartedInWork = false;
-      touchMovedWork = false;
-      touchEdgeTravel = 0;
-      touchStartedInLife = false;
-      touchLifeStartedAtEdge = false;
-      touchLifeEdgeTravel = 0;
-    };
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (event.pointerType === "touch" || event.button !== 0 || isInteractiveTarget(event.target)) return;
-      const index = nearestIndex();
-      if ((index !== 1 && index !== 2 && index !== 3) || Math.abs(window.scrollY - sectionTop(index)) > 12) return;
-      const board = index === 1 ? workBoard() : lifeBoard(index);
-      if (!board || !(event.target instanceof Node) || !board.contains(event.target)) return;
-
-      dragPointerId = event.pointerId;
-      dragLastY = event.clientY;
-      dragSurface = board;
-      dragEdgeTravel = 0;
-      dragStartedInLife = index === 2 || index === 3;
-      dragLifeEdgeTravel = 0;
-      dragLifeStartedAtEdge = false;
-      if (dragStartedInLife) {
-        const maximum = lifeMaxScroll(board);
-        dragLifeStartedAtEdge = maximum > EDGE_EPSILON &&
-          (board.scrollTop <= EDGE_EPSILON || board.scrollTop >= maximum - EDGE_EPSILON);
-      }
-      board.classList.add("is-dragging");
-      board.setPointerCapture?.(event.pointerId);
-      event.preventDefault();
-    };
-
-    const onPointerMove = (event: PointerEvent) => {
-      if (dragPointerId !== event.pointerId || !dragSurface) return;
-      const delta = dragLastY - event.clientY;
-      dragLastY = event.clientY;
+    const moveGesture = (y: number) => {
+      if (!gesture) return false;
+      const delta = gesture.lastY - y;
+      gesture.lastY = y;
+      if (busy()) return true;
       const direction = Math.sign(delta);
-      const before = dragSurface.scrollTop;
-      const maximum = dragStartedInLife ? lifeMaxScroll(dragSurface) : workMaxScroll(dragSurface);
-      dragSurface.scrollTop = clamp(before + delta, 0, maximum);
-      const consumed = dragSurface.scrollTop - before;
-
-      if (dragStartedInLife) {
-        if (Math.abs(consumed) < Math.abs(delta) * 0.35 && lifeAtEdge(dragSurface, direction)) {
-          if (dragLifeStartedAtEdge) dragLifeEdgeTravel += delta - consumed;
-        } else if (Math.abs(consumed) > 0.1) {
-          dragLifeEdgeTravel = 0;
-          dragLifeStartedAtEdge = false;
-        }
-      } else {
-        if (Math.abs(consumed) < Math.abs(delta) * 0.35 && workAtEdge(dragSurface, direction)) {
-          dragEdgeTravel += delta - consumed;
-        } else {
-          dragEdgeTravel = 0;
-        }
+      const surface = gesture.surface;
+      if (surface && canMove(surface, direction) &&
+          Math.abs(window.scrollY - sectionTop(indexNow())) < 8) {
+        surface.scrollTop = Math.max(0, Math.min(maximum(surface), surface.scrollTop + delta));
+        return true;
       }
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
+      // Native outer-boundary touch movement must remain available.
+      if ((direction < 0 && window.scrollY <= sectionTop(0) + 8) ||
+          (direction > 0 && window.scrollY >= sectionTop(panels.length - 1) - 8)) return false;
+      return true;
     };
-
-    const finishPointerDrag = (event?: PointerEvent) => {
-      if (!dragSurface) return;
-      const board = dragSurface;
-      const edgeTravel = dragEdgeTravel;
-      const lifeEdgeTravel = dragLifeEdgeTravel;
-      const startedInLife = dragStartedInLife;
-      const pointerId = dragPointerId;
-
-      board.classList.remove("is-dragging");
-      if (event && pointerId !== null && board.hasPointerCapture?.(pointerId)) {
-        board.releasePointerCapture?.(pointerId);
+    const finishGesture = () => {
+      if (!gesture) return;
+      const { startY, lastY, top, bottom, surface, pointerId } = gesture;
+      gesture = null;
+      surface?.classList.remove("is-dragging");
+      if (surface && pointerId !== undefined && surface.hasPointerCapture?.(pointerId)) {
+        surface.releasePointerCapture(pointerId);
       }
-
-      dragPointerId = null;
-      dragSurface = null;
-      dragEdgeTravel = 0;
-      dragStartedInLife = false;
-      dragLifeStartedAtEdge = false;
-      dragLifeEdgeTravel = 0;
-
-      if (startedInLife && Math.abs(lifeEdgeTravel) >= 72) {
-        const direction = Math.sign(lifeEdgeTravel);
-        const index = nearestIndex();
-        const next = index + direction;
-        if (next >= 0 && next < panels.length) transitionTo(next);
-      } else if (!startedInLife && Math.abs(edgeTravel) >= 72) {
-        const direction = Math.sign(edgeTravel);
-        const index = nearestIndex();
-        const next = index + direction;
-        if (next >= 0 && next < panels.length) transitionTo(next);
+      const distance = startY - lastY;
+      const direction = Math.sign(distance);
+      // Scrolling content to an edge never carries the same gesture into a new
+      // board. A fresh swipe at that edge enters the next spatial stop.
+      if (Math.abs(distance) >= 48 && (direction > 0 ? bottom : top)) route(direction, true);
+    };
+    const onTouchStart = (event: TouchEvent) => {
+      gesture = null;
+      if (event.touches.length === 1) beginGesture(event.touches[0].clientY);
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches.length === 1 && moveGesture(event.touches[0].clientY)) event.preventDefault();
+    };
+    const cancelGesture = () => { gesture?.surface?.classList.remove("is-dragging"); gesture = null; };
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "touch" || event.button || isInteractiveTarget(event.target) || busy()) return;
+      const surface = surfaceFor(indexNow());
+      if (!surface || !(event.target instanceof Node) || !surface.contains(event.target)) return;
+      if (beginGesture(event.clientY, event.pointerId)) {
+        surface.classList.add("is-dragging");
+        surface.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
       }
     };
-
-    const onResize = () => {
-      boardTween?.kill();
-      workTween?.kill();
-      lifeTween?.kill();
-      boardTween = null;
-      workTween = null;
-      lifeTween = null;
-      restoreScrollBehavior();
-      measure();
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch" || gesture?.pointerId !== event.pointerId) return;
+      if (moveGesture(event.clientY)) event.preventDefault();
     };
-
+    const onPointerUp = (event: PointerEvent) => {
+      if (gesture?.pointerId === event.pointerId) finishGesture();
+    };
+    const onResize = () => { stopInternal(); cancelGesture(); measure(); };
+    measure();
     window.addEventListener("wheel", onWheel, { passive: false, capture: true });
     window.addEventListener("keydown", onKeyDown, { capture: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
     window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
+    window.addEventListener("touchend", finishGesture, { passive: true, capture: true });
+    window.addEventListener("touchcancel", cancelGesture, { passive: true, capture: true });
     window.addEventListener("pointerdown", onPointerDown, { capture: true });
     window.addEventListener("pointermove", onPointerMove, { passive: false, capture: true });
-    window.addEventListener("pointerup", finishPointerDrag, { capture: true });
-    window.addEventListener("pointercancel", finishPointerDrag, { capture: true });
-    window.addEventListener("resize", onResize, { passive: true });
-
-    measure();
-
+    window.addEventListener("pointerup", onPointerUp, { capture: true });
+    window.addEventListener("pointercancel", cancelGesture, { capture: true });
+    window.addEventListener(BOARD_NAVIGATE_EVENT, stopInternal);
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("wheel", onWheel, true);
       window.removeEventListener("keydown", onKeyDown, true);
       window.removeEventListener("touchstart", onTouchStart, true);
       window.removeEventListener("touchmove", onTouchMove, true);
-      window.removeEventListener("touchend", onTouchEnd, true);
-      window.removeEventListener("touchcancel", onTouchEnd, true);
+      window.removeEventListener("touchend", finishGesture, true);
+      window.removeEventListener("touchcancel", cancelGesture, true);
       window.removeEventListener("pointerdown", onPointerDown, true);
       window.removeEventListener("pointermove", onPointerMove, true);
-      window.removeEventListener("pointerup", finishPointerDrag, true);
-      window.removeEventListener("pointercancel", finishPointerDrag, true);
+      window.removeEventListener("pointerup", onPointerUp, true);
+      window.removeEventListener("pointercancel", cancelGesture, true);
+      window.removeEventListener(BOARD_NAVIGATE_EVENT, stopInternal);
       window.removeEventListener("resize", onResize);
-      boardTween?.kill();
-      workTween?.kill();
-      lifeTween?.kill();
-      dragSurface?.classList.remove("is-dragging");
-      restoreScrollBehavior();
+      stopInternal();
+      cancelGesture();
     };
   }, []);
-
   return <style dangerouslySetInnerHTML={{ __html: styles }} />;
 }

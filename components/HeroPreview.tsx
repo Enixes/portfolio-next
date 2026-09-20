@@ -128,7 +128,7 @@ export function HeroPreview() {
         <div className="evidence-board-wrap">
           <div className="evidence-board-frame">
             <div className="evidence-board">
-              <p className="board-index">Case board 01 · systems / writing / life</p>
+              <p className="board-index">Case board 01 · systems / writing / life / contact</p>
               <p className="board-date">Last mapped · 2026</p>
 
               <span className="note-spotlight spotlight-thesis" aria-hidden="true" />
@@ -162,15 +162,22 @@ export function HeroPreview() {
                 </svg>
                 <span>03 / Life</span>
               </a>
+              <a className="board-zone board-zone-contact" href="#contact-board" aria-label="Open the Contact board">
+                <svg className="zone-mark zone-mark-contact" viewBox="0 0 165 60" aria-hidden="true">
+                  <path pathLength={100} d="M14 13 C45 3 123 4 151 16 L155 47 C112 55 48 55 10 44 Z" />
+                  <path pathLength={100} d="M19 8 L153 51" />
+                </svg>
+                <span>04 / Contact</span>
+              </a>
 
               <article className="board-paper identity-file">
                 <span className="board-pin pin-blue" aria-hidden="true" />
-                <p className="paper-eyebrow">Subject / 01</p>
+                <p className="paper-eyebrow">Profile / skill preview</p>
                 <h2>Backend systems engineer</h2>
                 <ul>
-                  <li>Java + concurrency</li>
-                  <li>Production reliability</li>
-                  <li>Agentic AI systems</li>
+                  <li>Java · multithreading</li>
+                  <li>Kafka · PostgreSQL</li>
+                  <li>Agentic AI · JMH</li>
                 </ul>
                 <span className="sketch-arrow" aria-hidden="true">↘</span>
               </article>
@@ -212,81 +219,77 @@ export function HeroPreview() {
 
               <article className="board-paper system-map">
                 <span className="paper-tape" aria-hidden="true" />
-                <p>request → queue → worker → recovery</p>
+                <p>XTP → measure → improve</p>
                 <div className="map-symbols" aria-hidden="true">
                   <i /><b>→</b><i /><b>→</b><i />
                 </div>
-                <small>design for the failure path</small>
+                <small>throughput · cache · recovery</small>
               </article>
 
               <aside className="war-note api-gateway-note">
                 <span className="board-pin pin-yellow" aria-hidden="true" />
-                <strong>API gateway</strong>
-                <span>auth · quota · idempotency</span>
+                <strong>95% DB uplift</strong>
+                <span>historical-data cleanup</span>
               </aside>
 
               <aside className="war-note queue-depth-note">
                 <span className="board-pin pin-blue" aria-hidden="true" />
-                <strong>Backpressure</strong>
-                <span>pause consumers @ 80%</span>
+                <strong>30% faster triage</strong>
+                <span>Alazium · production logs</span>
               </aside>
 
               <aside className="war-note idempotency-note">
                 <span className="board-pin pin-yellow" aria-hidden="true" />
-                <strong>Idempotency keys</strong>
-                <span>edge dedupe · safe retry</span>
+                <strong>35% lower AWS cost</strong>
+                <span>parallel CI artifact cache</span>
               </aside>
 
               <aside className="war-note autoscale-note">
                 <span className="board-pin pin-blue" aria-hidden="true" />
-                <strong>Load shedding</strong>
-                <span>backpressure → scale</span>
+                <strong>40% faster CI</strong>
+                <span>parallel artifact cache</span>
               </aside>
 
               <aside className="war-note cache-note">
                 <span className="board-pin pin-green" aria-hidden="true" />
-                <strong>Off-heap cache</strong>
-                <span>warm-up → persist → recover</span>
+                <strong>50× workflows</strong>
+                <span>off-heap persistent cache</span>
               </aside>
 
               <aside className="war-note failure-note">
                 <span className="board-pin" aria-hidden="true" />
-                <strong>Failure path</strong>
-                <span>retry ×3 → DLQ → replay</span>
+                <strong>Java · Spring Boot</strong>
+                <span>backend / systems</span>
               </aside>
 
               <aside className="war-note partition-note">
                 <span className="board-pin pin-yellow" aria-hidden="true" />
-                <strong>Partition key</strong>
-                <span>account_id / ordered</span>
+                <strong>Kafka · IBM MQ</strong>
+                <span>data / messaging</span>
               </aside>
 
               <p className="latency-ring">
                 p99
-                <strong>&lt; 120 ms</strong>
+                <strong>JMH study</strong>
               </p>
 
               <article className="board-paper observability-card">
                 <span className="paper-tape" aria-hidden="true" />
-                <p>Observability / live</p>
+                <p>Alazium / logs</p>
                 <div className="signal-chart" aria-hidden="true">
                   <i /><i /><i /><i /><i /><i />
                 </div>
-                <span>latency · errors · queue depth</span>
+                <span>100 GB+ parsed · triage ↓</span>
               </article>
 
-              <p className="blueprint-arrow blueprint-arrow-one" aria-hidden="true">queue → workers</p>
-              <p className="blueprint-arrow blueprint-arrow-two" aria-hidden="true">checkpoint ↗ resume</p>
-              <p className="blueprint-arrow blueprint-arrow-three" aria-hidden="true">logs → parser → signal</p>
-
-              <p className="board-scrawl scrawl-draft">draft → challenge → evidence</p>
-              <p className="board-scrawl scrawl-footnotes">keep the useful footnotes</p>
+              <p className="blueprint-arrow blueprint-arrow-one" aria-hidden="true">Java → throughput</p>
+              <p className="blueprint-arrow blueprint-arrow-two" aria-hidden="true">halted EOD ↗ recover</p>
 
               <svg
                 className="board-diagram diagram-fanout"
                 viewBox="0 0 300 150"
                 role="img"
-                aria-label="Queue fan-out with three workers, retry, and a dead-letter queue"
+                aria-label="Production systems sketch: trade processing, caching, and automatic recovery"
               >
                 <defs>
                   <marker id="fanout-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -313,13 +316,13 @@ export function HeroPreview() {
                   <path className="diagram-line diagram-dashed" markerEnd="url(#retry-arrow)" d="M122 115 C116 106 112 102 111 95" />
                 </g>
                 <g className="diagram-labels">
-                  <text x="14" y="77">API</text>
-                  <text x="94" y="78">queue</text>
-                  <text x="207" y="27">worker A</text>
-                  <text x="207" y="75">worker B</text>
-                  <text x="207" y="123">worker C</text>
-                  <text x="108" y="134">DLQ</text>
-                  <text className="diagram-label-red" x="151" y="143">retry ×3</text>
+                  <text x="10" y="77">trade</text>
+                  <text x="98" y="78">XTP</text>
+                  <text x="205" y="27">Java</text>
+                  <text x="202" y="75">cache</text>
+                  <text x="202" y="123">recover</text>
+                  <text x="105" y="134">EOD</text>
+                  <text className="diagram-label-red" x="151" y="143">resume</text>
                 </g>
               </svg>
 
@@ -327,7 +330,7 @@ export function HeroPreview() {
                 className="board-diagram diagram-circuit"
                 viewBox="0 0 230 140"
                 role="img"
-                aria-label="Circuit breaker states moving from closed to open to half-open and back"
+                aria-label="TailCache benchmarking cycle: measure, compare, tune, and inspect p99 latency"
               >
                 <defs>
                   <marker id="circuit-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -343,10 +346,10 @@ export function HeroPreview() {
                 <path className="circuit-node circuit-open" d="M85 25 C85 11 94 2 108 2 C123 3 132 12 131 26 C130 40 121 49 107 48 C93 47 84 39 85 25 Z" />
                 <path className="circuit-node circuit-half" d="M149 90 C150 69 163 55 184 56 C206 56 220 70 219 92 C218 113 204 127 182 126 C161 125 148 112 149 90 Z" />
                 <g className="diagram-labels circuit-labels">
-                  <text x="49" y="100">closed</text>
-                  <text x="108" y="29">open</text>
-                  <text x="184" y="88">half-open</text>
-                  <text x="184" y="103">probe 1%</text>
+                  <text x="49" y="100">measure</text>
+                  <text x="108" y="29">compare</text>
+                  <text x="184" y="88">tune</text>
+                  <text x="184" y="103">p99</text>
                 </g>
               </svg>
 
@@ -360,32 +363,51 @@ export function HeroPreview() {
               <aside className="war-note blog-topic-one">
                 <span className="board-pin pin-blue" aria-hidden="true" />
                 <strong>Failure paths first</strong>
-                <span>essay draft / 01</span>
+                <span>in progress / 01</span>
               </aside>
 
               <aside className="war-note blog-topic-two">
                 <span className="board-pin" aria-hidden="true" />
                 <strong>Agents under load</strong>
-                <span>field note / 02</span>
+                <span>draft / 02</span>
               </aside>
 
               <article className="board-paper life-note">
                 <span className="board-pin pin-yellow" aria-hidden="true" />
                 <p>Off the clock / Life</p>
-                <strong>Ideas, books &amp; elsewhere</strong>
-                <span>Personal notes, kept human.</span>
+                <strong>Football &amp; books.</strong>
+                <span>Anime · games · curiosity.</span>
               </article>
 
               <aside className="war-note life-topic-one">
                 <span className="board-pin pin-green" aria-hidden="true" />
-                <strong>Reading pile</strong>
-                <span>books + marginalia</span>
+                <strong>Manchester United</strong>
+                <span>the #10 space</span>
               </aside>
 
               <aside className="war-note life-topic-two">
                 <span className="board-pin pin-yellow" aria-hidden="true" />
-                <strong>Side quests</strong>
-                <span>experiments + elsewhere</span>
+                <strong>Books + games</strong>
+                <span>Naval · Hyrule · more</span>
+              </aside>
+
+              <article className="board-paper contact-note">
+                <span className="board-pin pin-blue" aria-hidden="true" />
+                <p>Contact / Open channel</p>
+                <strong>Bring me the hard problem.</strong>
+                <span>Systems · reliability · AI</span>
+              </article>
+
+              <aside className="war-note contact-topic-one">
+                <span className="board-pin pin-yellow" aria-hidden="true" />
+                <strong>Email</strong>
+                <span>project context</span>
+              </aside>
+
+              <aside className="war-note contact-topic-two">
+                <span className="board-pin pin-green" aria-hidden="true" />
+                <strong>GitHub + LinkedIn</strong>
+                <span>code · background</span>
               </aside>
 
               <p className="board-caption">
@@ -480,7 +502,7 @@ export function HeroPreview() {
                     </div>
 
                     <p className="story-board-footnote">
-                      {section.id === "contact-board" ? "The board stays open." : "Zoom out. Follow the next board →"}
+                      {section.id === "contact-board" ? "The board stays open." : "Follow the thread across the board →"}
                     </p>
                   </div>
                 </div>

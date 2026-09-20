@@ -5,7 +5,6 @@ import { WorkCvBoardPortal } from "@/components/WorkCvBoardPortal";
 import { WorkExperienceStory } from "@/components/WorkExperienceStory";
 import { LifeBoardPortal } from "@/components/LifeBoardPortal";
 import { BlogBoardPortal } from "@/components/BlogBoardPortal";
-import { BoardStoryBoundaryGuard } from "@/components/BoardStoryBoundaryGuard";
 import { BoardStoryAutoNavigator } from "@/components/BoardStoryAutoNavigator";
 import { BoardSpatialCamera } from "@/components/BoardSpatialCamera";
 import { ProfileLiveBoardPortal } from "@/components/ProfileLiveBoardPortal";
@@ -33,7 +32,6 @@ export default function Home() {
       <WorkExperienceStory />
       <BlogBoardPortal />
       <LifeBoardPortal />
-      <BoardStoryBoundaryGuard />
       <BoardStoryAutoNavigator />
       <BoardSpatialCamera />
       <BoardAliveLayer />
