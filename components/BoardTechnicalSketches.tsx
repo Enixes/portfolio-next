@@ -13,7 +13,6 @@ const boardSpecs = [
   ["work", "work-board-story-title"],
   ["blog", "blog-board-story-title"],
   ["life", "life-board-story-title"],
-  ["contact", "contact-board-story-title"],
 ] as const;
 
 const blockerSelector = [

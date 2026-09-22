@@ -71,6 +71,42 @@ const sectionBoards = [
   },
 ] as const;
 
+function ContactActionMarker({ channel }: { channel: string }) {
+  return (
+    <span className="contact-action-marker" aria-hidden="true">
+      {channel === "Email" ? (
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6.5h18v12H3z M4 8l8 6 8-6" />
+        </svg>
+      ) : channel === "LinkedIn" ? (
+        <svg viewBox="0 0 24 24">
+          <circle cx="5.5" cy="5.5" r="1.2" />
+          <path d="M4.3 10v9.5 M10 19.5V10m0 4.1c1.2-3.4 6.4-4.2 6.4 1v4.4 M16.4 15.1V19.5" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24">
+          <circle cx="6" cy="6" r="2" />
+          <circle cx="18" cy="8" r="2" />
+          <circle cx="10" cy="18" r="2" />
+          <path d="M8 6h3.5c3.5 0 3 2 4.5 2 M6 8v3c0 3.8 4 2.4 4 5" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+function ContactCardDoodle() {
+  return (
+    <span className="contact-card-doodle" aria-hidden="true">
+      <svg viewBox="0 0 94 34">
+        <path className="contact-doodle-route" pathLength="1" d="M4 25 C19 7 40 31 57 14 C68 3 77 7 88 14" />
+        <path className="contact-doodle-arrow" d="M80 8 L89 14 L80 19" />
+        <circle cx="4" cy="25" r="2.5" />
+      </svg>
+    </span>
+  );
+}
+
 export function HeroPreview() {
   return (
     <main id="top" className="portfolio-preview">
@@ -481,23 +517,32 @@ export function HeroPreview() {
                     </header>
 
                     <div className="story-board-grid">
-                      {section.cards.map(([title, result, description, href], cardIndex) => (
+                      {section.cards.map(([title, result, description, href], cardIndex) => href ? (
+                        <a
+                          className="story-case contact-story-action"
+                          key={`${section.id}-${title}`}
+                          href={href}
+                          target={href.startsWith("http") ? "_blank" : undefined}
+                          rel={href.startsWith("http") ? "noreferrer" : undefined}
+                        >
+                          <span className="board-pin" aria-hidden="true" />
+                          <ContactActionMarker channel={title} />
+                          <ContactCardDoodle />
+                          <small>Open channel / 0{cardIndex + 1}</small>
+                          <h3>{title}</h3>
+                          <strong>{result}</strong>
+                          <p>{description}</p>
+                          <span className="story-case-link">
+                            {title === "Email" ? "Write email" : `Open ${title}`} <span aria-hidden="true">↗</span>
+                          </span>
+                        </a>
+                      ) : (
                         <article className="story-case" key={`${section.id}-${title}`}>
                           <span className="board-pin" aria-hidden="true" />
                           <small>Evidence / 0{cardIndex + 1}</small>
                           <h3>{title}</h3>
                           <strong>{result}</strong>
                           <p>{description}</p>
-                          {href ? (
-                            <a
-                              className="story-case-link"
-                              href={href}
-                              target={href.startsWith("http") ? "_blank" : undefined}
-                              rel={href.startsWith("http") ? "noreferrer" : undefined}
-                            >
-                              Open channel <span aria-hidden="true">↗</span>
-                            </a>
-                          ) : null}
                         </article>
                       ))}
                     </div>

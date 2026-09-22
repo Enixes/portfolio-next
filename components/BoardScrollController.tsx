@@ -36,6 +36,16 @@ export function BoardScrollController() {
     let overlay: HTMLElement | null = null;
     let targetIndex = 0;
     let lastIndex = 0;
+    const intro = document.querySelector<HTMLElement>(".war-room-intro");
+    let introTimer = 0;
+
+    const completeIntro = () => {
+      root.dataset.introComplete = "true";
+      window.clearTimeout(introTimer);
+    };
+    const onIntroEnd = (event: AnimationEvent) => {
+      if (event.target === intro && event.animationName === "war-room-intro-exit") completeIntro();
+    };
 
     const measure = () => {
       const geometry = boardGeometry(story, panels.length);
@@ -79,6 +89,9 @@ export function BoardScrollController() {
     const navigate = (options: BoardNavigation) => {
       const index = options.index;
       if (!Number.isInteger(index) || index < -1 || index >= panels.length) return;
+      // Navigation is always subsequent to the page entrance. Keep that fact
+      // independent of scroll position so rebuilding the hero cannot replay it.
+      completeIntro();
       measure();
       const toHero = index === -1;
       const fromHero = window.scrollY < storyTop - 4;
@@ -193,6 +206,12 @@ export function BoardScrollController() {
     };
 
     measure();
+    if (reducedMotion.matches || window.scrollY >= storyTop - 1 ||
+        sectionIds.includes(window.location.hash.slice(1))) completeIntro();
+    else {
+      intro?.addEventListener("animationend", onIntroEnd);
+      introTimer = window.setTimeout(completeIntro, 3600);
+    }
     const originalRestoration = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
     initialFrame = window.requestAnimationFrame(() => {
@@ -218,6 +237,8 @@ export function BoardScrollController() {
       window.removeEventListener("popstate", onHistory);
       window.removeEventListener("hashchange", onHistory);
       window.removeEventListener("resize", onResize);
+      intro?.removeEventListener("animationend", onIntroEnd);
+      window.clearTimeout(introTimer);
       delete root.dataset.boardEntered;
       delete root.dataset.zoomSection;
     };

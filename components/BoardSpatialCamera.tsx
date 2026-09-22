@@ -2,14 +2,7 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
-import { boardGeometry } from "./board-navigation";
-
-// Coordinates describe the board, independently of the vertical scroll track.
-// Profile -> Systems -> lower-right Field Notes -> Life -> Contact, continuing right.
-const boardMap = [
-  { x: 0, y: 0 }, { x: 1.12, y: 0 }, { x: 1.8, y: 1.08 },
-  { x: 2.92, y: 1.08 }, { x: 4.04, y: 1.08 },
-];
+import { BOARD_SPATIAL_MAP, boardGeometry } from "./board-navigation";
 const clamp = (n: number, min = 0, max = 1) => Math.max(min, Math.min(max, n));
 
 const styles = `
@@ -64,10 +57,8 @@ html[data-spatial-camera="true"] .scroll-board-gold .story-board-surface {
   overflow-y: auto;
   overscroll-behavior-y: contain; touch-action: pan-x pinch-zoom;
 }
-html[data-spatial-camera="true"] .scroll-board-panel { padding-top: 84px !important; }
-@media (max-width: 760px) {
-  html[data-spatial-camera="true"] .scroll-board-panel { padding-top: 74px !important; }
-}
+/* The board itself reaches the viewport edge; only the centered nav island sits above it. */
+html[data-spatial-camera="true"] .scroll-board-panel { padding-top: 0 !important; }
 @media (prefers-reduced-motion: reduce) {
   .board-travel-marker { display: none; }
   html[data-spatial-camera="true"] .scroll-board-panel[aria-hidden="true"] {
@@ -120,8 +111,8 @@ export function BoardSpatialCamera() {
       const to = Math.min(panels.length - 1, from + 1);
       const fraction = position - from;
       const t = fraction * fraction * (3 - 2 * fraction);
-      const a = boardMap[from];
-      const b = boardMap[to];
+      const a = BOARD_SPATIAL_MAP[from];
+      const b = BOARD_SPATIAL_MAP[to];
       const camera = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
       const settledIndex = Math.round(position);
       const transitioning = Math.abs(position - settledIndex) > .003;
@@ -139,8 +130,8 @@ export function BoardSpatialCamera() {
         if (visible) panel.dataset.boardVisited = "true";
         const active = (reducedMotion.matches || !transitioning) && index === settledIndex;
         gsap.set(panel, {
-          x: reducedMotion.matches ? 0 : (boardMap[index].x - camera.x) * xStride,
-          y: reducedMotion.matches ? 0 : (boardMap[index].y - camera.y) * yStride,
+          x: reducedMotion.matches ? 0 : (BOARD_SPATIAL_MAP[index].x - camera.x) * xStride,
+          y: reducedMotion.matches ? 0 : (BOARD_SPATIAL_MAP[index].y - camera.y) * yStride,
           scale: 1, rotation: 0, autoAlpha: opacity, zIndex: 5,
           pointerEvents: active ? "auto" : "none",
           force3D: true,

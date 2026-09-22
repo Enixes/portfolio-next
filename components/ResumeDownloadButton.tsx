@@ -141,7 +141,21 @@ const styles = `
   animation: resume-status-scan 1.15s ease-in-out infinite;
 }
 
-.resume-mobile-link { display: none; }
+.resume-mobile-link {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+  border: 1px solid rgba(238,230,216,.26);
+  color: #eee6d8 !important;
+}
+.resume-mobile-link:hover,
+.resume-mobile-link:focus-visible {
+  border-color: #eee5d5;
+  background: #eee5d5 !important;
+  color: #25221e !important;
+}
+html[data-board-entered="true"] .resume-mobile-link { display: inline-flex; }
 .resume-mobile-short { display: none; }
 
 @keyframes resume-status-pulse {
@@ -155,20 +169,7 @@ const styles = `
 }
 
 @media (max-width: 900px) {
-  .resume-mobile-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: 2px;
-    border: 1px solid rgba(238,230,216,.26);
-    color: #eee6d8 !important;
-  }
-  .resume-mobile-link:hover,
-  .resume-mobile-link:focus-visible {
-    border-color: #eee5d5;
-    background: #eee5d5 !important;
-    color: #25221e !important;
-  }
+  .resume-mobile-link { display: inline-flex; }
 }
 
 @media (max-width: 520px) {

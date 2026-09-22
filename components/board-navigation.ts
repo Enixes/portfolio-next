@@ -3,6 +3,18 @@
 export const BOARD_NAVIGATE_EVENT = "board:navigate";
 export type BoardNavigation = { index: number; immediate?: boolean; reset?: boolean };
 
+/** Spatial stops mirror the clickable zones on the overview board:
+ * Profile (upper-left) -> Systems (upper-right) -> Field Notes (lower-left)
+ * -> Life -> Contact. Camera motion and the travel marker both consume this
+ * map, so forward and reverse navigation always trace the same route. */
+export const BOARD_SPATIAL_MAP = [
+  { x: 0, y: 0 },
+  { x: 1.12, y: 0 },
+  { x: 0, y: 1.08 },
+  { x: 1.12, y: 1.08 },
+  { x: 2.24, y: 1.08 },
+] as const;
+
 export function boardGeometry(story: HTMLElement, count: number) {
   const top = window.scrollY + story.getBoundingClientRect().top;
   const travel = Math.max(1, story.offsetHeight - window.innerHeight);
