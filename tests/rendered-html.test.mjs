@@ -43,33 +43,48 @@ test("server-renders the war-room intro and portfolio board", async () => {
   assert.match(html, /01 \/ Systems \+ Work/);
   assert.match(html, /02 \/ Field Notes/);
   assert.match(html, /03 \/ Life/);
+  assert.match(html, /04 \/ Contact/);
   assert.match(html, /id="profile-board"/);
   assert.match(html, /id="work-board"/);
   assert.match(html, /id="blog-board"/);
   assert.match(html, /id="life-board"/);
   assert.match(html, /id="contact-board"/);
   assert.match(html, /Bring me the hard problem/);
-  assert.match(html, /Open channel/);
+  assert.match(html, /class="story-case contact-story-action"/);
+  assert.match(html, /Write email/);
+  assert.match(html, /Open LinkedIn/);
+  assert.match(html, /Open GitHub/);
+  assert.match(html, /class="contact-card-doodle"/);
   assert.match(html, /class="zone-mark zone-mark-profile"/);
   assert.match(html, /class="zone-mark zone-mark-work"/);
   assert.match(html, /class="zone-mark zone-mark-blog"/);
   assert.match(html, /class="zone-mark zone-mark-life"/);
+  assert.match(html, /class="zone-mark zone-mark-contact"/);
   assert.match(html, /data-board-story="true"/);
   assert.match(html, /data-board-track="true"/);
   assert.match(html, /Scroll through the boards/);
-  assert.match(html, /Zoom out\. Follow the next board/);
-  assert.match(html, /Idempotency keys/);
-  assert.match(html, /Load shedding/);
-  assert.match(html, /Queue fan-out with three workers/);
-  assert.match(html, /Circuit breaker states moving from closed to open/);
+  assert.match(html, /Follow the thread across the board/);
+  assert.match(html, /50× workflows/);
+  assert.match(html, /30% faster triage/);
+  assert.match(html, /95% DB uplift/);
+  assert.match(html, /40% faster CI/);
+  assert.match(html, /Java · multithreading/);
+  assert.match(html, /Kafka · IBM MQ/);
+  assert.match(html, /Production systems sketch: trade processing/);
+  assert.match(html, /TailCache benchmarking cycle/);
+  assert.doesNotMatch(html, /draft → challenge → evidence|keep the useful footnotes/);
   assert.doesNotMatch(html, /evidence-thread/);
   assert.doesNotMatch(html, /class="preview-actions"/);
 });
 
-test("keeps the intro and scroll story lightweight and motion-safe", async () => {
-  const [component, controller, css, peopleAsset, roomAsset] = await Promise.all([
+test("keeps the intro and scroll story lightweight, explorable, and motion-safe", async () => {
+  const [component, controller, camera, navigation, workPortal, workPolish, css, peopleAsset, roomAsset] = await Promise.all([
     readFile(new URL("../components/HeroPreview.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/BoardScrollController.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/BoardSpatialCamera.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/board-navigation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../components/WorkCvBoardPortal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/WorkCaseBoardPolish.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     stat(new URL("../public/war-room-silhouettes-hires.png", import.meta.url)),
     stat(new URL("../public/war-room-environment-anime.jpg", import.meta.url)),
@@ -80,11 +95,24 @@ test("keeps the intro and scroll story lightweight and motion-safe", async () =>
   assert.doesNotMatch(component, /^\s*["']use client["']/m);
   assert.doesNotMatch(component, /framer-motion|@react-three|<canvas/i);
   assert.match(controller, /requestAnimationFrame/);
-  assert.match(controller, /addEventListener\("scroll", requestRender, \{ passive: true \}\)/);
-  assert.match(controller, /const focusProgress = \(index \+ \.42\) \/ panels\.length/);
+  assert.match(controller, /addEventListener\("scroll", handleScroll, \{ passive: true \}\)/);
+  assert.match(controller, /boardGeometry/);
+  assert.match(controller, /\.board-zone-contact/);
   assert.match(controller, /window\.history\.pushState/);
-  assert.match(controller, /panels\[index\]\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(controller, /window\.history\.replaceState/);
+  assert.match(controller, /root\.dataset\.introComplete = "true"/);
+  assert.match(controller, /panels\[options\.index\]\?\.focus\(\{ preventScroll: true \}\)/);
   assert.doesNotMatch(controller, /setInterval|framer-motion|@react-three|<canvas/i);
+  assert.match(camera, /BOARD_SPATIAL_MAP/);
+  assert.match(camera, /\.scroll-board-panel \{ padding-top: 0 !important; \}/);
+  assert.match(navigation, /\{ x: 1\.12, y: 0 \}[\s\S]*\{ x: 0, y: 1\.08 \}/);
+  assert.match(workPortal, /\.scroll-board-red \.story-board-frame \{[\s\S]*?height:100%!important;[\s\S]*?overflow:hidden!important;/);
+  assert.match(workPortal, /Drag or scroll · 0%/);
+  assert.match(workPortal, /board\.scrollHeight - board\.clientHeight/);
+  assert.match(workPolish, /window\.addEventListener\("wheel", onWheel, \{ passive: false, capture: true \}\)/);
+  assert.match(workPolish, /window\.addEventListener\("pointermove", onPointerMove/);
+  assert.match(workPolish, /window\.addEventListener\("touchmove", onTouchMove/);
+  assert.match(workPolish, /if \(Math\.abs\(consumed\) > 0\.1\) \{[\s\S]*?surface\.scrollTop = next;[\s\S]*?return;/);
   assert.match(css, /@keyframes board-camera-in/);
   assert.match(css, /@keyframes room-camera-in/);
   assert.match(css, /@keyframes war-room-people-exit/);
@@ -110,6 +138,10 @@ test("keeps the intro and scroll story lightweight and motion-safe", async () =>
   assert.match(css, /\.queue-depth-note\s*\{[\s\S]*?display:\s*grid;/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /\.war-room-intro\s*\{\s*display:\s*none;/);
+  assert.match(css, /html\[data-intro-complete="true"\] \.war-room-intro/);
+  assert.match(css, /html\[data-board-entered="true"\] \.preview-header\s*\{[\s\S]*?background:\s*transparent/);
+  assert.match(css, /\.contact-story-action:active/);
+  assert.match(css, /\.contact-story-action > \.board-pin::before/);
   assert.match(css, /\.zone-mark path\s*\{\s*animation:\s*none !important;/);
   assert.doesNotMatch(css, /backdrop-filter|filter:\s*blur|perspective:/i);
 });

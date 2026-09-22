@@ -1,0 +1,176 @@
+/* The Life portal keeps the existing paper surface and camera host. */
+.life-live-mounted > .story-board-index,
+.life-live-mounted > .story-board-header,
+.life-live-mounted > .story-board-grid,
+.life-live-mounted > .story-board-footnote,
+.life-live-mounted > .tech-life,
+.life-live-mounted > .alive-life { display: none !important; }
+.scroll-board-green .story-board-frame { height: 100% !important; min-height: 0 !important; overflow: hidden !important; }
+.story-board-surface.life-live-mounted { display: block !important; height: 100% !important; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; }
+.life-live-board {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  touch-action: pan-x pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto;
+  scrollbar-gutter: stable;
+  padding: 28px clamp(22px, 3.5vw, 56px) 18px;
+  color: #27251f;
+  scrollbar-width: thin;
+  scrollbar-color: #92a47c #e6e6d9;
+  background: radial-gradient(circle at 78% 18%, #ffffff70, transparent 24%), radial-gradient(circle at 13% 78%, #daebbe33, transparent 28%);
+  isolation: isolate;
+}
+.life-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; margin-bottom: 26px; }
+.life-header-copy { max-width: 780px; }
+.life-kicker { color: #4e713e; font: 800 9px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.life-header h2 { margin: 9px 0 10px; font: 900 clamp(34px, 3.6vw, 56px)/.95 var(--marker, var(--hand)); letter-spacing: -.035em; transform: rotate(-.8deg); }
+.life-header p { max-width: 690px; margin: 0; color: #5d5b54; font: 10px/1.6 var(--mono); }
+.life-header em { color: #a12f29; font-style: normal; }
+.life-united-scarf { position: relative; flex: 0 0 auto; width: 205px; margin: 16px 10px 0 0; padding: 10px 12px 9px; border-block: 5px solid #f1d361; color: #fff8df; background: #9f2524; box-shadow: 4px 7px 13px #3822182e; font: 900 17px/1 var(--marker, var(--hand)); text-align: center; text-transform: uppercase; transform: rotate(2deg); }
+.life-united-scarf::before, .life-united-scarf::after { content: ""; position: absolute; top: -5px; width: 15px; bottom: -5px; background: repeating-linear-gradient(90deg, #f1d361 0 2px, transparent 2px 5px); }
+.life-united-scarf::before { left: -13px; }.life-united-scarf::after { right: -13px; }
+
+.life-grid { position: relative; display: grid; grid-template-columns: .8fr 1.15fr 1.1fr; grid-template-rows: 1.12fr .88fr; gap: 20px; max-width: 1500px; margin: 0 auto; }
+.life-card { position: relative; min-width: 0; padding: 22px; border: 1px solid #463e301a; box-shadow: 4px 7px 15px #3b2b271f; }
+.life-card .board-pin { z-index: 4; }
+.life-card-label { display: block; color: #67665c; font: 800 8px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.life-card h3 { margin: 7px 0 12px; font: 900 clamp(24px, 2.15vw, 34px)/1 var(--marker, var(--hand)); letter-spacing: -.025em; }
+.life-card p { margin: 0; color: #4e514b; font: 10px/1.55 var(--mono); }
+.life-football { grid-column: 1; grid-row: 1; min-height: 315px; background: linear-gradient(145deg, #eaf0dc 0 24%, #dfe9ca 24% 100%); transform: rotate(-.7deg); }
+.life-football-head { display: flex; gap: 10px; align-items: flex-start; }
+.life-football h3 strong { color: #a12f29; }
+.life-cam-tag { margin-top: 7px; padding: 5px 8px; border: 2px solid #9f2d28; border-radius: 52% 48% 48% 52%; color: #9f2d28; background: #fffce8c2; font: 900 14px/1 var(--marker, var(--hand)); transform: rotate(5deg); }
+.life-football-note { position: relative; z-index: 2; }
+.life-pitch { position: absolute; right: 9%; bottom: 10%; left: 9%; height: 32%; border: 2px solid #48733f8f; border-radius: 2px; background: repeating-linear-gradient(90deg, #4c80440d 0 12%, #ffffff1a 12% 24%); }
+.life-pitch::before { content: ""; position: absolute; inset-block: 0; left: 50%; border-left: 2px solid #48733f7a; }
+.life-pitch::after { content: ""; position: absolute; top: 50%; left: 50%; width: 20%; aspect-ratio: 1; border: 2px solid #48733f7a; border-radius: 50%; transform: translate(-50%, -50%); }
+.life-box { position: absolute; top: 24%; width: 18%; height: 52%; border: 2px solid #48733f7a; }
+.life-box-left { left: -2px; border-left: 0; }.life-box-right { right: -2px; border-right: 0; }
+.life-player { position: absolute; width: 8px; height: 8px; border: 2px solid #304b2ca3; border-radius: 50%; background: #edf2df; transform: translate(-50%, -50%); }
+.life-player:nth-of-type(3) { left: 24%; top: 26%; }.life-player:nth-of-type(4) { left: 27%; top: 70%; }.life-player:nth-of-type(5) { left: 61%; top: 25%; }.life-player:nth-of-type(6) { left: 72%; top: 70%; }
+.life-cam-dot { position: absolute; z-index: 4; left: 49%; top: 52%; width: 13px; height: 13px; border: 3px solid #fff7dd; border-radius: 50%; background: #ad312b; box-shadow: 0 0 0 2px #a32f2a42; transform: translate(-50%, -50%); }
+.life-cam-dot::after { content: "CAM"; position: absolute; top: 13px; left: 50%; color: #8f2f2a; font: 900 8px/1 var(--marker, var(--hand)); transform: translateX(-50%) rotate(-3deg); }
+.life-pass-line { position: absolute; z-index: 3; left: 49%; top: 52%; width: 37%; height: 2px; border-top: 2px dashed #ad312b; transform: rotate(-21deg); transform-origin: left center; opacity: .65; }
+.life-pass-line::after { content: "›"; position: absolute; right: -2px; top: -10px; color: #ad312b; font: 900 20px/1 var(--sans); }
+.life-ball { position: absolute; z-index: 6; left: 48%; top: 50%; width: 9px; height: 9px; border: 1px solid #2a2a27; border-radius: 50%; background: #fff; box-shadow: inset 2px 1px #0000002e; }
+.life-playmaker { position: absolute; left: 9%; bottom: 3%; color: #41643b; font: 900 12px/1 var(--marker, var(--hand)); transform: rotate(-3deg); }
+.life-book { grid-column: 1; grid-row: 2; min-height: 250px; background: #fff5c8; transform: rotate(.8deg); }
+.life-book h3 { max-width: 240px; margin-top: 14px; }
+.life-book::before { content: ""; position: absolute; top: -7px; left: 42%; width: 72px; height: 19px; background: #dfc893b3; transform: rotate(-3deg); }
+.life-book-fav { color: #9b302a !important; font: 900 13px/1.2 var(--marker, var(--hand)) !important; transform: rotate(-2deg); }
+.life-margin-notes { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
+.life-margin-notes span { padding: 4px 6px; border: 1px solid #5e4c2829; color: #565045; background: #ffffff70; font: 800 8px/1 var(--mono); transform: rotate(-1deg); }
+.life-margin-notes span:nth-child(2) { transform: rotate(1.5deg); }
+.life-bookmark { position: absolute; top: 0; right: 10%; width: 16px; height: 47px; background: #9f302a; clip-path: polygon(0 0,100% 0,100% 100%,50% 82%,0 100%); transform-origin: 50% 0; }
+.life-book-margin { display: block; margin-top: 26px; color: #85744e; font: 900 14px/1.15 var(--marker, var(--hand)); transform: rotate(-4deg); }
+
+.life-games { grid-column: 2; grid-row: 1 / 3; background: #e5e7f3; transform: rotate(-.45deg); }
+.life-anime { grid-column: 3; grid-row: 1 / 3; background: #f2e0df; transform: rotate(.65deg); }
+.life-game-stack { display: grid; gap: 15px; }
+.life-anime-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.life-anime-head a { flex: 0 0 auto; padding: 7px 0; margin-top: -3px; color: #8f302a; font: 800 9px/1.4 var(--mono); text-decoration: underline; text-underline-offset: 3px; }
+.life-anime-list { display: grid; gap: 12px; }
+.life-postcard { position: relative; min-width: 0; margin: 0; padding: 7px 7px 10px; background: #fffaf0; box-shadow: 2px 4px 8px #3a2a251f; transform: rotate(-.6deg); transition: box-shadow .2s ease; }
+.life-postcard:nth-child(even) { transform: rotate(.65deg); }
+.life-postcard-art { overflow: hidden; }
+.life-postcard-art svg { display: block; width: 100%; height: auto; max-height: 220px; stroke-linecap: round; stroke-linejoin: round; }
+.life-postcard-caption { padding: 5px 8px 0; }
+.life-postcard-caption small { display: block; color: #716b5a; font: 700 7px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.life-postcard-caption h4 { margin: 4px 0; color: #303a2d; font: 900 clamp(21px, 1.7vw, 27px)/1 var(--marker, var(--hand)); letter-spacing: -.02em; }
+.life-postcard-caption p { font-size: 9px; line-height: 1.4; }
+.life-art-note { font: 13px var(--marker, var(--hand)); }
+.life-anime .life-postcard { display: grid; grid-template-columns: 54% 1fr; align-items: center; padding: 8px; min-height: 154px; }
+.life-anime .life-postcard-art svg { height: 136px; object-fit: contain; }
+.life-anime .life-postcard-caption { padding: 0 4px 0 9px; }
+.life-anime .life-postcard-caption h4 { font-size: clamp(21px, 1.65vw, 26px); }
+.life-anime .life-postcard-caption small { font-size: 6.5px; line-height: 1.65; }
+.life-anime .life-postcard-caption p { margin-top: 6px; }
+.life-fma { background: #f5ecd9; }.life-frieren { background: #f3f4e9; }.life-haikyuu { background: #fff0d9; }
+.life-witcher { background: #eef0e5; }
+.life-witcher h4 { color: #364c45; }.life-fma h4 { color: #9c4436; }.life-frieren h4 { color: #627a58; }.life-haikyuu h4 { color: #9f562d; }
+.life-postcard:hover { box-shadow: 3px 6px 12px #3a2a252b; }
+.life-live-board [tabindex="0"]:focus-visible, .life-anime-head a:focus-visible { outline: 2px dashed #6b7552; outline-offset: 5px; }
+.life-live-board [tabindex="0"] { scroll-margin-block: 18px; }
+.life-footer { display: flex; justify-content: space-between; gap: 20px; margin: 23px auto 0; max-width: 1500px; color: #626b51; font: 900 13px/1.3 var(--marker, var(--hand)); }
+.life-footer span:last-child { color: #777565; font: 8px/1.6 var(--mono); }
+
+/* The existing footballer and reader now stay inked on the page. */
+.life-doodle { position: absolute; pointer-events: none; mix-blend-mode: multiply; opacity: .82; }
+.life-doodle svg { display: block; width: 100%; height: auto; overflow: visible; }
+.life-doodle-line, .life-doodle-soft, .life-doodle-accent { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.life-doodle-line { stroke: #3f4f46; stroke-width: 2.15; }.life-doodle-soft { stroke: #63756d; stroke-width: 1.2; opacity: .5; }.life-doodle-accent { stroke: #9e302a; stroke-width: 2.1; }.life-doodle-wash { opacity: .14; }
+.life-doodle-football { right: 1%; bottom: 3%; width: 84px; transform: rotate(3deg); }
+.life-doodle-book { right: 5%; bottom: 5%; width: 86px; transform: rotate(-4deg); }
+
+/* Partial ink is intentional; each gesture briefly completes its drawing. */
+.life-live-board .sword-glint, .life-live-board .alchemy-sparks, .life-live-board .ball-impact { opacity: 0; }
+.life-live-board .track-one, .life-live-board .track-two, .life-live-board .track-three { opacity: .2; }
+.life-live-board .circle-outer { stroke-dasharray: 1; stroke-dashoffset: .16; opacity: .65; }
+.life-live-board .circle-inner { stroke-dasharray: 1; stroke-dashoffset: .22; opacity: .6; }
+.life-live-board .circle-geometry { stroke-dasharray: 1; stroke-dashoffset: .13; opacity: .7; }
+.life-live-board .magic-arc { stroke-dasharray: 1; stroke-dashoffset: .92; opacity: .18; }
+.life-live-board .magic-particles { opacity: .5; }
+.life-live-board .speed-lines { opacity: .22; }
+.life-live-board .court-lines { stroke-dasharray: 1; stroke-dashoffset: .08; opacity: .7; }
+.life-live-board .wind-ink path { stroke-dasharray: .75 .25; }
+.life-live-board .sword-sweep, .life-live-board .sign-radiance,
+.life-live-board .meadow-wind, .life-live-board .landing-ring { opacity: 0; }
+.life-live-board .sword-sweep, .life-live-board .sign-radiance,
+.life-live-board .witcher-sign, .life-live-board .meadow-wind path { stroke-dasharray: 1; }
+.life-live-board .sword-sweep, .life-live-board .sign-radiance { stroke-dashoffset: 1; }
+
+@media (min-width: 1500px) {
+  .life-live-board { padding-top: 38px; }.life-header { margin-bottom: 34px; }
+  .life-anime .life-postcard { min-height: 174px; }.life-anime .life-postcard-art svg { height: 156px; }
+}
+@media (max-width: 1150px) and (min-width: 981px) {
+  .life-live-board { padding-inline: 22px; }.life-grid { grid-template-columns: .85fr 1.2fr 1.1fr; gap: 14px; }
+  .life-card { padding: 17px; }.life-anime .life-postcard { grid-template-columns: 1fr; padding: 6px; min-height: 0; }
+  .life-anime .life-postcard-art svg { height: 95px; }.life-anime .life-postcard-caption { padding: 4px 5px; }
+  .life-anime .life-postcard-caption small { display: none; }.life-anime .life-postcard-caption h4 { font-size: 23px; }
+  .life-anime .life-postcard-caption p { margin-top: 2px; font-size: 8px; }
+}
+@media (max-width: 980px) {
+  .life-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 20px; }
+  .life-football { grid-column: 1; grid-row: 1; }.life-book { grid-column: 2; grid-row: 1; }
+  .life-games { grid-column: 1; grid-row: 2; }.life-anime { grid-column: 2; grid-row: 2; }
+  .life-header h2 { font-size: 42px; }.life-header p { font-size: 9px; }
+  .life-united-scarf { width: 165px; font-size: 14px; }
+  .life-football, .life-book { min-height: 280px; }
+  .life-anime .life-postcard { grid-template-columns: 1fr; min-height: 0; padding: 6px; }
+  .life-anime .life-postcard-art svg { height: 100px; }
+  .life-anime .life-postcard-caption { padding: 4px 6px; }
+  .life-anime .life-postcard-caption small { display: none; }
+  .life-anime .life-postcard-caption p { margin-top: 3px; }
+}
+@media (max-width: 620px) {
+  .life-live-board { padding: 24px 18px 20px; }
+  .life-header { flex-wrap: wrap; gap: 15px; margin-bottom: 28px; }.life-header h2 { font-size: 38px; }
+  .life-header p { font-size: 10px; }.life-united-scarf { margin: 0 0 0 10px; width: 176px; }
+  .life-grid { grid-template-columns: 1fr; grid-template-rows: auto; gap: 24px; }
+  .life-football, .life-book, .life-games, .life-anime { grid-column: 1; grid-row: auto; }
+  .life-card { padding: 22px; }.life-card h3 { font-size: 30px; }
+  .life-football { min-height: 330px; }.life-book { min-height: 270px; }
+  .life-pitch { height: 38%; }.life-football-note { max-width: 390px; }
+  .life-postcard-caption h4 { font-size: 26px; }.life-postcard-caption p { font-size: 10px; }
+  .life-anime .life-postcard { display: block; padding: 7px 7px 12px; }
+  .life-anime .life-postcard-art svg { height: auto; max-height: 220px; }
+  .life-anime .life-postcard-caption { padding: 7px 8px 0; }
+  .life-anime .life-postcard-caption small { display: block; font-size: 7px; }
+  .life-anime .life-postcard-caption h4 { font-size: 27px; }
+  .life-anime-list { gap: 16px; }.life-anime-head a { font-size: 10px; }
+  .life-doodle-book { width: 95px; }.life-footer { flex-direction: column; gap: 6px; }
+}
+@media (max-width: 760px) {
+  .life-live-board { scrollbar-gutter: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .life-live-board *, .life-live-board *::before, .life-live-board *::after { animation: none !important; transition: none !important; }
+  .life-live-board .circle-outer, .life-live-board .circle-inner,
+  .life-live-board .circle-geometry, .life-live-board .court-lines,
+  .life-live-board .magic-arc { stroke-dashoffset: 0; }
+}
