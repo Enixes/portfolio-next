@@ -25,6 +25,7 @@ export const cv = {
   location: "India",
   phone: "+91-9910521365",
   email: "itsasusingh@gmail.com",
+  resumeUrl: "https://drive.google.com/file/d/1GbsD52GUO9m29iac8QobkqERYq1ABE1d/view?usp=sharing",
   linkedin: "https://linkedin.com/in/asusingh",
   github: "https://github.com/Enixes/",
   summary:

@@ -1,6 +1,7 @@
 /** Shared by gesture routing, hash navigation and the camera. The first
  * checkpoint is the start of the sticky board, with no invisible lead-in. */
 export const BOARD_NAVIGATE_EVENT = "board:navigate";
+export const PROFILE_INTERRUPT_EVENT = "profile:interrupt";
 export type BoardNavigation = { index: number; immediate?: boolean; reset?: boolean };
 
 /** Spatial stops mirror the clickable zones on the overview board:
@@ -36,7 +37,7 @@ export function readingDestination(surface: HTMLElement, direction: number) {
   const page = Math.max(120, surface.clientHeight * .72);
   const edge = surface.getBoundingClientRect().top;
   const headings = Array.from(surface.querySelectorAll<HTMLElement>(
-    ".work-section-heading,.work-story-company,.blog-article,.blog-archive,.life-card,.profile-project-card,.profile-mini-chit",
+    ".work-section-heading,.work-story-company,.blog-article,.blog-archive,.life-card,.profile-timeline-chit",
   )).map((node) => Math.max(0, Math.min(maximum,
     current + node.getBoundingClientRect().top - edge - 24)));
   const stops = [0, ...headings, maximum].sort((a, b) => a - b);

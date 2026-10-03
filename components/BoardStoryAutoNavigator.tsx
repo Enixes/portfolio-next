@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
-import { BOARD_NAVIGATE_EVENT, boardGeometry, boardSurface, readingDestination } from "./board-navigation";
+import { BOARD_NAVIGATE_EVENT, PROFILE_INTERRUPT_EVENT, boardGeometry, boardSurface, readingDestination } from "./board-navigation";
 
 const styles = `
 /*
@@ -161,6 +161,10 @@ export function BoardStoryAutoNavigator() {
       return true;
     };
     const onWheel = (event: WheelEvent) => {
+      if (document.documentElement.dataset.zoomSection === "profile-board" ||
+          document.documentElement.dataset.boardDestination === "0") {
+        window.dispatchEvent(new Event(PROFILE_INTERRUPT_EVENT));
+      }
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
       const now = performance.now();
       const fresh = now - lastWheelAt > 190;
@@ -171,8 +175,34 @@ export function BoardStoryAutoNavigator() {
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
-          isInteractiveTarget(event.target)) return;
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      const profileActive = document.documentElement.dataset.zoomSection === "profile-board";
+      const profileControl = event.target instanceof Element &&
+        Boolean(event.target.closest(".profile-chit-toggle,.profile-playback-control"));
+      const playbackActivation = event.target instanceof Element &&
+        Boolean(event.target.closest(".profile-playback-control")) &&
+        ["Enter", " "].includes(event.key);
+      if (profileActive && !playbackActivation &&
+          ["ArrowDown", "ArrowUp", "PageDown", "PageUp", " ", "Home", "End", "Enter"].includes(event.key)) {
+        window.dispatchEvent(new Event(PROFILE_INTERRUPT_EVENT));
+      }
+      if (profileActive && (event.key === "Home" || event.key === "End") &&
+          (!isInteractiveTarget(event.target) || profileControl)) {
+        const surface = surfaceFor(indexNow());
+        if (surface) {
+          stopInternal();
+          surface.scrollTop = event.key === "Home" ? 0 : maximum(surface);
+          if (event.target instanceof Element && event.target.closest(".profile-chit-toggle")) {
+            const chits = surface.querySelectorAll<HTMLElement>(".profile-chit-toggle");
+            chits[event.key === "Home" ? 0 : chits.length - 1]?.focus({ preventScroll: true });
+          }
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+      }
+      if (isInteractiveTarget(event.target) && !(profileActive && profileControl &&
+          ["ArrowDown", "ArrowUp", "PageDown", "PageUp"].includes(event.key))) return;
       const direction = event.key === "ArrowDown" || event.key === "PageDown" ? 1
         : event.key === "ArrowUp" || event.key === "PageUp" ? -1
         : event.key === " " ? event.shiftKey ? -1 : 1 : 0;

@@ -37,6 +37,8 @@ test("server-renders the war-room intro and portfolio board", async () => {
   assert.match(html, /war-room-silhouettes-hires\.png/);
   assert.match(html, /fetchPriority="high"/);
   assert.match(html, /class="evidence-board"/);
+  assert.match(html, /href="https:\/\/drive\.google\.com\/file\/d\/1GbsD52GUO9m29iac8QobkqERYq1ABE1d\/view\?usp=sharing"/);
+  assert.match(html, /aria-label="View Asu Singh résumé on Google Drive"/);
   assert.match(html, /Senior Software Engineer/);
   assert.match(html, /I make complex systems/);
   assert.match(html, /00 \/ Profile/);

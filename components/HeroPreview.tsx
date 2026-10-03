@@ -144,10 +144,36 @@ export function HeroPreview() {
           <a href="#blog-board">Blog</a>
           <a href="#life-board">Life</a>
           <a href="#contact-board">Contact</a>
+          <a
+            className="resume-mobile-link"
+            href={cv.resumeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View Asu Singh résumé on Google Drive"
+          >
+            <span className="resume-mobile-long">Résumé</span>
+            <span className="resume-mobile-short">CV</span>
+            <span aria-hidden="true">↗</span>
+          </a>
         </nav>
 
-        <a className="preview-status" href={`mailto:${cv.email}`}>
-          <span aria-hidden="true" /> Available for hard problems
+        <a
+          className="preview-status resume-link"
+          href={cv.resumeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View Asu Singh résumé on Google Drive"
+        >
+          <svg className="resume-wind" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M-18 29 C30 5 57 43 110 15 S178 25 237 4" />
+            <path d="M-28 37 C24 23 70 46 111 29 S186 20 240 14" />
+          </svg>
+          <strong className="resume-seal" aria-hidden="true">AS</strong>
+          <div className="resume-caption">
+            <b>Résumé / field file</b>
+            <small>View on Drive</small>
+          </div>
+          <b className="resume-arrow" aria-hidden="true">↗</b>
         </a>
       </header>
 
@@ -222,12 +248,11 @@ export function HeroPreview() {
               <figure className="board-paper profile-photo">
                 <span className="board-pin" aria-hidden="true" />
                 <Image
-                  src="https://avatars.githubusercontent.com/u/20127633?s=240&v=4"
+                  src="/profile/asu-portrait-cutout.png"
                   alt="Asu Singh"
                   width="240"
                   height="240"
                   sizes="(max-width: 760px) 26vw, 8vw"
-                  referrerPolicy="no-referrer"
                 />
                 <figcaption>Asu / system owner</figcaption>
               </figure>

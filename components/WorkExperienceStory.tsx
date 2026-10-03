@@ -278,8 +278,8 @@ export function WorkExperienceStory() {
     const findTarget = () => document.querySelector<HTMLElement>(".work-cv-mounted .work-experience-stage");
     const immediate = findTarget();
     if (immediate) {
-      setTarget(immediate);
-      return;
+      const frame = requestAnimationFrame(() => setTarget(immediate));
+      return () => cancelAnimationFrame(frame);
     }
 
     const observer = new MutationObserver(() => {

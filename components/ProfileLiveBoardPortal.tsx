@@ -1,215 +1,381 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import gsap from "gsap";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { cv } from "@/data/cv";
+import { profileMilestones, type ProfileMilestone } from "@/data/profile-timeline";
+import { PROFILE_INTERRUPT_EVENT } from "./board-navigation";
+import "./profile-timeline.css";
 
-const styles = `
-.profile-live-mounted > .story-board-index,
-.profile-live-mounted > .story-board-header,
-.profile-live-mounted > .story-board-grid,
-.profile-live-mounted > .story-board-footnote { display:none!important; }
-.profile-live-mounted { position:relative; overflow:hidden; padding:0!important; }
-.profile-live-board { position:absolute; inset:0; overflow:hidden; color:#27231f; font-family:var(--sans); }
-.profile-live-board:before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 18% 18%,rgba(255,255,255,.55),transparent 24%),linear-gradient(rgba(64,58,47,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(64,58,47,.035) 1px,transparent 1px); background-size:auto,26px 26px,26px 26px; mix-blend-mode:multiply; }
-.profile-live-board:after { content:""; position:absolute; z-index:0; left:49%; top:8%; width:1px; height:84%; background:linear-gradient(transparent,rgba(109,89,59,.2) 12% 88%,transparent); transform:rotate(1deg); pointer-events:none; }
-.profile-live-header { position:absolute; z-index:12; top:5.2%; left:5.2%; width:min(44%,620px); }
-.profile-live-header>span { color:#654f91; font:800 8px/1 var(--mono); letter-spacing:.15em; text-transform:uppercase; }
-.profile-live-header h2 { margin:7px 0 6px; font:800 clamp(34px,4vw,58px)/.9 var(--hand); letter-spacing:-.035em; transform:rotate(-1deg); }
-.profile-live-header p { margin:0; max-width:540px; color:#5b5750; font:9px/1.55 var(--mono); }
-.profile-live-photo { position:absolute; z-index:9; top:5.5%; right:6%; width:10.5%; min-width:100px; margin:0; padding:7px 7px 24px; background:#fffdf5; box-shadow:4px 7px 15px rgba(55,43,27,.18); transform:rotate(3.2deg); }
-.profile-live-photo img { display:block; width:100%; height:auto; aspect-ratio:1; object-fit:cover; filter:saturate(.92) contrast(1.03); }
-.profile-live-photo figcaption { position:absolute; right:6px; bottom:7px; left:6px; overflow:hidden; color:#4f4a43; font:800 7px/1 var(--mono); text-align:center; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
-.profile-now-card,.profile-project-card,.profile-mini-chit,.profile-signal,.profile-status-stamp { position:absolute; z-index:5; box-shadow:3px 6px 12px rgba(65,48,29,.17); transform:rotate(var(--r,0deg)); }
-.profile-now-card { left:5.5%; top:29%; width:27%; min-height:39%; padding:23px 24px 20px; background:#fff5c8; --r:-1.7deg; }
-.profile-now-card:after { content:""; position:absolute; right:10%; top:-8px; width:47%; height:18px; background:rgba(228,210,156,.68); transform:rotate(2deg); box-shadow:0 1px 1px rgba(80,58,27,.08); }
-.profile-now-card small,.profile-project-card small,.profile-mini-chit small { display:block; color:#716c63; font:800 7px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; }
-.profile-now-card h3 { margin:11px 0 9px; font:800 clamp(27px,2.6vw,40px)/.92 var(--hand); }
-.profile-now-card>p { margin:0; color:#4c4942; font:9px/1.55 var(--mono); }
-.profile-now-list { display:grid; gap:8px; margin:16px 0 0; padding:0; list-style:none; }
-.profile-now-list li { position:relative; padding-left:15px; color:#302f2c; font:800 8px/1.4 var(--mono); }
-.profile-now-list li:before { content:"↳"; position:absolute; left:0; color:#9d302a; font-family:var(--hand); }
-.profile-proof-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:17px; }
-.profile-proof-grid div { min-height:58px; padding:10px 9px 9px; border:1px solid rgba(93,74,41,.12); background:rgba(255,255,255,.38); transform:rotate(var(--proof-r,-.4deg)); }
-.profile-proof-grid div:nth-child(2){--proof-r:.6deg}.profile-proof-grid div:nth-child(3){--proof-r:.45deg}.profile-proof-grid div:nth-child(4){--proof-r:-.7deg}
-.profile-proof-grid strong { display:block; color:#282622; font:900 clamp(17px,1.55vw,24px)/.95 var(--hand); }
-.profile-proof-grid span { display:block; margin-top:6px; color:#6d665c; font:800 6px/1.2 var(--mono); letter-spacing:.07em; text-transform:uppercase; }
-.profile-project-card { width:22%; min-width:185px; padding:17px 18px 15px; background:#fffdf5; border:1px solid rgba(86,72,52,.08); }
-.profile-project-card h3 { margin:9px 0 5px; font:800 clamp(20px,2vw,30px)/.95 var(--hand); }
-.profile-project-card p { margin:0; color:#555149; font:8px/1.48 var(--mono); }
-.profile-project-card .profile-stack { display:block; margin-top:11px; color:#645f56; font:800 6px/1.45 var(--mono); letter-spacing:.05em; text-transform:uppercase; }
-.profile-project-card .profile-state { position:absolute; top:12px; right:12px; padding:4px 6px; border:1px solid currentColor; border-radius:999px; color:#9e312b; background:rgba(255,255,255,.68); font:800 6px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; transform:rotate(3deg); }
-.profile-case-link { display:inline-block; margin-top:11px; color:#8f302a; font:900 7px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid currentColor; }
-.profile-project-tailcache { left:39%; top:23%; width:25%; background:#e5f1f4; --r:1.4deg; }
-.profile-project-agent { right:7%; top:31%; width:23%; background:#e8f0d5; --r:-1.6deg; }
-.profile-project-game { left:47%; top:62%; width:23%; background:#f2dfe8; --r:1.8deg; }
-.profile-mini-chit { padding:12px 14px; background:#fffdf6; }
-.profile-mini-chit strong { display:block; margin-top:6px; font:800 17px/1 var(--hand); }
-.profile-mini-chit span { display:block; margin-top:5px; color:#645f58; font:7px/1.35 var(--mono); }
-.profile-brief-chit { left:7%; bottom:7%; width:24%; background:#eee8f7; --r:1.5deg; }
-.profile-offclock-chit { right:6%; bottom:7%; width:18%; background:#fff0c8; --r:-2.1deg; }
-.profile-signal { z-index:7; left:35%; bottom:7%; display:flex; align-items:center; gap:13px; width:35%; padding:11px 15px; background:#fffdf7; --r:-.5deg; }
-.profile-signal:before { content:""; width:8px; height:8px; flex:0 0 auto; border-radius:50%; background:#79bd5d; box-shadow:0 0 0 4px rgba(121,189,93,.13); animation:profilePulse 1.8s ease-in-out infinite; }
-.profile-signal strong { font:800 8px/1 var(--mono); letter-spacing:.09em; text-transform:uppercase; }
-.profile-signal span { color:#686159; font:7px/1.35 var(--mono); }
-.profile-status-stamp { z-index:10; left:31%; top:18%; padding:7px 10px; border:2px solid #9c312a; border-radius:50%; color:#9c312a; background:rgba(255,250,233,.8); box-shadow:none; font:800 12px/1 var(--hand); --r:-10deg; }
-.profile-pencil { position:absolute; z-index:4; color:rgba(48,91,110,.74); font:800 12px/1 var(--hand); pointer-events:none; }
-.profile-pencil-one { left:35%; top:53%; transform:rotate(-4deg); }
-.profile-pencil-two { right:29%; top:18%; color:rgba(149,47,40,.72); transform:rotate(5deg); }
-.profile-pencil-three { right:26%; bottom:20%; transform:rotate(-3deg); }
-.profile-thread { position:absolute; z-index:2; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
-.profile-thread path { fill:none; stroke-linecap:round; vector-effect:non-scaling-stroke; }
-.profile-thread-shadow { stroke:rgba(70,28,20,.2); stroke-width:7; transform:translate(1px,3px); }
-.profile-thread-main { stroke:#a62f28; stroke-width:4; }
-.profile-thread-branch { stroke:#a62f28; stroke-width:3; }
-.profile-live-footnote { position:absolute; z-index:8; right:5%; bottom:2.5%; margin:0; color:#70685e; font:800 9px/1 var(--hand); transform:rotate(-2deg); }
-.profile-live-board .board-pin { top:-8px; }
-.profile-live-board .profile-project-card:hover,.profile-live-board .profile-mini-chit:hover,.profile-live-board .profile-now-card:hover { z-index:16; box-shadow:6px 12px 22px rgba(63,46,28,.23); }
-@keyframes profilePulse { 0%,100%{transform:scale(.9);opacity:.72} 50%{transform:scale(1.18);opacity:1} }
-@media (max-width:980px){
- .profile-live-header { width:50%; }
- .profile-now-card { width:30%; }
- .profile-project-tailcache { left:40%; width:27%; }
- .profile-project-agent { right:4%; width:25%; }
- .profile-project-game { left:43%; width:27%; }
- .profile-signal { left:33%; width:38%; }
- .profile-pencil { display:none; }
+const last = profileMilestones.length - 1;
+
+const doodlePaths: Record<ProfileMilestone["doodle"], string[]> = {
+  spark: ["M42 5l3 21 16-13-10 19 23 6-23 3 10 21-17-14-10 19 3-24-23-4 22-5z", "M10 9l10 10m57-8-10 10M8 69l13-12"],
+  brackets: ["M29 9H14v58h15M58 9h15v58H58", "M52 17 37 59M29 42l-10-5 10-5m28 0 10 5-10 5"],
+  wireless: ["M20 42h46v25H20zM27 49h15m-15 7h9m16-7h7m-7 7h7", "M43 34c7-8 14-8 21 0M35 27c12-15 26-15 38 0M28 19c17-22 35-22 52 0"],
+  route: ["M13 54c14-33 21 10 36-19 9-18 19-16 30-23", "M13 53a6 6 0 1 0 .1 0M50 34a5 5 0 1 0 .1 0M78 12l-11 2 8 9"],
+  clock: ["M46 10a30 30 0 1 0 0 60 30 30 0 0 0 0-60z", "M46 21v24l17 9M14 7l8 6m56-6-8 6"],
+  graph: ["M12 12v57h69", "M18 56 34 43l13 7 17-27 16-7M64 23l14-8-1 16", "M21 20c13-8 24-7 34-1"],
+  house: ["M9 37 45 9l37 28M19 33v37h52V33M39 70V47h16v23", "M59 11V5h13v17M27 41h8m27 0h8"],
+  pencil: ["M17 61 57 14l15 13-40 47-20 5zM17 61l15 13M57 14l8-8 15 13-8 8", "M42 76c15-4 29-3 40 1"],
+};
+
+function Doodle({ motif, className = "" }: { motif: ProfileMilestone["doodle"]; className?: string }) {
+  return <svg className={`profile-doodle ${className}`} viewBox="0 0 92 86" fill="none" aria-hidden="true">
+    {doodlePaths[motif].map((d, index) => <path key={index} d={d} pathLength="100" />)}
+  </svg>;
 }
-@media (max-width:760px){
- .profile-live-mounted { overflow-y:auto; }
- .profile-live-board { position:relative; min-height:1600px; overflow:hidden; padding-bottom:70px; }
- .profile-live-board:after,.profile-thread { display:none; }
- .profile-live-header { top:28px; left:22px; width:calc(100% - 44px); }
- .profile-live-header h2 { font-size:40px; }
- .profile-live-header p { font-size:8px; }
- .profile-live-photo { top:186px; right:22px; width:76px; min-width:0; padding:5px 5px 20px; }
- .profile-status-stamp { top:180px; left:22px; }
- .profile-now-card,.profile-project-card,.profile-mini-chit,.profile-signal { position:relative; top:auto!important; right:auto!important; bottom:auto!important; left:auto!important; width:auto!important; min-width:0; margin-left:20px; margin-right:20px; }
- .profile-now-card { margin-top:308px; padding:20px; min-height:0; }
- .profile-project-card { margin-top:18px; padding:16px; }
- .profile-project-tailcache { margin-left:42px; }
- .profile-project-agent { margin-right:38px; }
- .profile-project-game { margin-left:30px; }
- .profile-signal { margin-top:18px; }
- .profile-brief-chit { margin-top:18px; margin-right:56px; }
- .profile-offclock-chit { margin-top:18px; margin-left:54px; }
- .profile-live-footnote { right:20px; bottom:18px; }
- .profile-proof-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
- .profile-proof-grid div { min-height:52px; }
- .profile-case-link { font-size:6.5px; }
-}
-@media (prefers-reduced-motion:reduce){ .profile-signal:before { animation:none; } }
-`;
+
+type Trail = { main: string; branches: string[]; anchors: { x: number; y: number }[] };
 
 export function ProfileLiveBoardPortal() {
-  const [target, setTarget] = useState<HTMLElement | null>(null);
+  const [surface, setSurface] = useState<HTMLElement | null>(null);
+  const [active, setActive] = useState(0);
+  const [revealed, setRevealed] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [detail, setDetail] = useState<number | null>(null);
+  const [trail, setTrail] = useState<Trail | null>(null);
+  const surfaceRef = useRef<HTMLElement | null>(null);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const pathRef = useRef<SVGPathElement | null>(null);
+  const markerRef = useRef<SVGCircleElement | null>(null);
+  const rows = useRef<(HTMLDivElement | null)[]>([]);
+  const cards = useRef<(HTMLButtonElement | null)[]>([]);
+  const detailPanels = useRef<(HTMLDivElement | null)[]>([]);
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const timer = useRef<number | null>(null);
+  const arrivalTimer = useRef<number | null>(null);
+  const tween = useRef<gsap.core.Tween | null>(null);
+  const playingNow = useRef(false);
+  const activeNow = useRef(0);
+  const revealedNow = useRef(0);
+  const completedNow = useRef(false);
+  const explicitPause = useRef(false);
+  const pausedForVisit = useRef(false);
+  const hereNow = useRef(false);
+  const trailNow = useRef<Trail | null>(null);
 
-  useEffect(() => {
-    const title = document.getElementById("profile-board-story-title");
-    const surface = title?.closest<HTMLElement>(".story-board-surface") ?? null;
-    if (!surface) return;
-    surface.classList.add("profile-live-mounted");
-    const mountFrame = window.requestAnimationFrame(() => setTarget(surface));
-    return () => {
-      window.cancelAnimationFrame(mountFrame);
-      surface.classList.remove("profile-live-mounted");
-    };
+  const alignCard = useCallback((index: number) => {
+    const host = surfaceRef.current;
+    const card = cards.current[index];
+    if (!host || !card) return;
+    const clearance = window.innerWidth <= 480 ? 158 : 96;
+    host.scrollTop = Math.max(0, Math.min(host.scrollHeight - host.clientHeight,
+      host.scrollTop + card.getBoundingClientRect().top - host.getBoundingClientRect().top - clearance));
   }, []);
 
-  const board = target ? createPortal(
-    <div className="profile-live-board" aria-label="Asu Singh selected systems and engineering evidence">
-      <header className="profile-live-header">
-        <span>Case board / 00 · selected systems</span>
-        <h2>Selected systems.</h2>
-        <p>Six years in production fintech systems — Java, concurrency, recovery, caching, observability, and research where the claims can be measured.</p>
-      </header>
+  useEffect(() => {
+    const host = document.getElementById("profile-board-story-title")?.closest<HTMLElement>(".story-board-surface");
+    if (!host) return;
+    surfaceRef.current = host;
+    host.classList.add("profile-live-mounted");
+    const frame = requestAnimationFrame(() => setSurface(host));
+    return () => { cancelAnimationFrame(frame); host.classList.remove("profile-live-mounted"); surfaceRef.current = null; };
+  }, []);
 
-      <figure className="profile-live-photo profile-animate">
-        <span className="board-pin" aria-hidden="true" />
-        <Image src="https://avatars.githubusercontent.com/u/20127633?s=240&v=4" alt="Asu Singh" width={240} height={240} sizes="120px" referrerPolicy="no-referrer" />
-        <figcaption>{cv.name} / system owner</figcaption>
-      </figure>
+  const updatePosition = useCallback(() => {
+    const host = surfaceRef.current;
+    const track = timelineRef.current;
+    const geometry = trailNow.current;
+    if (!host || !track || !geometry || !geometry.anchors.length) return;
+    const trackTop = track.getBoundingClientRect().top - host.getBoundingClientRect().top + host.scrollTop;
+    const maximum = Math.max(0, host.scrollHeight - host.clientHeight);
+    const readingLine = host.scrollTop >= maximum - 3
+      ? geometry.anchors[last].y + trackTop + 70
+      : host.scrollTop + host.clientHeight * .4;
+    const localY = readingLine - trackTop;
+    let current = 0;
+    geometry.anchors.forEach((point, i) => { if (point.y - 44 <= localY) current = i; });
+    if (current !== activeNow.current) { activeNow.current = current; setActive(current); }
+    if (current === last && !playingNow.current && !completedNow.current) {
+      completedNow.current = true;
+      setCompleted(true);
+    }
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const nextReveal = reduce ? last : Math.max(revealedNow.current, current);
+    if (nextReveal !== revealedNow.current) { revealedNow.current = nextReveal; setRevealed(nextReveal); }
+    const path = pathRef.current;
+    const marker = markerRef.current;
+    if (!path || !marker) return;
+    const total = path.getTotalLength();
+    let low = 0;
+    let high = total;
+    if (!reduce) for (let i = 0; i < 18; i++) {
+      const middle = (low + high) / 2;
+      if (path.getPointAtLength(middle).y < localY) low = middle;
+      else high = middle;
+    }
+    const inkLength = reduce ? total : Math.max(0, Math.min(total, (low + high) / 2));
+    path.style.strokeDasharray = `${total} ${total}`;
+    path.style.strokeDashoffset = String(total - inkLength);
+    const point = path.getPointAtLength(inkLength);
+    marker.setAttribute("cx", String(point.x));
+    marker.setAttribute("cy", String(point.y));
+    marker.style.opacity = inkLength < 3 ? "0" : "1";
+  }, []);
 
-      <span className="profile-status-stamp profile-animate">6 yrs production</span>
+  const measureTrail = useCallback(() => {
+    const track = timelineRef.current;
+    if (!track || !rows.current.every(Boolean)) return;
+    const bounds = track.getBoundingClientRect();
+    const mobile = bounds.width <= 620;
+    const anchors = rows.current.map((row) => {
+      const anchor = row!.querySelector<HTMLElement>(".profile-trail-anchor")!;
+      const rect = anchor.getBoundingClientRect();
+      return { x: rect.left - bounds.left, y: rect.top - bounds.top };
+    });
+    const start = { x: mobile ? anchors[0].x + 7 : Math.min(bounds.width - 18, anchors[0].x + bounds.width * .09), y: 0 };
+    let main = `M ${start.x.toFixed(1)} 0`;
+    let previous = start;
+    anchors.forEach((point) => {
+      const dy = Math.max(40, point.y - previous.y);
+      const sway = mobile ? 4 : Math.min(44, Math.abs(point.x - previous.x) * .15 + 12);
+      const direction = point.x >= previous.x ? 1 : -1;
+      main += ` C ${(previous.x + direction * sway).toFixed(1)} ${(previous.y + dy * .34).toFixed(1)}, ${(point.x - direction * sway).toFixed(1)} ${(point.y - dy * .34).toFixed(1)}, ${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
+      previous = point;
+    });
+    main += ` C ${(previous.x + (mobile ? 5 : -22)).toFixed(1)} ${(previous.y + 26).toFixed(1)}, ${(previous.x - (mobile ? 4 : 17)).toFixed(1)} ${(previous.y + 47).toFixed(1)}, ${previous.x.toFixed(1)} ${(previous.y + 66).toFixed(1)}`;
+    const branches = anchors.map((point, i) => {
+      const card = cards.current[i]!.getBoundingClientRect();
+      const endX = mobile || card.left - bounds.left > point.x ? card.left - bounds.left + 3 : card.right - bounds.left - 3;
+      const endY = card.top - bounds.top + Math.min(48, card.height * .3);
+      const bend = (point.x + endX) / 2;
+      return `M ${point.x.toFixed(1)} ${point.y.toFixed(1)} C ${bend.toFixed(1)} ${point.y.toFixed(1)}, ${bend.toFixed(1)} ${endY.toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}`;
+    });
+    const next = { main, branches, anchors };
+    trailNow.current = next;
+    setTrail(next);
+    requestAnimationFrame(updatePosition);
+  }, [updatePosition]);
 
-      <svg className="profile-thread" viewBox="0 0 1400 820" preserveAspectRatio="none" aria-hidden="true">
-        <path className="profile-thread-shadow" d="M405 358 C520 314 589 300 687 308 C804 319 882 364 1010 351 C1118 340 1187 364 1284 420" />
-        <path className="profile-thread-main" pathLength="100" d="M405 358 C520 314 589 300 687 308 C804 319 882 364 1010 351 C1118 340 1187 364 1284 420" />
-        <path className="profile-thread-branch" pathLength="100" d="M648 307 C650 261 680 225 729 190" />
-        <path className="profile-thread-branch" pathLength="100" d="M995 352 C1026 296 1063 270 1110 255" />
-        <path className="profile-thread-branch" pathLength="100" d="M830 329 C824 448 844 524 900 592" />
-      </svg>
+  useEffect(() => { if (trail) updatePosition(); }, [trail, updatePosition]);
 
-      <article className="profile-now-card profile-animate">
-        <span className="board-pin pin-blue" aria-hidden="true" />
-        <small>Profile / signal</small>
-        <h3>Systems, not slogans.</h3>
-        <p>The recurring pattern across the work: make it faster, make recovery boring, then prove it with numbers.</p>
-        <div className="profile-proof-grid" aria-label="Career proof points">
-          <div><strong>6 yrs</strong><span>production</span></div>
-          <div><strong>Fintech</strong><span>systems</span></div>
-          <div><strong>Java</strong><span>+ concurrency</span></div>
-          <div><strong>~100</strong><span>citations</span></div>
-        </div>
-      </article>
+  const stopPlayback = useCallback(() => {
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = null;
+    tween.current?.kill();
+    tween.current = null;
+    playingNow.current = false;
+    setPlaying(false);
+    updatePosition();
+  }, [updatePosition]);
 
-      <article className="profile-project-card profile-project-tailcache profile-animate">
-        <span className="board-pin pin-blue" aria-hidden="true" />
-        <small>Selected system / 01</small>
-        <span className="profile-state">production</span>
-        <h3>Trading engine</h3>
-        <p>Java multithreading refactor for XTP end-of-day trade processing increased throughput by 20×.</p>
-        <span className="profile-stack">20× throughput · Java · multithreading · XTP</span>
-        <a className="profile-case-link" href="#work-board">Open case →</a>
-      </article>
+  const queueNext = useCallback((index: number) => {
+    function schedule(current: number) {
+      if (current >= last) {
+        playingNow.current = false;
+        completedNow.current = true;
+        setCompleted(true);
+        setPlaying(false);
+        return;
+      }
+      timer.current = window.setTimeout(() => {
+        const host = surfaceRef.current;
+        const next = cards.current[current + 1];
+        if (!host || !next || !playingNow.current) return;
+        const destination = Math.max(0, Math.min(host.scrollHeight - host.clientHeight,
+          host.scrollTop + next.getBoundingClientRect().top - host.getBoundingClientRect().top - host.clientHeight * .22));
+        tween.current = gsap.to(host, {
+          scrollTop: destination, duration: .9, ease: "power2.inOut", onUpdate: updatePosition,
+          onComplete: () => {
+            tween.current = null;
+            activeNow.current = current + 1;
+            setActive(current + 1);
+            revealedNow.current = Math.max(revealedNow.current, current + 1);
+            setRevealed(revealedNow.current);
+            updatePosition();
+            if (playingNow.current) schedule(current + 1);
+          },
+        });
+      }, 2200);
+    }
+    schedule(index);
+  }, [updatePosition]);
 
-      <article className="profile-project-card profile-project-agent profile-animate">
-        <span className="board-pin pin-green" aria-hidden="true" />
-        <small>Selected system / 02</small>
-        <span className="profile-state">production</span>
-        <h3>Recovery system</h3>
-        <p>Automatic recovery for halted end-of-day processing cut downtime by 90% and eliminated after-hours operator calls.</p>
-        <span className="profile-stack">-90% downtime · recovery · production operations</span>
-        <a className="profile-case-link" href="#work-board">Open case →</a>
-      </article>
+  const play = useCallback((replay = false) => {
+    const host = surfaceRef.current;
+    if (!host || detail !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    stopPlayback();
+    explicitPause.current = false;
+    pausedForVisit.current = false;
+    if (replay || completedNow.current || activeNow.current === last) {
+      host.scrollTop = 0;
+      activeNow.current = 0;
+      setActive(0);
+      completedNow.current = false;
+      setCompleted(false);
+      updatePosition();
+    }
+    playingNow.current = true;
+    setPlaying(true);
+    queueNext(activeNow.current);
+  }, [detail, queueNext, stopPlayback, updatePosition]);
 
-      <article className="profile-project-card profile-project-game profile-animate">
-        <span className="board-pin" aria-hidden="true" />
-        <small>Selected system / 03</small>
-        <span className="profile-state">research</span>
-        <h3>TailCache</h3>
-        <p>Controlled JMH study of Caffeine vs Chronicle Map, focused on p99 tail latency and heap ↔ off-heap trade-offs.</p>
-        <span className="profile-stack">Java 21 · JMH · Caffeine · Chronicle Map</span>
-        <a className="profile-case-link" href="https://github.com/Enixes/TailCache" target="_blank" rel="noreferrer">Benchmarks →</a>
-      </article>
+  const closeDetail = useCallback((restoreFocus = true) => {
+    const index = detail;
+    setDetail(null);
+    if (restoreFocus) requestAnimationFrame(() => {
+      if (index !== null) alignCard(index);
+      opener.current?.focus({ preventScroll: true });
+    });
+  }, [alignCard, detail]);
 
-      <article className="profile-mini-chit profile-brief-chit profile-animate">
-        <span className="board-pin pin-yellow" aria-hidden="true" />
-        <small>Research</small>
-        <strong>Springer · ~100 citations</strong>
-        <span>ML optimisation applied to chest X-ray classification in Cognitive Computation.</span>
-      </article>
+  useEffect(() => {
+    if (detail === null) return;
+    const frame = requestAnimationFrame(() => {
+      alignCard(detail);
+      detailPanels.current[detail]?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [alignCard, detail]);
 
-      <div className="profile-signal profile-animate">
-        <strong>Open source</strong>
-        <span>TailCache · Chronicle Map issue #533 work · Astra Skills</span>
+  useEffect(() => {
+    if (!surface) return;
+    const root = document.documentElement;
+    const onInput = (event: Event) => {
+      if (root.dataset.zoomSection !== "profile-board" || root.dataset.boardNavigating === "true") return;
+      if (event.target instanceof Element && event.target.closest(".profile-playback-control") &&
+          (event instanceof PointerEvent || event instanceof TouchEvent ||
+            (event instanceof KeyboardEvent && ["Enter", " "].includes(event.key)))) return;
+      if (event.target instanceof Element && event.target.closest(".profile-chit-toggle") &&
+          (event instanceof PointerEvent || event instanceof TouchEvent ||
+            (event instanceof KeyboardEvent && ["Enter", " "].includes(event.key)))) {
+        pausedForVisit.current = true;
+        if (playingNow.current) stopPlayback();
+        return;
+      }
+      if (event instanceof KeyboardEvent && event.key === "Escape" && detail !== null) {
+        event.preventDefault();
+        closeDetail();
+      }
+      pausedForVisit.current = true;
+      if (playingNow.current) stopPlayback();
+    };
+    const onBoardState = () => {
+      const here = root.dataset.zoomSection === "profile-board" && root.dataset.boardNavigating !== "true";
+      if (!here) {
+        if (arrivalTimer.current !== null) window.clearTimeout(arrivalTimer.current);
+        arrivalTimer.current = null;
+        if (hereNow.current) {
+          hereNow.current = false;
+          pausedForVisit.current = false;
+          stopPlayback();
+        }
+        return;
+      }
+      if (hereNow.current) return;
+      hereNow.current = true;
+      updatePosition();
+      if (explicitPause.current || completedNow.current || detail !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      arrivalTimer.current = window.setTimeout(() => {
+        arrivalTimer.current = null;
+        if (hereNow.current && !pausedForVisit.current && !explicitPause.current && !completedNow.current) play();
+      }, 400);
+    };
+    const observer = new MutationObserver(onBoardState);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-zoom-section", "data-board-navigating"] });
+    const resize = new ResizeObserver(measureTrail);
+    if (timelineRef.current) resize.observe(timelineRef.current);
+    surface.addEventListener("scroll", updatePosition, { passive: true });
+    window.addEventListener("wheel", onInput, { passive: true, capture: true });
+    window.addEventListener(PROFILE_INTERRUPT_EVENT, onInput);
+    window.addEventListener("touchstart", onInput, { passive: true, capture: true });
+    window.addEventListener("keydown", onInput, { capture: true });
+    window.addEventListener("pointerdown", onInput, { capture: true });
+    const frame = requestAnimationFrame(() => { measureTrail(); onBoardState(); });
+    return () => {
+      observer.disconnect(); resize.disconnect(); cancelAnimationFrame(frame);
+      surface.removeEventListener("scroll", updatePosition);
+      window.removeEventListener("wheel", onInput, true);
+      window.removeEventListener(PROFILE_INTERRUPT_EVENT, onInput);
+      window.removeEventListener("touchstart", onInput, true);
+      window.removeEventListener("keydown", onInput, true);
+      window.removeEventListener("pointerdown", onInput, true);
+      if (arrivalTimer.current !== null) window.clearTimeout(arrivalTimer.current);
+      stopPlayback();
+    };
+  }, [surface, detail, closeDetail, measureTrail, play, stopPlayback, updatePosition]);
+
+  const toggleDetail = (index: number, button: HTMLButtonElement) => {
+    pausedForVisit.current = true;
+    if (playingNow.current) stopPlayback();
+    opener.current = button;
+    if (detail === index) { closeDetail(); return; }
+    setDetail(index);
+    revealedNow.current = Math.max(revealedNow.current, index);
+    setRevealed(revealedNow.current);
+  };
+
+  return surface && createPortal(<div className={`profile-live-board ${trail ? "has-trail" : ""}`} aria-label="Asu Singh career timeline">
+    <div className="profile-playback-bar">
+      <span className="profile-playback-count" aria-live="polite">{String(active + 1).padStart(2, "0")} / 08 · {profileMilestones[active].year}</span>
+      <button type="button" className="profile-playback-control" disabled={detail !== null} onClick={() => {
+        if (playing) { explicitPause.current = true; stopPlayback(); }
+        else play(completed || active === last);
+      }} aria-label={playing ? "Pause Profile story" : completed || active === last ? "Replay Profile story" : "Play Profile story"}>
+        <span aria-hidden="true">{playing ? "Ⅱ" : "▶"}</span> {playing ? "Pause" : completed || active === last ? "Replay" : "Play"}
+      </button>
+    </div>
+    <header className="profile-live-header">
+      <div className="profile-live-intro">
+        <span className="profile-kicker">Case board / 00 · the long view</span>
+        <h2>A trail of things<br /><em>made real.</em></h2>
+        <p>From a first homemade editor to trading systems, research, and tools still in progress. Follow the red thread, or take the wheel.</p>
+        <span className="profile-instruction">Scroll to explore · tap a pinned note to unfold it ↘</span>
       </div>
-
-      <article className="profile-mini-chit profile-offclock-chit profile-animate">
-        <span className="board-pin pin-green" aria-hidden="true" />
-        <small>Field notes / life</small>
-        <strong>Systems + off the clock</strong>
-        <span>Writing on systems and AI; football, books, anime, and games.</span>
-      </article>
-
-      <span className="profile-pencil profile-pencil-one">20× throughput →</span>
-      <span className="profile-pencil profile-pencil-two">90% downtime ↓</span>
-      <span className="profile-pencil profile-pencil-three">p99: measure the tail →</span>
-      <p className="profile-live-footnote">Production evidence first. Everything else earns its pin.</p>
-    </div>,
-    target,
-  ) : null;
-
-  return <><style dangerouslySetInnerHTML={{ __html: styles }} />{board}</>;
+      <figure className="profile-live-photo">
+        <span className="board-pin pin-blue" aria-hidden="true" />
+        <Image src="/profile/asu-portrait-cutout.png" alt="Portrait of Asu Singh" width={240} height={240} sizes="(max-width: 760px) 100px, 170px" priority />
+        <figcaption>Asu / work in progress</figcaption>
+      </figure>
+    </header>
+    <div ref={timelineRef} className="profile-timeline" aria-label="Career milestones">
+      {trail && <svg className="profile-trail-svg" width="100%" height="100%" aria-hidden="true">
+        <path className="profile-trail-guide" d={trail.main} />
+        <path ref={pathRef} className="profile-trail-ink" d={trail.main} />
+        {trail.branches.map((branch, i) => <path key={i} className={`profile-trail-branch ${i <= revealed ? "is-drawn" : ""}`} d={branch} pathLength="100" />)}
+        <circle ref={markerRef} className="profile-trail-marker" r="6" />
+      </svg>}
+      {profileMilestones.map((item, i) => <div key={item.id} ref={(node) => { rows.current[i] = node; }}
+        className={`profile-timeline-row row-${i} ${i <= revealed ? "is-revealed" : ""} ${i === active ? "is-current" : ""} ${detail === i ? "is-open" : ""}`}>
+        <span className="profile-trail-anchor" aria-hidden="true" />
+        <article className={`profile-timeline-chit tone-${item.tone}`}>
+          <span className="board-pin" aria-hidden="true" />
+          <span className="profile-chit-fold" aria-hidden="true" />
+          <button type="button" ref={(node) => { cards.current[i] = node; }} className="profile-chit-toggle"
+            onClick={(event) => toggleDetail(i, event.currentTarget)} aria-expanded={detail === i}
+            aria-controls={`profile-note-${item.id}`} aria-label={`${detail === i ? "Fold" : "Unfold"} ${item.year}: ${item.title}`}>
+            <span className="profile-chit-date">{item.year} <span>· {item.chapter}</span></span>
+            <strong>{item.title}</strong>
+            <span className="profile-chit-aside">{item.aside}</span>
+            <span className="profile-chit-highlight">{item.highlight}</span>
+            <span className="profile-chit-open">{detail === i ? "Fold note" : "Unfold story"} <span aria-hidden="true">{detail === i ? "↖" : "↗"}</span></span>
+          </button>
+          <Doodle motif={item.doodle} />
+          {detail === i && <div id={`profile-note-${item.id}`} ref={(node) => { detailPanels.current[i] = node; }}
+            className="profile-note-detail" tabIndex={-1} aria-label={`${item.year} story`}>
+            <p className="profile-note-label">Field note / {item.chapter}</p>
+            <div className="profile-note-copy">{item.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
+            {item.artifact && <figure className="profile-note-artifact">
+              <Image src={item.artifact.src} alt={item.artifact.alt} width={1366} height={768} sizes="(max-width: 760px) 72vw, 520px" />
+              <figcaption>{item.artifact.caption}</figcaption>
+            </figure>}
+            {item.id === "vide" && <div className="profile-injectorist-note">
+              <Doodle motif="wireless" className="profile-injectorist-doodle" />
+              <div><strong>Injectorist</strong><span>Bash · connected wireless cards · packet injection capability</span></div>
+            </div>}
+            <div className="profile-note-proof"><span>Proof / explore further</span>
+              {item.proof.map((proof) => <a key={proof.href} href={proof.href}
+                target={proof.href.startsWith("#") ? undefined : "_blank"}
+                rel={proof.href.startsWith("#") ? undefined : "noreferrer"}
+                onClick={proof.href.startsWith("#") ? () => closeDetail(false) : undefined}>{proof.label} ↗</a>)}
+            </div>
+          </div>}
+        </article>
+      </div>)}
+    </div>
+    <p className="profile-live-footnote">The story keeps going. The board is yours to explore.</p>
+  </div>, surface);
 }

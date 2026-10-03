@@ -36,6 +36,7 @@ export function BoardScrollController() {
     let overlay: HTMLElement | null = null;
     let targetIndex = 0;
     let lastIndex = 0;
+    let profileVisited = false;
     const intro = document.querySelector<HTMLElement>(".war-room-intro");
     let introTimer = 0;
 
@@ -101,10 +102,11 @@ export function BoardScrollController() {
       root.dataset.boardNavigating = "true";
       root.dataset.boardDestination = String(index);
       root.style.scrollBehavior = "auto";
-      // Every board arrives at its header in either direction. Internal reading
-      // belongs to the gesture navigator, never to the camera's transition.
+      // Profile keeps its place after its first visit so its story can resume.
+      // The other boards continue to arrive at their headers.
       const surface = toHero ? null : boardSurface(panels[index]);
-      if (surface && (options.reset || index !== previous || fromHero)) surface.scrollTop = 0;
+      if (surface && (index !== 0 || !profileVisited) &&
+          (options.reset || index !== previous || fromHero)) surface.scrollTop = 0;
       const destination = toHero ? 0 : sectionTop(index);
       const finish = () => {
         tween = null;
@@ -116,6 +118,7 @@ export function BoardScrollController() {
         window.history.replaceState(null, "", toHero ? "#top" : "#" + sectionIds[index]);
         if (toHero) document.querySelector<HTMLElement>(".preview-brand")?.focus({ preventScroll: true });
         else panels[options.index]?.focus({ preventScroll: true });
+        if (index === 0) profileVisited = true;
         render();
       };
       if (options.immediate || reducedMotion.matches) {

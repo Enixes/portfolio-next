@@ -158,7 +158,9 @@ export function HeaderStatusResume() {
   const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    setTarget(document.querySelector<HTMLElement>(".preview-status-slot"));
+    const frame = requestAnimationFrame(() =>
+      setTarget(document.querySelector<HTMLElement>(".preview-status-slot")));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

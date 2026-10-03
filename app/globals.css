@@ -1986,3 +1986,151 @@ html[data-board-entered="true"] .preview-nav .preview-overview { display: block;
 @media (max-width: 520px) {
   .thesis-role { max-width: 100%; font-size: clamp(18px, 5.2vw, 23px); white-space: normal; }
 }
+
+/* A small animated field file tucked into the original charcoal nav. */
+.preview-status.resume-link {
+  position: relative;
+  isolation: isolate;
+  width: 218px;
+  min-height: 40px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 5px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(232,211,169,.4);
+  border-radius: 3px;
+  background: #292723;
+  color: #f3eada;
+  box-shadow: inset 0 0 0 1px rgba(20,18,16,.3);
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease, color .25s ease;
+}
+.resume-link::before,
+.resume-mobile-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(105deg, #bbd1cf 0%, #e9d7a8 55%, #f5e9d4 100%);
+  transform: translateX(-103%);
+  transition: transform .58s cubic-bezier(.18,.8,.2,1);
+  pointer-events: none;
+}
+.resume-link:hover::before,
+.resume-link:focus-visible::before,
+.resume-mobile-link:hover::before,
+.resume-mobile-link:focus-visible::before { transform: translateX(0); }
+.resume-link:hover,
+.resume-link:focus-visible {
+  border-color: #f4e3be;
+  color: #24221f;
+  box-shadow: 0 0 0 2px rgba(235,207,148,.18), 0 5px 18px rgba(0,0,0,.2);
+  transform: translateY(-1px);
+}
+.resume-link:focus-visible,
+.resume-mobile-link:focus-visible { outline: 2px solid #eac877; outline-offset: 3px; }
+.resume-wind {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.resume-wind path {
+  fill: none;
+  stroke: #c9d9d2;
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  stroke-dasharray: 42 110;
+  opacity: .35;
+  animation: resume-wind-drift 5.2s linear infinite;
+}
+.resume-wind path + path {
+  stroke: #eacb84;
+  stroke-width: .9;
+  opacity: .28;
+  animation-delay: -2.6s;
+}
+.resume-link:hover .resume-wind path,
+.resume-link:focus-visible .resume-wind path { stroke: #506b70; opacity: .7; animation-duration: 1.8s; }
+.resume-link:hover .resume-wind path + path,
+.resume-link:focus-visible .resume-wind path + path { stroke: #94702e; opacity: .6; }
+.resume-seal,
+.resume-caption,
+.resume-arrow { position: relative; z-index: 2; }
+.resume-seal {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border: 1px solid #d8bd80;
+  border-radius: 50%;
+  color: #e8d09a;
+  font: 800 8px/1 var(--mono);
+  letter-spacing: -.04em;
+  transform: rotate(-12deg);
+  transition: transform .35s ease, border-color .25s ease, color .25s ease;
+}
+.resume-link:hover .resume-seal,
+.resume-link:focus-visible .resume-seal {
+  border-color: #695333;
+  color: #4c3c26;
+  transform: rotate(0deg) scale(1.07);
+}
+.resume-caption { display: grid; flex: 1 1 auto; min-width: 0; gap: 3px; }
+.resume-caption b { font: 700 9px/1 var(--mono); letter-spacing: .08em; }
+.resume-caption small { color: #c7bba8; font: 600 9px/1 var(--mono); letter-spacing: .02em; text-transform: none; transition: color .25s ease; }
+.resume-link:hover .resume-caption small,
+.resume-link:focus-visible .resume-caption small { color: #514a40; }
+.resume-arrow {
+  color: #e2c27e;
+  font: 700 17px/1 var(--mono);
+  transition: transform .3s ease, color .3s ease;
+}
+.resume-link:hover .resume-arrow,
+.resume-link:focus-visible .resume-arrow { color: #353b3b; transform: translate(2px,-2px); }
+
+.preview-nav a.resume-mobile-link {
+  position: relative;
+  isolation: isolate;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(232,211,169,.4);
+  color: #f3eada;
+  background: #292723;
+}
+.resume-mobile-link > span { position: relative; z-index: 1; }
+.resume-mobile-short { display: none; }
+.preview-nav a.resume-mobile-link:hover,
+.preview-nav a.resume-mobile-link:focus-visible { color: #24221f; background: #292723; }
+html[data-board-entered="true"] .preview-nav a.resume-mobile-link { display: inline-flex; }
+
+@keyframes resume-wind-drift {
+  from { stroke-dashoffset: 152; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media (max-width: 900px) {
+  .preview-nav a.resume-mobile-link { display: inline-flex; }
+}
+@media (max-width: 520px) {
+  .preview-header { gap: 4px; padding-inline: 8px; }
+  .preview-nav a { padding-inline: 4px; }
+  .resume-mobile-long { display: none; }
+  .resume-mobile-short { display: inline; }
+  .preview-nav a.resume-mobile-link { padding-inline: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resume-wind path { animation: none; stroke-dasharray: none; }
+  .resume-link,
+  .resume-link::before,
+  .resume-seal,
+  .resume-caption small,
+  .resume-arrow,
+  .resume-mobile-link::before { transition: none; }
+}
