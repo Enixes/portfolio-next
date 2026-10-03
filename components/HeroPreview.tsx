@@ -1,6 +1,7 @@
-import { cv } from "@/data/cv";
 import { BreezeController } from "@/components/BreezeController";
 import { BoardScrollController } from "@/components/BoardScrollController";
+import { FloatingNavigation } from "@/components/FloatingNavigation";
+import { ContactBoard } from "@/components/ContactBoard";
 import Image from "next/image";
 
 const sectionBoards = [
@@ -63,49 +64,9 @@ const sectionBoards = [
     eyebrow: "Contact / Open Channel",
     title: "Bring me the hard problem",
     summary: "For backend systems, production reliability, and agentic AI work, open a channel directly.",
-    cards: [
-      ["Email", "Start a conversation", "Best for project context, roles, and detailed engineering questions.", `mailto:${cv.email}`],
-      ["LinkedIn", "Professional profile", "Experience, background, and a direct way to connect.", cv.linkedin],
-      ["GitHub", "Code + experiments", "Projects, prototypes, and the engineering trail behind the board.", cv.github],
-    ],
+    cards: [],
   },
 ] as const;
-
-function ContactActionMarker({ channel }: { channel: string }) {
-  return (
-    <span className="contact-action-marker" aria-hidden="true">
-      {channel === "Email" ? (
-        <svg viewBox="0 0 24 24">
-          <path d="M3 6.5h18v12H3z M4 8l8 6 8-6" />
-        </svg>
-      ) : channel === "LinkedIn" ? (
-        <svg viewBox="0 0 24 24">
-          <circle cx="5.5" cy="5.5" r="1.2" />
-          <path d="M4.3 10v9.5 M10 19.5V10m0 4.1c1.2-3.4 6.4-4.2 6.4 1v4.4 M16.4 15.1V19.5" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24">
-          <circle cx="6" cy="6" r="2" />
-          <circle cx="18" cy="8" r="2" />
-          <circle cx="10" cy="18" r="2" />
-          <path d="M8 6h3.5c3.5 0 3 2 4.5 2 M6 8v3c0 3.8 4 2.4 4 5" />
-        </svg>
-      )}
-    </span>
-  );
-}
-
-function ContactCardDoodle() {
-  return (
-    <span className="contact-card-doodle" aria-hidden="true">
-      <svg viewBox="0 0 94 34">
-        <path className="contact-doodle-route" pathLength="1" d="M4 25 C19 7 40 31 57 14 C68 3 77 7 88 14" />
-        <path className="contact-doodle-arrow" d="M80 8 L89 14 L80 19" />
-        <circle cx="4" cy="25" r="2.5" />
-      </svg>
-    </span>
-  );
-}
 
 export function HeroPreview() {
   return (
@@ -132,50 +93,7 @@ export function HeroPreview() {
         />
       </div>
 
-      <header className="preview-header" aria-label="Primary navigation">
-        <a className="preview-brand" href="#top" aria-label="Asu Singh, home">
-          <span aria-hidden="true" />
-          ASU / SYSTEMS
-        </a>
-
-        <nav className="preview-nav">
-          <a className="preview-overview" href="#top">Board</a>
-          <a href="#work-board">Work</a>
-          <a href="#blog-board">Blog</a>
-          <a href="#life-board">Life</a>
-          <a href="#contact-board">Contact</a>
-          <a
-            className="resume-mobile-link"
-            href={cv.resumeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="View Asu Singh résumé on Google Drive"
-          >
-            <span className="resume-mobile-long">Résumé</span>
-            <span className="resume-mobile-short">CV</span>
-            <span aria-hidden="true">↗</span>
-          </a>
-        </nav>
-
-        <a
-          className="preview-status resume-link"
-          href={cv.resumeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View Asu Singh résumé on Google Drive"
-        >
-          <svg className="resume-wind" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M-18 29 C30 5 57 43 110 15 S178 25 237 4" />
-            <path d="M-28 37 C24 23 70 46 111 29 S186 20 240 14" />
-          </svg>
-          <strong className="resume-seal" aria-hidden="true">AS</strong>
-          <div className="resume-caption">
-            <b>Résumé / field file</b>
-            <small>View on Drive</small>
-          </div>
-          <b className="resume-arrow" aria-hidden="true">↗</b>
-        </a>
-      </header>
+      <FloatingNavigation />
 
       <section className="preview-hero" aria-labelledby="hero-title">
         <Image
@@ -539,29 +457,16 @@ export function HeroPreview() {
                       <span>{section.eyebrow}</span>
                       <h2 id={`${section.id}-story-title`}>{section.title}</h2>
                       <p>{section.summary}</p>
+                      {section.id === "contact-board" && (
+                        <svg className="contact-heading-signal" viewBox="0 0 160 32" aria-hidden="true">
+                          <path pathLength="1" d="M2 24 C24 9 35 29 56 16 S85 14 101 8 S126 26 153 5" />
+                          <circle cx="153" cy="5" r="3" />
+                        </svg>
+                      )}
                     </header>
 
-                    <div className="story-board-grid">
-                      {section.cards.map(([title, result, description, href], cardIndex) => href ? (
-                        <a
-                          className="story-case contact-story-action"
-                          key={`${section.id}-${title}`}
-                          href={href}
-                          target={href.startsWith("http") ? "_blank" : undefined}
-                          rel={href.startsWith("http") ? "noreferrer" : undefined}
-                        >
-                          <span className="board-pin" aria-hidden="true" />
-                          <ContactActionMarker channel={title} />
-                          <ContactCardDoodle />
-                          <small>Open channel / 0{cardIndex + 1}</small>
-                          <h3>{title}</h3>
-                          <strong>{result}</strong>
-                          <p>{description}</p>
-                          <span className="story-case-link">
-                            {title === "Email" ? "Write email" : `Open ${title}`} <span aria-hidden="true">↗</span>
-                          </span>
-                        </a>
-                      ) : (
+                    {section.id === "contact-board" ? <ContactBoard /> : <div className="story-board-grid">
+                      {section.cards.map(([title, result, description], cardIndex) => (
                         <article className="story-case" key={`${section.id}-${title}`}>
                           <span className="board-pin" aria-hidden="true" />
                           <small>Evidence / 0{cardIndex + 1}</small>
@@ -570,7 +475,7 @@ export function HeroPreview() {
                           <p>{description}</p>
                         </article>
                       ))}
-                    </div>
+                    </div>}
 
                     <p className="story-board-footnote">
                       {section.id === "contact-board" ? "The board stays open." : "Follow the thread across the board →"}
