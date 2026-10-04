@@ -239,6 +239,7 @@ function layoutDoodles(surface: HTMLElement) {
         ".work-tenure-tag",
         ".work-cv-legend",
         ".work-cv-footnote",
+        ".contact-board-layout",
       ].join(","),
     ),
   ).filter((node) => !layer.contains(node) && node.getBoundingClientRect().width > 4);
