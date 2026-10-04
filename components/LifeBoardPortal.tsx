@@ -6,6 +6,7 @@ import { Footballer, Reader } from "./LifeBoardDoodles";
 import { AlchemyPostcard, FrierenPostcard, HyrulePostcard, LifePostcard, VolleyballPostcard, WitcherPostcard } from "./LifePostcards";
 import { useLifeBoardMotion } from "./useLifeBoardMotion";
 import "./life-board.css";
+import { BoardEndCue } from "./BoardEndCue";
 
 const ANILIST_PROFILE = "https://anilist.co/user/enixes";
 
@@ -93,6 +94,7 @@ export function LifeBoardPortal() {
         </section>
       </div>
       <footer className="life-footer"><span>same brain, different rabbit holes →</span><span>Hover or focus a sketch to bring it to life.</span></footer>
+      <BoardEndCue from="life" />
     </div>,
     target,
   );

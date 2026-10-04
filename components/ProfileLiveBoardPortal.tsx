@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { profileMilestones, type ProfileMilestone } from "@/data/profile-timeline";
 import { PROFILE_INTERRUPT_EVENT } from "./board-navigation";
+import { BoardEndCue } from "./BoardEndCue";
 import "./profile-timeline.css";
 
 const last = profileMilestones.length - 1;
@@ -351,13 +352,16 @@ export function ProfileLiveBoardPortal() {
             <strong>{item.title}</strong>
             <span className="profile-chit-aside">{item.aside}</span>
             <span className="profile-chit-highlight">{item.highlight}</span>
-            {item.preview && <span className="profile-chit-preview">
-              <Image src={item.preview.src} alt={item.preview.alt} width={1200} height={860} sizes="(max-width: 620px) 67vw, 330px" loading="eager" />
-              <span className="profile-chit-preview-caption">{item.preview.caption}</span>
+            {item.preview && <span className={item.secondaryPreview ? "profile-chit-media-pair" : undefined}>
+              {(item.secondaryPreview ? [item.preview, item.secondaryPreview] : [item.preview]).map((media) =>
+                <span className="profile-chit-preview" key={media.src}>
+                  <Image src={media.src} alt={media.alt} width={1200} height={860} sizes="(max-width: 620px) 67vw, 330px" loading="eager" />
+                  <span className="profile-chit-preview-caption">{media.caption}</span>
+                </span>)}
             </span>}
             <span className="profile-chit-open">{detail === i ? "Fold note" : "Unfold story"} <span aria-hidden="true">{detail === i ? "↖" : "↗"}</span></span>
           </button>
-          <Doodle motif={item.doodle} />
+          {item.id !== "holisol" && <Doodle motif={item.doodle} />}
           {detail === i && <div id={`profile-note-${item.id}`} ref={(node) => { detailPanels.current[i] = node; }}
             className="profile-note-detail" tabIndex={-1} aria-label={`${item.year} story`}>
             <p className="profile-note-label">Field note / {item.chapter}</p>
@@ -366,11 +370,16 @@ export function ProfileLiveBoardPortal() {
               <Image src={item.artifact.src} alt={item.artifact.alt} width={1366} height={768} sizes="(max-width: 760px) 72vw, 520px" />
               <figcaption>{item.artifact.caption}</figcaption>
             </figure>}
+            {item.secondaryArtifact && <figure className="profile-note-artifact">
+              <Image src={item.secondaryArtifact.src} alt={item.secondaryArtifact.alt} width={870} height={410} sizes="(max-width: 760px) 72vw, 520px" />
+              <figcaption>{item.secondaryArtifact.caption}</figcaption>
+            </figure>}
             {item.id === "vide" && <div className="profile-injectorist-note">
               <Doodle motif="wireless" className="profile-injectorist-doodle" />
               <div><strong>Injectorist</strong><span>Bash · connected wireless cards · packet injection capability</span></div>
             </div>}
             <div className="profile-note-proof"><span>Proof / explore further</span>
+              {item.evidenceLabel && <span className="profile-proprietary-label">{item.evidenceLabel}</span>}
               {item.proof.map((proof) => <a key={proof.href} href={proof.href}
                 target={proof.href.startsWith("#") ? undefined : "_blank"}
                 rel={proof.href.startsWith("#") ? undefined : "noreferrer"}
@@ -381,5 +390,6 @@ export function ProfileLiveBoardPortal() {
       </div>)}
     </div>
     <p className="profile-live-footnote">The story keeps going. The board is yours to explore.</p>
+    <BoardEndCue from="profile" />
   </div>, surface);
 }

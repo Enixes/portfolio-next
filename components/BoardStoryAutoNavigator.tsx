@@ -25,7 +25,7 @@ const styles = `
   scroll-behavior: auto !important;
   scrollbar-gutter: stable;
   touch-action: pan-x pinch-zoom;
-  cursor: grab;
+  cursor: auto;
   -webkit-overflow-scrolling: touch;
 }
 .work-cv-mounted > .work-cv-board.is-dragging {
@@ -260,6 +260,7 @@ export function BoardStoryAutoNavigator() {
     const onPointerDown = (event: PointerEvent) => {
       if (event.pointerType === "touch" || event.button || isInteractiveTarget(event.target) || busy()) return;
       const surface = surfaceFor(indexNow());
+      if (surface?.classList.contains("work-cv-board")) return;
       if (!surface || !(event.target instanceof Node) || !surface.contains(event.target)) return;
       if (beginGesture(event.clientY, event.pointerId)) {
         surface.classList.add("is-dragging");

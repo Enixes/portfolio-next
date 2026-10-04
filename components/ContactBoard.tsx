@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { cv } from "@/data/cv";
+import { BrandSticker } from "./BrandSticker";
 
 const channels = [
   {
@@ -212,9 +213,10 @@ export function ContactBoard() {
                   <span className="contact-chit-handle contact-chit-handle-wide">{item.handle}</span>
                   <span className="contact-chit-handle contact-chit-handle-narrow">{item.shortHandle}</span>
                 </span>
-                <ChannelCharacter kind={item.kind} />
+                {item.kind !== "email" && <BrandSticker brand={item.kind} className="contact-brand-sticker" />}
                 <span className="contact-chit-arrow" aria-hidden="true">↗</span>
               </a>
+              <ChannelCharacter kind={item.kind} />
               <span className="contact-scene-note" aria-hidden="true">{item.note}</span>
             </div>
           ))}

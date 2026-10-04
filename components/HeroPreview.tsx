@@ -3,6 +3,8 @@ import { BoardScrollController } from "@/components/BoardScrollController";
 import { FloatingNavigation } from "@/components/FloatingNavigation";
 import { ContactBoard } from "@/components/ContactBoard";
 import { HeroChitExperience } from "@/components/HeroChitExperience";
+import { BrandSticker } from "@/components/BrandSticker";
+import { BoardEndCue } from "@/components/BoardEndCue";
 import Image from "next/image";
 
 const sectionBoards = [
@@ -379,12 +381,14 @@ export function HeroPreview() {
               <aside className="war-note contact-topic-one">
                 <span className="board-pin pin-yellow" aria-hidden="true" />
                 <strong>Email</strong>
+                <span className="hero-contact-mail" aria-hidden="true">✉</span>
                 <span>project context</span>
               </aside>
 
               <aside className="war-note contact-topic-two">
                 <span className="board-pin pin-green" aria-hidden="true" />
                 <strong>GitHub + LinkedIn</strong>
+                <span className="hero-brand-stickers"><BrandSticker brand="github" /><BrandSticker brand="linkedin" /></span>
                 <span>code · background</span>
               </aside>
 
@@ -404,6 +408,7 @@ export function HeroPreview() {
         <div className="hero-interaction-guide" role="note" aria-label="Click a chit once to unfold it. Double click it to dive into the section. On touch, tap to unfold, then use Explore this board.">
           <svg viewBox="0 0 220 57" aria-hidden="true"><path d="M8 12c18-6 20 11 36 0s21-4 33 7M82 18h127M88 44h121" /><circle cx="57" cy="16" r="5" /><circle cx="60" cy="43" r="5" /><circle cx="73" cy="43" r="5" /></svg>
           <span className="guide-desktop"><b>Click once</b> → unfold<br /><b>Double click</b> → dive in</span>
+          <span className="guide-hover"><b>Double click</b> this chit ↗<br />dive into its board</span>
           <span className="guide-touch"><b>Tap</b> → unfold<br /><b>Explore board</b> → dive in</span>
         </div>
 
@@ -484,6 +489,7 @@ export function HeroPreview() {
                     <p className="story-board-footnote">
                       {section.id === "contact-board" ? "The board stays open." : "Follow the thread across the board →"}
                     </p>
+                    {section.id === "contact-board" && <BoardEndCue from="contact" />}
                   </div>
                 </div>
               </article>

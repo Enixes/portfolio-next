@@ -8,7 +8,10 @@ export type ProfileMilestone = {
   paragraphs: string[];
   proof: { label: string; href: string }[];
   preview?: { src: string; alt: string; caption: string };
+  secondaryPreview?: { src: string; alt: string; caption: string };
   artifact?: { src: string; alt: string; caption: string };
+  secondaryArtifact?: { src: string; alt: string; caption: string };
+  evidenceLabel?: string;
   tone: "yellow" | "blue" | "green" | "pink" | "lilac";
   doodle: "spark" | "brackets" | "wireless" | "route" | "clock" | "graph" | "house" | "pencil";
 };
@@ -45,6 +48,9 @@ export const profileMilestones: ProfileMilestone[] = [
       "Injectorist was another early experiment: a Bash script that checks connected wireless cards for packet injection capability. It grew out of my exploration of networking and cybersecurity, alongside a brief spell of competitive programming.",
     ],
     artifact: { src: "/profile/vide-ide.png", alt: "Screenshot of the vIDE editor from its GitHub repository", caption: "A screenshot kept in the vIDE repository." },
+    preview: { src: "/profile/vide-ide.png", alt: "vIDE editor screenshot from its GitHub repository", caption: "vIDE · editor screenshot" },
+    secondaryPreview: { src: "/profile/injectorist-readme-capture.webp", alt: "Capture of the Injectorist GitHub README describing its wireless-card packet injection check", caption: "Injectorist · GitHub README/source view" },
+    secondaryArtifact: { src: "/profile/injectorist-readme-capture.webp", alt: "Capture of the Injectorist GitHub README", caption: "Injectorist · public GitHub README. View the linked repository for the source." },
     proof: [
       { label: "vIDE · GitHub", href: "https://github.com/Enixes/vIDE" },
       { label: "Injectorist · GitHub", href: "https://github.com/Enixes/Injectorist" },
@@ -57,7 +63,8 @@ export const profileMilestones: ProfileMilestone[] = [
       "During a software development internship at Holisol Logistics, I took a Daily Run Sheet Generator from requirements through a Django frontend to deployment. It helped plan logistics deliveries and was approved by the founder for live daily operations.",
       "It was the first time the outcome of my code depended on people using it at work, every day. That changed what delivery meant to me.",
     ],
-    proof: [{ label: "Academic CV account", href: "https://docs.google.com/document/d/18Doo1tMaCr-BnjtHryovwuKkkuCZRNkLwYFxggUtCi4/edit?tab=t.0" }],
+    evidenceLabel: "Proprietary work",
+    proof: [],
   },
   {
     id: "ion", year: "2020–now", title: "Joined ION to work on trading systems", aside: "The edge cases had a clock.", chapter: "Production systems",
@@ -69,8 +76,9 @@ export const profileMilestones: ProfileMilestone[] = [
     proof: [
       { label: "Explore the Systems board", href: "#work-board" },
       { label: "IONathon recognition", href: "https://lnkd.in/p/g48cHXEA" },
-      { label: "Academic CV account", href: "https://docs.google.com/document/d/18Doo1tMaCr-BnjtHryovwuKkkuCZRNkLwYFxggUtCi4/edit?tab=t.0" },
+      { label: "Career history · LinkedIn", href: "https://linkedin.com/in/asusingh" },
     ],
+    evidenceLabel: "Production metrics · proprietary work",
   },
   {
     id: "paper", year: "2021", title: "Published first-author optimisation research", aside: "The question left the notebook.", chapter: "Research",
@@ -88,7 +96,9 @@ export const profileMilestones: ProfileMilestone[] = [
       "As co-founder and Technical Director for Home Automation at Boxy Buildcon, I translate client requirements into system designs, contribute hands-on technical work, and occasionally supervise on-site execution.",
       "The work keeps the same engineering question in view: does the design survive contact with the place and people it was made for?",
     ],
-    proof: [{ label: "Academic CV account", href: "https://docs.google.com/document/d/18Doo1tMaCr-BnjtHryovwuKkkuCZRNkLwYFxggUtCi4/edit?tab=t.0" }],
+    preview: { src: "/profile/boxy-homepage-capture.webp", alt: "Current Boxy Group homepage with three business worlds: Interiors, Realty and Rentals", caption: "Boxy Group · current homepage" },
+    artifact: { src: "/profile/boxy-homepage-capture.webp", alt: "Current Boxy Group homepage showing Interiors, Realty and Rentals", caption: "Boxy Group homepage · captured October 2026" },
+    proof: [{ label: "Visit Boxy Group", href: "https://www.boxybuildcon.com/" }, { label: "Career history · LinkedIn", href: "https://linkedin.com/in/asusingh" }],
   },
   {
     id: "current", year: "Now", title: "Benchmarking TailCache; building an AI assistant", aside: "The next chapter is in pencil.", chapter: "Current projects",
@@ -100,7 +110,7 @@ export const profileMilestones: ProfileMilestone[] = [
     ],
     proof: [
       { label: "Explore TailCache", href: "https://github.com/Enixes/TailCache" },
-      { label: "Academic CV account", href: "https://docs.google.com/document/d/18Doo1tMaCr-BnjtHryovwuKkkuCZRNkLwYFxggUtCi4/edit?tab=t.0" },
     ],
+    evidenceLabel: "Assistant build · proprietary work",
   },
 ];

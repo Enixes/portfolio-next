@@ -42,26 +42,44 @@ function dive(section: ChitStory["section"]) {
 export function HeroChitExperience() {
   const [active, setActive] = useState<ChitStory | null>(null);
   const timer = useRef<number | null>(null);
+  const primed = useRef<HTMLElement | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const board = document.querySelector<HTMLElement>(".evidence-board");
     if (!board) return;
+    const guide = document.querySelector<HTMLElement>(".hero-interaction-guide");
     const bindings = stories.flatMap((story) => Array.from(board.querySelectorAll<HTMLElement>(story.selector)).map((node) => ({ story, node })));
     const cleanups = bindings.map(({ story, node }) => {
       node.classList.add("hero-chit");
       node.tabIndex = 0;
       node.setAttribute("role", "button");
       node.setAttribute("aria-label", `Unfold ${story.title}; double click to open ${story.section} board`);
+      const zone = board.querySelector<HTMLElement>(`.board-zone-${story.section}`);
+      const highlight = () => { zone?.classList.add("is-chit-active"); guide?.classList.add("is-chit-near"); };
+      const unhighlight = () => { zone?.classList.remove("is-chit-active"); guide?.classList.remove("is-chit-near"); };
 
       const open = () => { trigger.current = node; setActive(story); };
       const click = (event: MouseEvent) => {
         event.stopPropagation();
         if (event.detail > 1) return;
         if (timer.current !== null) window.clearTimeout(timer.current);
+        primed.current?.classList.remove("is-primed");
+        primed.current = null;
         if (window.matchMedia("(pointer: coarse)").matches) open();
-        else timer.current = window.setTimeout(() => { timer.current = null; open(); }, 450);
+        else {
+          node.classList.add("is-primed");
+          primed.current = node;
+          guide?.classList.add("is-primed");
+          timer.current = window.setTimeout(() => {
+            timer.current = null;
+            node.classList.remove("is-primed");
+            primed.current = null;
+            guide?.classList.remove("is-primed");
+            open();
+          }, 450);
+        }
       };
       const doubleClick = (event: MouseEvent) => {
         event.preventDefault();
@@ -69,6 +87,10 @@ export function HeroChitExperience() {
         if (window.matchMedia("(pointer: coarse)").matches) return;
         if (timer.current !== null) window.clearTimeout(timer.current);
         timer.current = null;
+        primed.current?.classList.remove("is-primed");
+        primed.current = null;
+        guide?.classList.remove("is-primed");
+        unhighlight();
         setActive(null);
         dive(story.section);
       };
@@ -80,17 +102,26 @@ export function HeroChitExperience() {
       node.addEventListener("click", click);
       node.addEventListener("dblclick", doubleClick);
       node.addEventListener("keydown", keyDown);
+      node.addEventListener("pointerenter", highlight);
+      node.addEventListener("pointerleave", unhighlight);
+      node.addEventListener("focus", highlight);
+      node.addEventListener("blur", unhighlight);
       return () => {
         node.removeEventListener("click", click);
         node.removeEventListener("dblclick", doubleClick);
         node.removeEventListener("keydown", keyDown);
+        node.removeEventListener("pointerenter", highlight);
+        node.removeEventListener("pointerleave", unhighlight);
+        node.removeEventListener("focus", highlight);
+        node.removeEventListener("blur", unhighlight);
+        unhighlight();
         node.classList.remove("hero-chit");
         node.removeAttribute("role");
         node.removeAttribute("aria-label");
         node.removeAttribute("tabindex");
       };
     });
-    return () => { cleanups.forEach((cleanup) => cleanup()); if (timer.current !== null) window.clearTimeout(timer.current); };
+    return () => { cleanups.forEach((cleanup) => cleanup()); if (timer.current !== null) window.clearTimeout(timer.current); primed.current?.classList.remove("is-primed"); primed.current = null; };
   }, []);
 
   useEffect(() => {

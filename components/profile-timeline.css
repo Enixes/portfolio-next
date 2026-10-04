@@ -174,6 +174,13 @@
 .profile-chit-preview::before { content:""; position:absolute; top:-10px; left:37%; width:65px; height:18px; background:rgba(122,186,201,.46); transform:rotate(3deg); }
 .profile-chit-preview img { display:block; width:100%; height:auto; aspect-ratio:1.4; object-fit:cover; }
 .profile-chit-preview-caption { position:absolute; right:8px; bottom:6px; left:8px; color:#6a5b49; font:800 10px/1.2 var(--hand); text-align:center; }
+.profile-chit-media-pair { display:flex; align-items:stretch; gap:10px; width:100%; margin-top:15px; }
+.profile-chit-media-pair .profile-chit-preview { flex:1 1 0; min-width:0; width:auto; margin:0; padding-bottom:35px; }
+.profile-chit-media-pair .profile-chit-preview:nth-child(2) { transform:rotate(1.5deg); }
+.profile-chit-media-pair .profile-chit-preview img { aspect-ratio:1.55; }
+.profile-chit-media-pair .profile-chit-preview-caption { font:800 10px/1.15 var(--mono); }
+@media(max-width:390px) { .profile-chit-media-pair { flex-direction:column;gap:14px; }.profile-chit-media-pair .profile-chit-preview { flex:auto;width:min(100%,260px); }.profile-chit-media-pair .profile-chit-preview-caption { font-size:11px; } }
+.profile-proprietary-label { flex-basis:100%; color:#685b4c!important; font:800 10px/1.4 var(--mono)!important; letter-spacing:0!important; text-transform:none!important; }
 .profile-chit-open { display: block; margin-top: 15px; color: #98352e; font: 900 10px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid currentColor; }
 .profile-doodle {
   position: absolute; z-index: 3; width: 86px; height: 82px;
@@ -288,3 +295,4 @@
   .profile-doodle path { stroke-dashoffset: 0 !important; }
   .profile-trail-branch { stroke-dashoffset: 0; }
 }
+@media(max-width:390px) { .profile-timeline-row.row-2 .profile-timeline-chit > .profile-doodle { display:none; } }

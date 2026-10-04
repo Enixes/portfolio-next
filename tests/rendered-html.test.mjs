@@ -53,7 +53,9 @@ test("keeps the board story and expandable case content grounded", async () => {
   assert.match(controller, /root\.dataset\.introComplete = "true"/);
   assert.match(work, /20× trade throughput/);
   assert.match(work, /35%/);
-  assert.match(work, /Academic CV account/);
+  assert.match(work, /Proprietary work/);
+  assert.match(work, /EvidenceStage/);
+  assert.doesNotMatch(work, /Academic CV account/);
   assert.match(work, /aria-expanded=\{open\}/);
   assert.doesNotMatch(work, /work-skills-section|work-recognition-section|work-principles-section|This portfolio/);
   assert.match(workPolish, /window\.addEventListener\("wheel", onWheel/);
@@ -63,4 +65,6 @@ test("keeps the board story and expandable case content grounded", async () => {
   assert.doesNotMatch(field, /fieldNotes\.map|Link pending/);
   assert.match(profile, /KV ceremony · Feb 2014/);
   assert.match(profile, /DST INSPIRE certificate/);
+  assert.match(profile, /injectorist-readme-capture\.webp/);
+  assert.match(profile, /boxy-homepage-capture\.webp/);
 });

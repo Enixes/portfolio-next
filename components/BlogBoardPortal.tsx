@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import "./blog-board.css";
+import { BoardEndCue } from "./BoardEndCue";
 
 export function BlogBoardPortal() {
   const [target, setTarget] = useState<HTMLElement | null>(null);
@@ -48,6 +49,7 @@ export function BlogBoardPortal() {
           <div className="field-desk-doodle" aria-hidden="true"><span>✳</span><b>ideas in pencil</b><i>↝</i></div>
         </div>
         <p className="field-workshop-footnote">The first note goes up when it earns its place.</p>
+        <BoardEndCue from="blog" />
       </div>
     </div>, target,
   );

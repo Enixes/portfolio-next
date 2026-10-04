@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { BoardEndCue } from "./BoardEndCue";
+import "./work-board.css";
 
 type CaseNote = {
   id: string;
@@ -30,59 +32,8 @@ const projectCases: readonly CaseNote[] = [
   { id: "mining", kicker: "Open project / HackBMU", title: "Illegal Mining Detector", outcome: "A computer-vision build placed Top 10 at the inaugural HackBMU.", story: "A rapid prototype for identifying illegal mining activity from visual data. Built for the inaugural HackBMU hackathon, where it placed in the Top 10.", skills: ["Computer vision", "Detection", "Rapid prototyping"], proof: { label: "Inspect the public code", href: "https://github.com/Enixes/Illegal-Mining-Detector" }, tone: "pink" },
 ];
 
-const styles = `
-.work-cv-mounted > .story-board-index,.work-cv-mounted > .story-board-header,.work-cv-mounted > .story-board-grid,.work-cv-mounted > .story-board-footnote { display:none!important; }
-.scroll-board-red .story-board-frame { height:100%!important;min-height:0!important;overflow:hidden!important; }
-.work-cv-mounted { position:relative;display:block!important;height:100%!important;min-height:0!important;overflow:hidden!important;padding:0!important; }
-.work-cv-board { box-sizing:border-box;position:relative;width:100%;height:100%;overflow:auto hidden;padding:clamp(28px,4vw,54px) clamp(20px,4.8vw,66px) 100px;color:#2a2925;background:radial-gradient(circle at 20% 5%,#fffdf780,transparent 38%),repeating-linear-gradient(0deg,transparent 0 31px,#5a51450a 31px 32px),#f7f3e9;scrollbar-width:thin;scrollbar-color:#a64d3d #ede3d4;touch-action:pan-y pinch-zoom; }
-.work-cv-board * { box-sizing:border-box; }
-.work-cv-header { position:relative;z-index:2;max-width:850px;margin:0 0 34px; }
-.work-cv-header small,.work-section-heading small { display:block;color:#9b3c32;font:900 10px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase; }
-.work-cv-header h2 { margin:8px 0 10px;font:800 clamp(42px,5vw,76px)/.9 var(--marker,var(--hand));transform:rotate(-1deg); }
-.work-cv-header p { max-width:720px;margin:0;color:#58544c;font:500 clamp(13px,1.2vw,17px)/1.55 var(--sans); }
-.work-cv-scroll-hint { position:sticky;z-index:12;top:8px;display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;margin:0 0 32px auto;padding:8px 12px;color:#784234;background:#fff0c6f0;border:1px dashed #b78957;box-shadow:2px 4px 8px #49392818;font:800 10px/1 var(--mono);transform:rotate(1deg); }
-.work-cv-scroll-hint i { width:54px;height:3px;background:linear-gradient(90deg,#a73c35 var(--work-progress,0%),#d7c0a0 var(--work-progress,0%)); }
-.work-section { position:relative;margin:36px 0 80px; }
-.work-section-heading { position:relative;max-width:800px;margin:0 0 26px; }
-.work-section-heading h3 { width:max-content;max-width:100%;margin:7px 0 8px;font:800 clamp(30px,3.3vw,50px)/1 var(--hand); }
-.work-section-heading h3::after { content:"";display:block;margin-top:3px;border-bottom:4px solid #b04739;border-radius:50%;transform:rotate(-1deg); }
-.work-section-heading p { margin:0;color:#686158;font:600 12px/1.5 var(--sans); }
-.work-case-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;align-items:start; }
-.work-case { position:relative;min-width:0;border:1px solid #bcb19b;background:#fff5d3;box-shadow:4px 7px 15px #483b2b21;transform:rotate(var(--case-tilt,-.7deg));transition:transform .25s,box-shadow .25s; }
-.work-case:nth-child(3n+2) { --case-tilt:1deg; }
-.work-case:nth-child(3n+3) { --case-tilt:-1.2deg; }
-.work-case.tone-blue { background:#e2f0f4; }.work-case.tone-green { background:#eaf1d9; }.work-case.tone-pink { background:#f8e6e7; }.work-case.tone-lilac { background:#eee8f6; }
-.work-case.is-open { transform:rotate(0);box-shadow:8px 13px 24px #483b2b2b; }
-.work-case-pin { position:absolute;z-index:3;top:-10px;left:48%;width:17px;height:17px;border:2px solid #6d332a;border-radius:50%;background:#c85743;box-shadow:2px 3px 3px #2c1c1840; }
-.work-case:nth-child(3n+2) .work-case-pin { background:#4890a6;border-color:#225b71; }.work-case:nth-child(3n+3) .work-case-pin { background:#76a35e;border-color:#4b6d38; }
-.work-case-button { position:relative;display:block;width:100%;min-height:170px;padding:26px 27px 22px;border:0;color:#292823;background:transparent;text-align:left;cursor:pointer; }
-.work-case-button:focus-visible,.work-case-detail a:focus-visible { outline:3px solid #a33d33;outline-offset:3px; }
-.work-case-button small { display:block;color:#8b4c3c;font:900 9px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase; }
-.work-case-button strong { display:block;margin:12px 0 8px;font:800 clamp(25px,2.45vw,35px)/1 var(--hand); }
-.work-case-button .work-case-outcome { display:block;max-width:51ch;color:#514b44;font:500 13px/1.45 var(--sans); }
-.work-case-button .work-case-action { display:block;margin-top:18px;color:#973c35;font:900 10px/1.2 var(--mono);letter-spacing:.07em;text-transform:uppercase; }
-.work-case-detail { margin:0 18px 19px;padding:21px 22px 19px;border:1px solid #cfc1a7;background:repeating-linear-gradient(transparent 0 29px,#786b5c0f 29px 30px),#fffdf6;box-shadow:inset 0 4px 8px #51412b0d;animation:workCaseUnfold .48s cubic-bezier(.18,.8,.2,1) both;transform-origin:top; }
-.work-case-detail p { margin:0 0 17px;color:#4b4741;font:500 clamp(13px,1.2vw,16px)/1.6 var(--sans); }
-.work-case-skills { display:flex;flex-wrap:wrap;gap:7px;margin:0 0 16px;padding:0;list-style:none; }
-.work-case-skills li { padding:6px 9px;border:1px solid #9c7457;border-radius:40% 60% 42% 58% / 60% 47% 53% 40%;color:#6c4839;background:#f8eedb;font:800 10px/1.2 var(--mono);transform:rotate(-1deg); }
-.work-case-detail a { display:inline-block;padding:9px 12px;color:#fff;background:#363733;font:800 10px/1 var(--mono);text-decoration:none; }
-.work-case-detail a:hover { background:#a13e34; }
-.work-case-divider { display:block;width:78%;margin:0 auto 17px;fill:none;stroke:#b0493a;stroke-width:3;stroke-linecap:round;stroke-dasharray:760;stroke-dashoffset:0; }
-.work-case-footnote { margin:20px 0 0;color:#70675d;font:700 11px/1.5 var(--mono);text-align:right; }
-@keyframes workCaseUnfold { from { opacity:.2;transform:perspective(700px) rotateX(-28deg) translateY(-12px); } to { opacity:1;transform:none; } }
-@media(max-width:900px){ .work-cv-board { padding-top:88px; } }
-@media(max-width:800px){ .work-case-grid { gap:17px; }.work-case-button { padding:22px 19px 18px; }.work-case-detail { margin:0 12px 12px;padding:17px; } }
-@media(max-width:650px){ .work-cv-board { padding:82px 18px 82px; }.work-case-grid { grid-template-columns:1fr;gap:19px; }.work-case-button { min-height:0; }.work-cv-scroll-hint { font-size:8px; }.work-section { margin-bottom:60px; } }
-@media(max-width:360px){ .work-cv-board { padding-inline:12px; }.work-case-button { padding:20px 16px 17px; }.work-case-detail { margin-inline:8px;padding:14px; } }
-@media(prefers-reduced-motion:reduce){ .work-case,.work-case-detail { animation:none!important;transition:none!important;transform:none!important; } }
-`;
-
-function CaseCard({ note, index, open, onToggle, buttonRef }: { note: CaseNote; index: number; open: boolean; onToggle: () => void; buttonRef: (node: HTMLButtonElement | null) => void }) {
-  const proof = note.proof ?? (index < productionCases.length ? {
-    label: "Academic CV account",
-    href: "https://docs.google.com/document/d/18Doo1tMaCr-BnjtHryovwuKkkuCZRNkLwYFxggUtCi4/edit?tab=t.0",
-  } : undefined);
-  return <article className={`work-case tone-${note.tone} ${open ? "is-open" : ""}`}>
+function CaseCard({ note, index, open, onToggle, buttonRef, production = false }: { note: CaseNote; index: number; open: boolean; onToggle: () => void; buttonRef: (node: HTMLButtonElement | null) => void; production?: boolean }) {
+  return <article data-work-case={production ? note.id : undefined} className={`work-case tone-${note.tone} ${open ? "is-open" : ""}`}>
     <span className="work-case-pin" aria-hidden="true" />
     <button ref={buttonRef} type="button" className="work-case-button" onClick={onToggle} aria-expanded={open} aria-controls={`work-case-${note.id}`}>
       <small>{String(index + 1).padStart(2, "0")} / {note.kicker}</small>
@@ -93,9 +44,55 @@ function CaseCard({ note, index, open, onToggle, buttonRef }: { note: CaseNote; 
     {open && <div id={`work-case-${note.id}`} className="work-case-detail" tabIndex={-1}>
       <p>{note.story}</p>
       <ul className="work-case-skills" aria-label="Skills used">{note.skills.map((skill) => <li key={skill}>{skill}</li>)}</ul>
-      {proof && <a href={proof.href} target="_blank" rel="noopener noreferrer">{proof.label} ↗</a>}
+      {production && <span className="work-case-proprietary">Proprietary work · technical account</span>}
+      {note.proof && <a href={note.proof.href} target="_blank" rel="noopener noreferrer">{note.proof.label} ↗</a>}
     </div>}
   </article>;
+}
+
+function EvidenceStage({ company, period, description, children }: { company: "ION" | "Holisol"; period: string; description: string; children: ReactNode }) {
+  const stageRef = useRef<HTMLElement>(null);
+  const [paths, setPaths] = useState<string[]>([]);
+  useEffect(() => {
+    const stage = stageRef.current;
+    const anchor = stage?.querySelector<HTMLElement>(".work-company-chit");
+    const cards = Array.from(stage?.querySelectorAll<HTMLElement>("[data-work-case]") ?? []);
+    if (!stage || !anchor || !cards.length) return;
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const area = stage.getBoundingClientRect();
+        const node = anchor.getBoundingClientRect();
+        const narrow = area.width <= 650;
+        const x1 = narrow ? node.left - area.left + node.width * .5 : node.right - area.left - 4;
+        const y1 = narrow ? node.bottom - area.top - 3 : node.top - area.top + node.height * .5;
+        setPaths(cards.map((card) => {
+          const rect = card.getBoundingClientRect();
+          const x2 = narrow ? rect.left - area.left + Math.min(34, rect.width * .14) : rect.left - area.left + 3;
+          const y2 = narrow ? rect.top - area.top + 15 : rect.top - area.top + Math.min(43, rect.height * .3);
+          return narrow
+            ? `M${x1} ${y1} C${x1 - 24} ${y1 + 32},${x2 - 20} ${y2 - 36},${x2} ${y2}`
+            : `M${x1} ${y1} C${x1 + 38} ${y1},${x2 - 46} ${y2},${x2} ${y2}`;
+        }));
+      });
+    };
+    const resize = new ResizeObserver(measure);
+    [stage, anchor, ...cards].forEach((element) => resize.observe(element));
+    measure();
+    return () => { resize.disconnect(); cancelAnimationFrame(frame); };
+  }, []);
+  return <section ref={stageRef} className={`work-map-stage work-stage-${company.toLowerCase()}`} aria-label={`${company} production work`}>
+    <svg className="work-cv-thread" aria-hidden="true"><g>{paths.map((path, i) => <path key={i} d={path} />)}</g></svg>
+    <div className="work-company-chit">
+      <span className="work-company-pin" aria-hidden="true" />
+      <small>{company === "ION" ? "01 / trading systems" : "02 / logistics"}</small>
+      <h3>{company}</h3>
+      <strong>{period}</strong>
+      <p>{description}</p>
+    </div>
+    <div className="work-evidence-grid">{children}</div>
+  </section>;
 }
 
 export function WorkCvBoardPortal() {
@@ -140,7 +137,7 @@ export function WorkCvBoardPortal() {
 
   const renderCase = (note: CaseNote, index: number) => <CaseCard key={note.id} note={note} index={index} open={open === note.id}
     onToggle={() => setOpen((current) => current === note.id ? null : note.id)}
-    buttonRef={(node) => { buttons.current[note.id] = node; }} />;
+    buttonRef={(node) => { buttons.current[note.id] = node; }} production={index < productionCases.length} />;
 
   const board = target ? createPortal(<div className="work-cv-board" tabIndex={0} aria-label="Scrollable systems case board">
     <header className="work-cv-header">
@@ -151,15 +148,21 @@ export function WorkCvBoardPortal() {
     <div className="work-cv-scroll-hint" aria-hidden="true"><span>Scroll the case board</span><i /></div>
     <section className="work-section" aria-labelledby="work-production-title">
       <header className="work-section-heading"><small>ION Trading · 2020–present / Holisol · 2019</small><h3 id="work-production-title">Production, with receipts.</h3><p>Measured changes in live workflows. Each number belongs to the path it describes.</p></header>
-      <div className="work-case-grid">{productionCases.map(renderCase)}</div>
+      <EvidenceStage company="ION" period="2020–present" description="Trading workflows · throughput · recovery">
+        {productionCases.slice(0, 6).map(renderCase)}
+      </EvidenceStage>
+      <EvidenceStage company="Holisol" period="2019" description="First production delivery · Django">
+        {productionCases.slice(6).map((note, index) => renderCase(note, index + 6))}
+      </EvidenceStage>
     </section>
     <svg className="work-case-divider" viewBox="0 0 760 28" aria-hidden="true"><path d="M3 17C155 2 221 23 375 12S593 21 757 7" /></svg>
     <section className="work-section" aria-labelledby="work-projects-title">
       <header className="work-section-heading"><small>Public code / experiments</small><h3 id="work-projects-title">Things with fingerprints on them.</h3><p>Projects that can be inspected beyond this board.</p></header>
-      <div className="work-case-grid">{projectCases.map((note, index) => renderCase(note, index + productionCases.length))}</div>
+      <div className="work-project-strip">{projectCases.map((note, index) => renderCase(note, index + productionCases.length))}</div>
     </section>
     <p className="work-case-footnote">The skills sit beside the decisions that needed them. ↗</p>
+    <BoardEndCue from="work" />
   </div>, target) : null;
 
-  return <><style>{styles}</style>{board}</>;
+  return board;
 }
