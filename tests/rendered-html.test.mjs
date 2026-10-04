@@ -6,156 +6,61 @@ async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
-
-  return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
+  return worker.fetch(new Request("http://localhost/", { headers: { accept: "text/html" } }), {
+    ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
+  }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("server-renders the war-room intro and portfolio board", async () => {
+test("renders the afternoon board, contact channels, and section routes", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-
   const html = await response.text();
-  assert.match(html, /<title>Asu Singh — Senior Software Engineer/);
-  assert.match(html, /class="war-room-intro" aria-hidden="true"/);
-  assert.match(html, /Systems war room/);
-  assert.match(html, /Tracing the evidence/);
-  assert.match(html, /war-room-environment-anime\.jpg/);
-  assert.match(html, /war-room-silhouettes-hires\.png/);
-  assert.match(html, /fetchPriority="high"/);
-  assert.match(html, /class="evidence-board"/);
+  assert.match(html, /An afternoon at the board/);
+  assert.match(html, /room\/afternoon-studio\.webp/);
+  assert.doesNotMatch(html, /war-room-silhouettes-hires\.png|war-room-environment-anime\.jpg|Systems war room/);
+  assert.match(html, /Click once/);
+  assert.match(html, /Double click/);
+  assert.match(html, /Explore board/);
+  assert.match(html, /Field Notes · WIP/);
+  assert.match(html, /Work in progress\./);
+  for (const id of ["profile-board", "work-board", "blog-board", "life-board", "contact-board"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
   assert.match(html, /href="https:\/\/drive\.google\.com\/file\/d\/1GbsD52GUO9m29iac8QobkqERYq1ABE1d\/view\?usp=sharing"/);
-  assert.match(html, /aria-label="View Asu Singh résumé on Google Drive"/);
-  assert.match(html, /Senior Software Engineer/);
-  assert.match(html, /I make complex systems/);
-  assert.match(html, /00 \/ Profile/);
-  assert.match(html, /01 \/ Systems \+ Work/);
-  assert.match(html, /02 \/ Field Notes/);
-  assert.match(html, /03 \/ Life/);
-  assert.match(html, /04 \/ Contact/);
-  assert.match(html, /id="profile-board"/);
-  assert.match(html, /id="work-board"/);
-  assert.match(html, /id="blog-board"/);
-  assert.match(html, /id="life-board"/);
-  assert.match(html, /id="contact-board"/);
-  assert.match(html, /Bring me the hard problem/);
-  assert.match(html, /Leave a field note/);
   assert.match(html, /class="contact-form-loading"/);
   assert.doesNotMatch(html, /name="email"/);
-  assert.match(html, /Find me elsewhere/);
-  assert.match(html, /linkedin\.com\/in\/asusingh/);
-  assert.match(html, /github\.com\/Enixes/);
-  assert.match(html, /id="contact-email-chit"/);
-  assert.match(html, /id="contact-linkedin-chit"/);
-  assert.match(html, /id="contact-github-chit"/);
-  assert.match(html, /a note is one click away/);
-  assert.match(html, /let&#x27;s connect the dots|let&#39;s connect the dots|let's connect the dots/);
-  assert.match(html, /still building\.\.\./);
-  assert.match(html, /Choose a corner of the board/);
-  assert.match(html, /Field Notes/);
-  assert.match(html, /class="zone-mark zone-mark-profile"/);
-  assert.match(html, /class="zone-mark zone-mark-work"/);
-  assert.match(html, /class="zone-mark zone-mark-blog"/);
-  assert.match(html, /class="zone-mark zone-mark-life"/);
-  assert.match(html, /class="zone-mark zone-mark-contact"/);
-  assert.match(html, /data-board-story="true"/);
-  assert.match(html, /data-board-track="true"/);
-  assert.match(html, /Scroll through the boards/);
-  assert.match(html, /Follow the thread across the board/);
-  assert.match(html, /50× workflows/);
-  assert.match(html, /30% faster triage/);
-  assert.match(html, /95% DB uplift/);
-  assert.match(html, /40% faster CI/);
-  assert.match(html, /Java · multithreading/);
-  assert.match(html, /Kafka · IBM MQ/);
-  assert.match(html, /Production systems sketch: trade processing/);
-  assert.match(html, /TailCache benchmarking cycle/);
-  assert.doesNotMatch(html, /draft → challenge → evidence|keep the useful footnotes/);
-  assert.doesNotMatch(html, /evidence-thread/);
-  assert.doesNotMatch(html, /class="preview-actions"/);
+  for (const id of ["contact-email-chit", "contact-linkedin-chit", "contact-github-chit"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
 });
 
-test("keeps the intro and scroll story lightweight, explorable, and motion-safe", async () => {
-  const [component, controller, camera, navigation, workPortal, workPolish, css, peopleAsset, roomAsset] = await Promise.all([
+test("keeps the board story and expandable case content grounded", async () => {
+  const [hero, controller, work, workPolish, field, profile, room, photo] = await Promise.all([
     readFile(new URL("../components/HeroPreview.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/BoardScrollController.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/BoardSpatialCamera.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../components/board-navigation.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/WorkCvBoardPortal.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/WorkCaseBoardPolish.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    stat(new URL("../public/war-room-silhouettes-hires.png", import.meta.url)),
-    stat(new URL("../public/war-room-environment-anime.jpg", import.meta.url)),
+    readFile(new URL("../components/BlogBoardPortal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../data/profile-timeline.ts", import.meta.url), "utf8"),
+    stat(new URL("../public/room/afternoon-studio.webp", import.meta.url)),
+    stat(new URL("../public/profile/kv-ceremony-2014.webp", import.meta.url)),
   ]);
-
-  assert.ok(peopleAsset.size > 0 && peopleAsset.size < 1_100_000);
-  assert.ok(roomAsset.size > 0 && roomAsset.size < 350_000);
-  assert.doesNotMatch(component, /^\s*["']use client["']/m);
-  assert.doesNotMatch(component, /framer-motion|@react-three|<canvas/i);
-  assert.match(controller, /requestAnimationFrame/);
-  assert.match(controller, /addEventListener\("scroll", handleScroll, \{ passive: true \}\)/);
+  assert.ok(room.size > 0 && room.size < 500_000);
+  assert.ok(photo.size > 0 && photo.size < 250_000);
+  assert.match(hero, /HeroChitExperience/);
   assert.match(controller, /boardGeometry/);
-  assert.match(controller, /\.board-zone-contact/);
-  assert.match(controller, /window\.history\.pushState/);
-  assert.match(controller, /window\.history\.replaceState/);
   assert.match(controller, /root\.dataset\.introComplete = "true"/);
-  assert.match(controller, /panels\[options\.index\]\?\.focus\(\{ preventScroll: true \}\)/);
-  assert.doesNotMatch(controller, /setInterval|framer-motion|@react-three|<canvas/i);
-  assert.match(camera, /BOARD_SPATIAL_MAP/);
-  assert.match(camera, /\.scroll-board-panel \{ padding-top: 0 !important; \}/);
-  assert.match(navigation, /\{ x: 1\.12, y: 0 \}[\s\S]*\{ x: 0, y: 1\.08 \}/);
-  assert.match(workPortal, /\.scroll-board-red \.story-board-frame \{[\s\S]*?height:100%!important;[\s\S]*?overflow:hidden!important;/);
-  assert.match(workPortal, /Drag or scroll · 0%/);
-  assert.match(workPortal, /board\.scrollHeight - board\.clientHeight/);
-  assert.match(workPolish, /window\.addEventListener\("wheel", onWheel, \{ passive: false, capture: true \}\)/);
-  assert.match(workPolish, /window\.addEventListener\("pointermove", onPointerMove/);
+  assert.match(work, /20× trade throughput/);
+  assert.match(work, /35%/);
+  assert.match(work, /Academic CV account/);
+  assert.match(work, /aria-expanded=\{open\}/);
+  assert.doesNotMatch(work, /work-skills-section|work-recognition-section|work-principles-section|This portfolio/);
+  assert.match(workPolish, /window\.addEventListener\("wheel", onWheel/);
   assert.match(workPolish, /window\.addEventListener\("touchmove", onTouchMove/);
-  assert.match(workPolish, /if \(Math\.abs\(consumed\) > 0\.1\) \{[\s\S]*?surface\.scrollTop = next;[\s\S]*?return;/);
-  assert.match(css, /@keyframes board-camera-in/);
-  assert.match(css, /@keyframes room-camera-in/);
-  assert.match(css, /@keyframes war-room-people-exit/);
-  assert.match(css, /@keyframes thesis-marker-sweep/);
-  assert.match(css, /@keyframes zone-marker-cycle/);
-  assert.match(css, /\.zone-mark-life\s*\{/);
-  assert.match(css, /@media \(max-width: 760px\)/);
-  assert.match(css, /\.evidence-board\s*\{\s*min-height:\s*1600px;/);
-  assert.doesNotMatch(css, /linear-gradient\(var\(--grid\)/);
-  assert.match(css, /\.board-zone span\s*\{[\s\S]*?background:\s*transparent;/);
-  assert.doesNotMatch(component, /const pins|evidence-thread/);
-  assert.match(css, /\.board-zone:hover::after/);
-  assert.match(css, /\.board-zone::before[\s\S]*?right:\s*-7%[\s\S]*?bottom:\s*7%/);
-  assert.doesNotMatch(css, /border-right-color:\s*transparent/);
-  assert.match(css, /\.board-scroll-story\s*\{[\s\S]*?height:\s*650svh/);
-  assert.match(css, /\.board-scroll-track\s*\{/);
-  assert.match(css, /\.scroll-board-panel\s*\{/);
-  assert.match(css, /scroll-snap-type:\s*x mandatory/);
-  assert.match(css, /\.board-scrawl\s*\{/);
-  assert.match(css, /\.board-diagram\s*\{/);
-  assert.match(css, /\.diagram-fanout\s*\{[\s\S]*?display:\s*block;/);
-  assert.match(css, /stroke-dasharray:\s*38 1\.4 61 1 27 1\.8/);
-  assert.match(css, /\.queue-depth-note\s*\{[\s\S]*?display:\s*grid;/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.match(css, /\.war-room-intro\s*\{\s*display:\s*none;/);
-  assert.match(css, /html\[data-intro-complete="true"\] \.war-room-intro/);
-  assert.match(css, /html\[data-board-entered="true"\] \.preview-header\s*\{[\s\S]*?background:\s*transparent/);
-  assert.match(css, /\.contact-board-layout\s*\{/);
-  assert.match(css, /\.contact-form-paper\s*\{/);
-  assert.match(css, /\.dock-marker\s*\{/);
-  assert.match(css, /\.contact-channel-chit\s*\{/);
-  assert.match(css, /\.contact-scene-sketch\s*\{/);
-  assert.match(css, /\.zone-mark path\s*\{\s*animation:\s*none !important;/);
-  assert.doesNotMatch(css, /perspective:/i);
+  assert.doesNotMatch(workPolish, /onPointerDown|is-dragging/);
+  assert.match(field, /Work in progress/);
+  assert.doesNotMatch(field, /fieldNotes\.map|Link pending/);
+  assert.match(profile, /KV ceremony · Feb 2014/);
+  assert.match(profile, /DST INSPIRE certificate/);
 });

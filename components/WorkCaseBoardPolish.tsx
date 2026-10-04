@@ -32,12 +32,6 @@ const styles = `
   scroll-behavior:auto;
   scrollbar-width:thin;
   scrollbar-color:#9b302a rgba(99,78,53,.08);
-  cursor:grab;
-}
-.work-cv-mounted > .work-cv-board.is-dragging {
-  cursor:grabbing!important;
-  user-select:none!important;
-  -webkit-user-select:none!important;
 }
 .work-cv-mounted > .work-cv-board a,
 .work-cv-mounted > .work-cv-board button { cursor:pointer; }
@@ -143,18 +137,9 @@ function normalizedWheelDelta(event: WheelEvent, surface: HTMLElement) {
   return event.deltaY;
 }
 
-function isInteractiveTarget(target: EventTarget | null) {
-  return target instanceof Element && Boolean(
-    target.closest("a,button,input,textarea,select,summary,[contenteditable='true']"),
-  );
-}
-
 export function WorkCaseBoardPolish() {
   useEffect(() => {
     let lastTouchY: number | null = null;
-    let dragPointerId: number | null = null;
-    let dragLastY = 0;
-    let dragSurface: HTMLElement | null = null;
 
     const onWheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
@@ -193,40 +178,6 @@ export function WorkCaseBoardPolish() {
       lastTouchY = null;
     };
 
-    const onPointerDown = (event: PointerEvent) => {
-      if (event.pointerType === "touch" || event.button !== 0 || isInteractiveTarget(event.target)) return;
-      const context = visibleWorkContext();
-      if (!context || !context.surface.contains(event.target as Node)) return;
-
-      dragPointerId = event.pointerId;
-      dragLastY = event.clientY;
-      dragSurface = context.surface;
-      dragSurface.classList.add("is-dragging");
-      dragSurface.setPointerCapture?.(event.pointerId);
-      event.preventDefault();
-    };
-
-    const onPointerMove = (event: PointerEvent) => {
-      if (dragPointerId !== event.pointerId || !dragSurface) return;
-      const deltaY = dragLastY - event.clientY;
-      dragLastY = event.clientY;
-
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      routeDelta(dragSurface, deltaY);
-    };
-
-    const finishPointerDrag = (event?: PointerEvent) => {
-      if (dragSurface) {
-        dragSurface.classList.remove("is-dragging");
-        if (event && dragSurface.hasPointerCapture?.(event.pointerId)) {
-          dragSurface.releasePointerCapture?.(event.pointerId);
-        }
-      }
-      dragPointerId = null;
-      dragSurface = null;
-    };
-
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target as HTMLElement | null;
@@ -257,10 +208,6 @@ export function WorkCaseBoardPolish() {
     window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
-    window.addEventListener("pointerdown", onPointerDown, { capture: true });
-    window.addEventListener("pointermove", onPointerMove, { passive: false, capture: true });
-    window.addEventListener("pointerup", finishPointerDrag, { capture: true });
-    window.addEventListener("pointercancel", finishPointerDrag, { capture: true });
     window.addEventListener("keydown", onKeyDown, { capture: true });
 
     return () => {
@@ -269,12 +216,7 @@ export function WorkCaseBoardPolish() {
       window.removeEventListener("touchmove", onTouchMove, true);
       window.removeEventListener("touchend", onTouchEnd, true);
       window.removeEventListener("touchcancel", onTouchEnd, true);
-      window.removeEventListener("pointerdown", onPointerDown, true);
-      window.removeEventListener("pointermove", onPointerMove, true);
-      window.removeEventListener("pointerup", finishPointerDrag, true);
-      window.removeEventListener("pointercancel", finishPointerDrag, true);
       window.removeEventListener("keydown", onKeyDown, true);
-      dragSurface?.classList.remove("is-dragging");
     };
   }, []);
 

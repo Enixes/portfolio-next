@@ -170,6 +170,10 @@
 .profile-chit-toggle strong { display: block; max-width: 92%; margin: 11px 0 3px; font: 800 clamp(23px, 2.4vw, 33px)/1.03 var(--hand); }
 .profile-chit-aside { color: #963c34; font: 700 clamp(16px, 1.55vw, 20px)/1.18 var(--hand); transform: rotate(-1deg); }
 .profile-chit-highlight { display: block; margin-top: 11px; color: #514b44; font: 500 13px/1.42 var(--sans); }
+.profile-chit-preview { position:relative; display:block; width:min(85%,330px); margin:16px 0 0; padding:6px 6px 25px; background:#fffdf8; box-shadow:3px 6px 12px rgba(56,44,32,.19); transform:rotate(-1.8deg); }
+.profile-chit-preview::before { content:""; position:absolute; top:-10px; left:37%; width:65px; height:18px; background:rgba(122,186,201,.46); transform:rotate(3deg); }
+.profile-chit-preview img { display:block; width:100%; height:auto; aspect-ratio:1.4; object-fit:cover; }
+.profile-chit-preview-caption { position:absolute; right:8px; bottom:6px; left:8px; color:#6a5b49; font:800 10px/1.2 var(--hand); text-align:center; }
 .profile-chit-open { display: block; margin-top: 15px; color: #98352e; font: 900 10px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid currentColor; }
 .profile-doodle {
   position: absolute; z-index: 3; width: 86px; height: 82px;
@@ -245,6 +249,7 @@
   .profile-chit-toggle { min-height: 0; padding: 19px 16px 18px; }
   .profile-chit-toggle strong { font-size: clamp(23px, 5.8vw, 30px); }
   .profile-chit-highlight { padding-right: 45px; font-size: 12px; }
+  .profile-chit-preview { width:min(100%,310px); }
   .profile-chit-date { font-size: 11px; }
   .profile-chit-date span { font-size: 9px; }
   .profile-doodle, .row-1 .profile-doodle, .row-2 .profile-doodle,

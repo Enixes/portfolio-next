@@ -2,6 +2,7 @@ import { BreezeController } from "@/components/BreezeController";
 import { BoardScrollController } from "@/components/BoardScrollController";
 import { FloatingNavigation } from "@/components/FloatingNavigation";
 import { ContactBoard } from "@/components/ContactBoard";
+import { HeroChitExperience } from "@/components/HeroChitExperience";
 import Image from "next/image";
 
 const sectionBoards = [
@@ -35,14 +36,10 @@ const sectionBoards = [
     id: "blog-board",
     number: "02",
     marker: "blue",
-    eyebrow: "Field Notes / Blog",
-    title: "Writing from the failure path",
-    summary: "Practical essays about systems, AI, performance, and the decisions hidden between the diagrams.",
-    cards: [
-      ["Failure paths first", "Systems essay", "Why the recovery story should be designed before the happy path.", null],
-      ["Agents under load", "AI engineering", "What changes when an agent becomes part of a production control loop.", null],
-      ["Concurrency field notes", "Performance", "Patterns, bottlenecks, and lessons gathered from Java systems.", null],
-    ],
+    eyebrow: "Field Notes / In progress",
+    title: "The notebook is still in pencil",
+    summary: "A space for observations that are being worked into writing, with no publication date promised yet.",
+    cards: [],
   },
   {
     id: "life-board",
@@ -73,21 +70,22 @@ export function HeroPreview() {
     <main id="top" className="portfolio-preview">
       <BreezeController />
       <BoardScrollController />
+      <HeroChitExperience />
 
       <div className="war-room-intro" aria-hidden="true">
-        <p className="intro-case">Case board 01 · systems / reliability</p>
+        <p className="intro-case">An afternoon at the board</p>
         <div className="intro-copy">
-          <span>Systems war room</span>
-          <strong>Tracing the evidence</strong>
+          <span>The window is open</span>
+          <strong>Follow the thread</strong>
           <i className="intro-progress" />
         </div>
-        <p className="intro-signal">Signal acquired · zooming in</p>
+        <p className="intro-signal">A little wind in the room · zooming in</p>
         <Image
-          className="war-room-silhouettes"
-          src="/war-room-silhouettes-hires.png"
+          className="studio-intro-scene"
+          src="/room/afternoon-studio.webp"
           alt=""
-          width="1935"
-          height="812"
+          width="1672"
+          height="941"
           sizes="100vw"
           priority
         />
@@ -98,7 +96,7 @@ export function HeroPreview() {
       <section className="preview-hero" aria-labelledby="hero-title">
         <Image
           className="room-atmosphere"
-          src="/war-room-environment-anime.jpg"
+          src="/room/afternoon-studio.webp"
           alt=""
           width="1672"
           height="941"
@@ -129,12 +127,12 @@ export function HeroPreview() {
                 </svg>
                 <span>01 / Systems + Work</span>
               </a>
-              <a className="board-zone board-zone-blog" href="#blog-board" aria-label="Open the Field Notes and Blog board">
+              <a className="board-zone board-zone-blog" href="#blog-board" aria-label="Open the Field Notes work-in-progress board">
                 <svg className="zone-mark zone-mark-blog" viewBox="0 0 205 60" aria-hidden="true">
                   <path pathLength={100} d="M22 13 C61 3 161 4 191 20 C215 35 174 53 96 52 C34 52 3 40 14 22 C18 15 28 10 38 8" />
                   <path pathLength={100} d="M15 19 C25 9 39 6 50 7" />
                 </svg>
-                <span>02 / Field Notes</span>
+                <span>02 / Field Notes · WIP</span>
               </a>
               <a className="board-zone board-zone-life" href="#life-board" aria-label="Open the Life board">
                 <svg className="zone-mark zone-mark-life" viewBox="0 0 150 66" aria-hidden="true">
@@ -335,21 +333,21 @@ export function HeroPreview() {
 
               <article className="board-sticky sticky-pink blog-note">
                 <span className="board-pin" aria-hidden="true" />
-                <p>Field notes / Blog</p>
-                <strong>Systems, AI &amp; performance</strong>
-                <span>Long-form writing is part of the map →</span>
+                <p>Field notes / In pencil</p>
+                <strong>Work in progress.</strong>
+                <span>The notebook will open when the writing is ready →</span>
               </article>
 
               <aside className="war-note blog-topic-one">
                 <span className="board-pin pin-blue" aria-hidden="true" />
-                <strong>Failure paths first</strong>
-                <span>in progress / 01</span>
+                <strong>Loose leaf / 001</strong>
+                <span>still finding the thread</span>
               </aside>
 
               <aside className="war-note blog-topic-two">
                 <span className="board-pin" aria-hidden="true" />
-                <strong>Agents under load</strong>
-                <span>draft / 02</span>
+                <strong>Notes in pencil</strong>
+                <span>revision before publication</span>
               </aside>
 
               <article className="board-paper life-note">
@@ -403,6 +401,12 @@ export function HeroPreview() {
           </div>
         </div>
 
+        <div className="hero-interaction-guide" role="note" aria-label="Click a chit once to unfold it. Double click it to dive into the section. On touch, tap to unfold, then use Explore this board.">
+          <svg viewBox="0 0 220 57" aria-hidden="true"><path d="M8 12c18-6 20 11 36 0s21-4 33 7M82 18h127M88 44h121" /><circle cx="57" cy="16" r="5" /><circle cx="60" cy="43" r="5" /><circle cx="73" cy="43" r="5" /></svg>
+          <span className="guide-desktop"><b>Click once</b> → unfold<br /><b>Double click</b> → dive in</span>
+          <span className="guide-touch"><b>Tap</b> → unfold<br /><b>Explore board</b> → dive in</span>
+        </div>
+
         <p className="preview-scroll">Follow the thread <span aria-hidden="true">↓</span></p>
       </section>
 
@@ -421,7 +425,7 @@ export function HeroPreview() {
         <div className="board-scroll-sticky">
           <Image
             className="board-story-room"
-            src="/war-room-environment-anime.jpg"
+            src="/room/afternoon-studio.webp"
             alt=""
             width="1672"
             height="941"

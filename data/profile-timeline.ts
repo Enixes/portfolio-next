@@ -7,6 +7,7 @@ export type ProfileMilestone = {
   chapter: string;
   paragraphs: string[];
   proof: { label: string; href: string }[];
+  preview?: { src: string; alt: string; caption: string };
   artifact?: { src: string; alt: string; caption: string };
   tone: "yellow" | "blue" | "green" | "pink" | "lilac";
   doodle: "spark" | "brackets" | "wireless" | "route" | "clock" | "graph" | "house" | "pencil";
@@ -17,6 +18,7 @@ export const profileMilestones: ProfileMilestone[] = [
   {
     id: "recognition", year: "2013", title: "Earned school merit; attended DST INSPIRE", aside: "Curiosity got its first stamp.", chapter: "The curious years",
     highlight: "School merit and a place at the DST INSPIRE science camp.", tone: "yellow", doodle: "spark",
+    preview: { src: "/profile/kv-ceremony-2014.webp", alt: "Asu Singh receiving a school recognition plaque at a Kendriya Vidyalaya ceremony in February 2014", caption: "KV ceremony · Feb 2014" },
     paragraphs: [
       "A Kendriya Vidyalaya Certificate of Merit recognised A1 grades across every subject in the 2013 CBSE secondary examination. The same year, a DST INSPIRE fellowship brought me to a science camp at Kirori Mal College, University of Delhi.",
       "The useful part was the invitation to ask how things worked. That curiosity eventually found its way into software, research, and production engineering.",

@@ -351,6 +351,10 @@ export function ProfileLiveBoardPortal() {
             <strong>{item.title}</strong>
             <span className="profile-chit-aside">{item.aside}</span>
             <span className="profile-chit-highlight">{item.highlight}</span>
+            {item.preview && <span className="profile-chit-preview">
+              <Image src={item.preview.src} alt={item.preview.alt} width={1200} height={860} sizes="(max-width: 620px) 67vw, 330px" loading="eager" />
+              <span className="profile-chit-preview-caption">{item.preview.caption}</span>
+            </span>}
             <span className="profile-chit-open">{detail === i ? "Fold note" : "Unfold story"} <span aria-hidden="true">{detail === i ? "↖" : "↗"}</span></span>
           </button>
           <Doodle motif={item.doodle} />
