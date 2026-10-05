@@ -37,6 +37,9 @@
 .blog-header-number { display: inline-block; margin-left: 22px; color: #8c7357; font: 400 18px/1 var(--mono); letter-spacing: -.06em; vertical-align: middle; }
 .blog-header p { margin: 0; color: #625c52; font: 11px/1.6 var(--mono); }
 .blog-header-aside { display: grid; gap: 14px; padding-top: 10px; color: #6c6255; font: 14px/1.3 var(--hand); text-align: right; }
+@media (min-width: 621px) and (max-width: 900px) {
+  .blog-header-aside { margin-right: calc(50vw - 260px); }
+}
 .blog-draft-stamp { display: block; padding: 7px 10px; border: 2px solid #915b43; color: #824630; font: 700 10px/1 var(--mono); text-transform: uppercase; transform: rotate(4deg); }
 .blog-evidence-layout { position: relative; display: grid; grid-template-columns: 1.25fr 1fr .7fr; grid-template-areas: "recovery agents archive" "recovery concurrency archive" "margins margins archive"; gap: 25px; align-items: start; }
 .blog-position-recovery { grid-area: recovery; }
@@ -110,7 +113,7 @@
   .blog-recovery { min-height: 540px; }
 }
 @media (max-width: 620px) {
-  .blog-live-board { padding: 24px 20px; scrollbar-gutter: auto; }
+  .blog-live-board { padding: 140px 20px 24px; scrollbar-gutter: auto; }
   .blog-header { flex-wrap: wrap; gap: 15px; margin-bottom: 28px; }
   .blog-header h2 { font-size: 43px; }
   .blog-header-number { margin-left: 14px; font-size: 14px; }
@@ -154,6 +157,6 @@
 @media(max-width:760px){ .field-workshop { padding:24px 18px; } .field-drafting-table { min-height:0; padding:36px 7px 50px; } .field-paper-shadow { inset:6% 2% 3%; } .field-drafting-sheet { min-height:0; padding:28px 24px; } .field-desk-doodle { right:4px; bottom:0; font-size:14px; } .field-desk-doodle span { font-size:24px; } .field-desk-doodle i { display:none; } }
 @media(max-width:390px){ .field-workshop { padding:18px 10px; } .field-drafting-sheet { padding:27px 18px; } .field-drafting-sheet h3 { font-size:34px; } .field-desk-doodle { bottom:3px; } }
 @media(prefers-reduced-motion:reduce){ .field-pencil-sketch path:first-child { animation:none; stroke-dashoffset:0; } }
-@media(max-width:760px){ .field-workshop { padding-top:82px; } }
-@media(max-width:390px){ .field-workshop { padding-top:82px; } }
+@media(max-width:760px){ .field-workshop { padding-top:140px; } }
+@media(max-width:390px){ .field-workshop { padding-top:140px; } }
 @media(min-width:761px) and (max-width:900px){ .field-workshop { padding-top:86px; } }

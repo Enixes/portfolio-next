@@ -28,7 +28,24 @@ function Doodle({ motif, className = "" }: { motif: ProfileMilestone["doodle"]; 
   </svg>;
 }
 
-type Trail = { main: string; branches: string[]; anchors: { x: number; y: number }[] };
+type Trail = {
+  main: string;
+  branches: string[];
+  anchors: { x: number; y: number }[];
+  spans: { id: "education" | "ion" | "boxy"; path: string; endY: number }[];
+  links: { id: "football" | "ionathon"; path: string }[];
+};
+
+function ChitMedia({ item }: { item: ProfileMilestone }) {
+  if (!item.preview) return null;
+  return <span className={item.secondaryPreview ? "profile-chit-media-pair" : undefined}>
+    {(item.secondaryPreview ? [item.preview, item.secondaryPreview] : [item.preview]).map((media) =>
+      <span className={`profile-chit-preview${media.src.includes("-official-logo") ? " is-logo" : ""}${media.src.includes("ion-official-logo") ? " is-ion-logo" : ""}`} key={media.src}>
+        <Image src={media.src} alt={media.alt} width={1200} height={860} sizes="(max-width: 620px) 67vw, 330px" loading="eager" />
+        <span className="profile-chit-preview-caption">{media.caption}</span>
+      </span>)}
+  </span>;
+}
 
 export function ProfileLiveBoardPortal() {
   const [surface, setSurface] = useState<HTMLElement | null>(null);
@@ -42,8 +59,9 @@ export function ProfileLiveBoardPortal() {
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const pathRef = useRef<SVGPathElement | null>(null);
   const markerRef = useRef<SVGCircleElement | null>(null);
+  const spanRevealRef = useRef<SVGRectElement | null>(null);
   const rows = useRef<(HTMLDivElement | null)[]>([]);
-  const cards = useRef<(HTMLButtonElement | null)[]>([]);
+  const cards = useRef<(HTMLElement | null)[]>([]);
   const detailPanels = useRef<(HTMLDivElement | null)[]>([]);
   const opener = useRef<HTMLButtonElement | null>(null);
   const timer = useRef<number | null>(null);
@@ -115,6 +133,7 @@ export function ProfileLiveBoardPortal() {
     marker.setAttribute("cx", String(point.x));
     marker.setAttribute("cy", String(point.y));
     marker.style.opacity = inkLength < 3 ? "0" : "1";
+    spanRevealRef.current?.setAttribute("height", String(reduce ? track.scrollHeight : Math.max(0, localY)));
   }, []);
 
   const measureTrail = useCallback(() => {
@@ -145,7 +164,45 @@ export function ProfileLiveBoardPortal() {
       const bend = (point.x + endX) / 2;
       return `M ${point.x.toFixed(1)} ${point.y.toFixed(1)} C ${bend.toFixed(1)} ${point.y.toFixed(1)}, ${bend.toFixed(1)} ${endY.toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}`;
     });
-    const next = { main, branches, anchors };
+    const span = (id: "education" | "ion" | "boxy", from: string, to: string, lane: number, ongoing = false) => {
+      const startIndex = profileMilestones.findIndex((item) => item.id === from);
+      const endIndex = profileMilestones.findIndex((item) => item.id === to);
+      const first = anchors[startIndex];
+      const final = anchors[endIndex];
+      const endY = final.y + (ongoing ? 74 : 0);
+      const offset = [28, 44, 60][lane];
+      const x = mobile ? [5, 11, 38][lane] : first.x - offset;
+      let path = `M ${first.x.toFixed(1)} ${first.y.toFixed(1)} C ${x.toFixed(1)} ${(first.y + 18).toFixed(1)}, ${x.toFixed(1)} ${(first.y + 39).toFixed(1)}, ${x.toFixed(1)} ${(first.y + 60).toFixed(1)}`;
+      if (mobile) {
+        path += ` L ${x.toFixed(1)} ${Math.max(first.y + 60, endY - 35).toFixed(1)} Q ${x.toFixed(1)} ${endY.toFixed(1)} ${(ongoing ? x : final.x).toFixed(1)} ${endY.toFixed(1)}`;
+      } else {
+        let previous = { x, y: first.y + 60 };
+        for (const anchor of anchors.slice(startIndex + 1, endIndex + 1)) {
+          const target = { x: anchor.x - offset, y: anchor.y };
+          const bendY = (previous.y + target.y) / 2;
+          path += ` C ${previous.x.toFixed(1)} ${bendY.toFixed(1)}, ${target.x.toFixed(1)} ${bendY.toFixed(1)}, ${target.x.toFixed(1)} ${target.y.toFixed(1)}`;
+          previous = target;
+        }
+        path += ongoing
+          ? ` C ${previous.x.toFixed(1)} ${(endY - 25).toFixed(1)}, ${previous.x.toFixed(1)} ${endY.toFixed(1)}, ${previous.x.toFixed(1)} ${endY.toFixed(1)}`
+          : ` Q ${previous.x.toFixed(1)} ${(endY + 16).toFixed(1)} ${final.x.toFixed(1)} ${endY.toFixed(1)}`;
+      }
+      return { id, path, endY };
+    };
+    const spans = [
+      span("education", "degree", "graduation", 0),
+      span("ion", "ion", "current", 1, true),
+      span("boxy", "boxy", "current", 2, true),
+    ];
+    const links = (["football", "ionathon"] as const).map((id) => {
+      const point = anchors[profileMilestones.findIndex((item) => item.id === id)];
+      const startX = mobile ? 11 : point.x - 44;
+      return {
+        id,
+        path: `M ${startX.toFixed(1)} ${point.y.toFixed(1)} C ${((startX + point.x) / 2).toFixed(1)} ${(point.y - 16).toFixed(1)}, ${((startX + point.x) / 2).toFixed(1)} ${(point.y + 16).toFixed(1)}, ${point.x.toFixed(1)} ${point.y.toFixed(1)}`,
+      };
+    });
+    const next = { main, branches, anchors, spans, links };
     trailNow.current = next;
     setTrail(next);
     requestAnimationFrame(updatePosition);
@@ -190,7 +247,7 @@ export function ProfileLiveBoardPortal() {
             if (playingNow.current) schedule(current + 1);
           },
         });
-      }, 2200);
+      }, profileMilestones[current].compact ? 1250 : 2200);
     }
     schedule(index);
   }, [updatePosition]);
@@ -311,7 +368,7 @@ export function ProfileLiveBoardPortal() {
 
   return surface && createPortal(<div className={`profile-live-board ${trail ? "has-trail" : ""}`} aria-label="Asu Singh career timeline">
     <div className="profile-playback-bar">
-      <span className="profile-playback-count" aria-live="polite">{String(active + 1).padStart(2, "0")} / 08 · {profileMilestones[active].year}</span>
+      <span className="profile-playback-count" aria-live="polite">{String(active + 1).padStart(2, "0")} / {String(profileMilestones.length).padStart(2, "0")} · {profileMilestones[active].year}</span>
       <button type="button" className="profile-playback-control" disabled={detail !== null} onClick={() => {
         if (playing) { explicitPause.current = true; stopPlayback(); }
         else play(completed || active === last);
@@ -332,36 +389,51 @@ export function ProfileLiveBoardPortal() {
         <figcaption>Asu / work in progress</figcaption>
       </figure>
     </header>
+    <div className="profile-branch-legend" aria-label="Overlapping chapters">
+      <span><i className="profile-legend-education" /> Education · 2016–20</span>
+      <span><i className="profile-legend-ion" /> ION · Aug 2020–now</span>
+      <span><i className="profile-legend-boxy" /> Boxy · 2024–now</span>
+      <small>Colored branches run beside the red story trail.</small>
+    </div>
     <div ref={timelineRef} className="profile-timeline" aria-label="Career milestones">
       {trail && <svg className="profile-trail-svg" width="100%" height="100%" aria-hidden="true">
+        <defs><clipPath id="profile-span-reveal"><rect ref={spanRevealRef} x="0" y="0" width="100%" height="0" /></clipPath></defs>
         <path className="profile-trail-guide" d={trail.main} />
+        <g clipPath="url(#profile-span-reveal)">
+          {trail.spans.map((span) => <g key={span.id}>
+            <path className={`profile-era-line era-${span.id}`} d={span.path} />
+            <circle className={`profile-era-node era-${span.id}`} cx={trail.anchors[profileMilestones.findIndex((item) => item.id === (span.id === "education" ? "degree" : span.id))].x} cy={trail.anchors[profileMilestones.findIndex((item) => item.id === (span.id === "education" ? "degree" : span.id))].y} r="5" />
+          </g>)}
+          {trail.links.map((link) => <path key={link.id} className={`profile-era-link era-${link.id}`} d={link.path} />)}
+        </g>
         <path ref={pathRef} className="profile-trail-ink" d={trail.main} />
         {trail.branches.map((branch, i) => <path key={i} className={`profile-trail-branch ${i <= revealed ? "is-drawn" : ""}`} d={branch} pathLength="100" />)}
         <circle ref={markerRef} className="profile-trail-marker" r="6" />
       </svg>}
       {profileMilestones.map((item, i) => <div key={item.id} ref={(node) => { rows.current[i] = node; }}
-        className={`profile-timeline-row row-${i} ${i <= revealed ? "is-revealed" : ""} ${i === active ? "is-current" : ""} ${detail === i ? "is-open" : ""}`}>
+        className={`profile-timeline-row row-${i} ${item.compact ? "is-compact" : ""} ${i <= revealed ? "is-revealed" : ""} ${i === active ? "is-current" : ""} ${detail === i ? "is-open" : ""}`}>
         <span className="profile-trail-anchor" aria-hidden="true" />
         <article className={`profile-timeline-chit tone-${item.tone}`}>
           <span className="board-pin" aria-hidden="true" />
-          <span className="profile-chit-fold" aria-hidden="true" />
-          <button type="button" ref={(node) => { cards.current[i] = node; }} className="profile-chit-toggle"
+          {!item.compact && <span className="profile-chit-fold" aria-hidden="true" />}
+          {item.compact ? <div ref={(node) => { cards.current[i] = node; }} className="profile-chit-static">
+            <span className="profile-chit-date">{item.year} <span>· {item.chapter}</span></span>
+            <strong>{item.title}</strong>
+            <span className="profile-chit-aside">{item.aside}</span>
+            <span className="profile-chit-highlight profile-mini-highlight">{item.highlight}</span>
+            <ChitMedia item={item} />
+            {item.proof.length > 0 && <a className="profile-mini-proof" href={item.proof[0].href} target="_blank" rel="noreferrer">{item.proof[0].label} ↗</a>}
+          </div> : <button type="button" ref={(node) => { cards.current[i] = node; }} className="profile-chit-toggle"
             onClick={(event) => toggleDetail(i, event.currentTarget)} aria-expanded={detail === i}
             aria-controls={`profile-note-${item.id}`} aria-label={`${detail === i ? "Fold" : "Unfold"} ${item.year}: ${item.title}`}>
             <span className="profile-chit-date">{item.year} <span>· {item.chapter}</span></span>
             <strong>{item.title}</strong>
             <span className="profile-chit-aside">{item.aside}</span>
             <span className="profile-chit-highlight">{item.highlight}</span>
-            {item.preview && <span className={item.secondaryPreview ? "profile-chit-media-pair" : undefined}>
-              {(item.secondaryPreview ? [item.preview, item.secondaryPreview] : [item.preview]).map((media) =>
-                <span className="profile-chit-preview" key={media.src}>
-                  <Image src={media.src} alt={media.alt} width={1200} height={860} sizes="(max-width: 620px) 67vw, 330px" loading="eager" />
-                  <span className="profile-chit-preview-caption">{media.caption}</span>
-                </span>)}
-            </span>}
+            <ChitMedia item={item} />
             <span className="profile-chit-open">{detail === i ? "Fold note" : "Unfold story"} <span aria-hidden="true">{detail === i ? "↖" : "↗"}</span></span>
-          </button>
-          {item.id !== "holisol" && <Doodle motif={item.doodle} />}
+          </button>}
+          {!item.compact && item.id !== "holisol" && <Doodle motif={item.doodle} />}
           {detail === i && <div id={`profile-note-${item.id}`} ref={(node) => { detailPanels.current[i] = node; }}
             className="profile-note-detail" tabIndex={-1} aria-label={`${item.year} story`}>
             <p className="profile-note-label">Field note / {item.chapter}</p>

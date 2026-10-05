@@ -23,11 +23,18 @@ function isVisible(note: HTMLElement) {
 export function BreezeController() {
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) return;
 
     let gustTimer: number | undefined;
     let cleanupTimer: number | undefined;
+    let roomCleanupTimer: number | undefined;
     let activeNotes: HTMLElement[] = [];
+    const room = document.querySelector<HTMLElement>(".preview-hero");
+    let roomVisible = false;
+    const roomObserver = room ? new IntersectionObserver(([entry]) => {
+      roomVisible = entry.isIntersecting;
+      if (!roomVisible) room.classList.remove("is-room-breezing");
+    }, { threshold: 0.05 }) : null;
+    if (room && roomObserver) roomObserver.observe(room);
 
     const clearGust = () => {
       activeNotes.forEach((note) => {
@@ -35,6 +42,9 @@ export function BreezeController() {
         note.style.removeProperty("--gust-delay");
       });
       activeNotes = [];
+    };
+    const clearRoom = () => {
+      room?.classList.remove("is-room-breezing");
     };
 
     const scheduleGust = (delay: number) => {
@@ -48,9 +58,18 @@ export function BreezeController() {
         return;
       }
 
-      const visibleNotes = Array.from(
+      const visibleNotes = reducedMotion.matches ? [] : Array.from(
         document.querySelectorAll<HTMLElement>(NOTE_SELECTOR),
       ).filter(isVisible);
+
+      if (roomVisible && !reducedMotion.matches) {
+        room?.classList.remove("is-room-breezing");
+        void room?.offsetWidth;
+        room?.classList.add("is-room-breezing");
+        window.clearTimeout(roomCleanupTimer);
+        roomCleanupTimer = window.setTimeout(clearRoom, 2_600);
+      }
+      window.dispatchEvent(new CustomEvent("room:gust", { detail: { heroVisible: roomVisible } }));
 
       const shuffled = visibleNotes
         .map((note) => ({ note, order: Math.random() }))
@@ -79,7 +98,9 @@ export function BreezeController() {
       if (document.visibilityState === "hidden") {
         window.clearTimeout(gustTimer);
         window.clearTimeout(cleanupTimer);
+        window.clearTimeout(roomCleanupTimer);
         clearGust();
+        clearRoom();
       } else {
         scheduleGust(1_800);
       }
@@ -90,9 +111,12 @@ export function BreezeController() {
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      roomObserver?.disconnect();
       window.clearTimeout(gustTimer);
       window.clearTimeout(cleanupTimer);
+      window.clearTimeout(roomCleanupTimer);
       clearGust();
+      clearRoom();
     };
   }, []);
 

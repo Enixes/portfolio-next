@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-type BoardKind = "profile" | "work" | "blog" | "life" | "contact";
+type BoardKind = "work" | "blog" | "life" | "contact";
 type Target = { kind: BoardKind; surface: HTMLElement };
 type Box = { left: number; top: number; right: number; bottom: number; width: number; height: number };
 type Placement = { left: number; top: number; width: number; score: number };
 
 const boardSpecs = [
-  ["profile", "profile-board-story-title"],
   ["work", "work-board-story-title"],
   ["blog", "blog-board-story-title"],
   ["life", "life-board-story-title"],
@@ -30,7 +29,7 @@ const styles = `
 .tech-line,.tech-line-soft,.tech-accent,.tech-rough{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1}
 .tech-line{stroke:var(--sketch-ink);stroke-width:2;opacity:.78}.tech-line-soft{stroke:var(--sketch-ink);stroke-width:1.1;opacity:.42}.tech-rough{stroke:var(--sketch-ink);stroke-width:.8;opacity:.27}.tech-accent{stroke:var(--sketch-accent);stroke-width:1.8;opacity:.72}.tech-wash{stroke:none;fill:var(--wash);opacity:0;vector-effect:non-scaling-stroke}
 .tech-label{fill:#30383b;font:800 9px/1 var(--marker,"Marker Felt","Segoe Print","Bradley Hand",cursive);letter-spacing:-.025em}.tech-label-small{font-size:7px;opacity:.7}.tech-label-red{fill:var(--sketch-accent)}
-.tech-profile{--sketch-r:-2deg;--wash:#e6c268}.tech-work{--sketch-r:1.7deg;--wash:#d9badb}.tech-blog{--sketch-r:-1deg;--wash:#a9d3db}.tech-life{--sketch-r:1.8deg;--wash:#d9b06d}.tech-contact{--sketch-r:-1.8deg;--wash:#ebce75}
+.tech-work{--sketch-r:1.7deg;--wash:#d9badb}.tech-blog{--sketch-r:-1deg;--wash:#a9d3db}.tech-life{--sketch-r:1.8deg;--wash:#d9b06d}.tech-contact{--sketch-r:-1.8deg;--wash:#ebce75}
 .scroll-board-panel[style*="opacity: 1"] .tech-line,.scroll-board-panel[style*="opacity: 1"] .tech-line-soft,.scroll-board-panel[style*="opacity: 1"] .tech-rough,.scroll-board-panel[style*="opacity: 1"] .tech-accent{animation:tinyDoodleDraw 8.8s cubic-bezier(.2,.72,.22,1) var(--line-delay,0s) infinite}
 .scroll-board-panel[style*="opacity: 1"] .tech-wash{animation:tinyDoodleWash 8.8s cubic-bezier(.2,.72,.22,1) .48s infinite}.tech-line-soft{--line-delay:.18s}.tech-rough{--line-delay:.32s}.tech-accent{--line-delay:.42s}
 @keyframes tinyDoodleDraw{0%,8%{stroke-dashoffset:1;opacity:.02}22%,67%{stroke-dashoffset:0;opacity:.78}79%{stroke-dashoffset:0;opacity:.38}91%,100%{stroke-dashoffset:1;opacity:.02}}
@@ -38,17 +37,6 @@ const styles = `
 @media(max-width:760px){.board-tech-sketch{opacity:.62}.tech-label{font-size:8px}.tech-label-small{font-size:6.5px}}
 @media(prefers-reduced-motion:reduce){.tech-line,.tech-line-soft,.tech-rough,.tech-accent{stroke-dashoffset:0!important;animation:none!important}.tech-wash{opacity:.07!important;animation:none!important}}
 `;
-
-function CpuSketch() {
-  return <div className="board-tech-sketch tech-profile" data-tech-kind="profile" aria-hidden="true"><svg viewBox="0 0 210 135">
-    <path className="tech-wash" d="M12 16H196V112H12Z"/><path className="tech-line" pathLength="1" d="M18 20H90V54H18Z M108 20H190V54H108Z"/>
-    <path className="tech-line-soft" pathLength="1" d="M25 28H42V46H25Z M48 28H64V46H48Z M70 28H84V46H70Z M116 28H133V46H116Z M139 28H156V46H139Z M162 28H183V46H162Z"/>
-    <path className="tech-line" pathLength="1" d="M24 67H84V85H24Z M116 67H184V85H116Z"/><path className="tech-accent" pathLength="1" d="M35 98H174V114H35Z"/>
-    <path className="tech-line-soft" pathLength="1" d="M54 54V67 M149 54V67 M54 85V98 M149 85V98 M174 106C190 108 194 117 195 128"/>
-    <path className="tech-rough" pathLength="1" d="M15 15l14-7 M89 18l10-7 M109 16l12-8 M189 17l12-5 M31 118C72 124 132 123 180 118"/>
-    <text className="tech-label" x="27" y="42">fetch → exec</text><text className="tech-label" x="119" y="42">fetch → exec</text><text className="tech-label-small" x="43" y="80">L1/L2</text><text className="tech-label-small" x="139" y="80">L1/L2</text><text className="tech-label tech-label-red" x="77" y="110">shared L3</text><text className="tech-label-small" x="166" y="132">RAM ↘</text>
-  </svg></div>;
-}
 
 function WorkSketch() {
   return <div className="board-tech-sketch tech-work" data-tech-kind="work" aria-hidden="true"><svg viewBox="0 0 210 138">
@@ -84,7 +72,6 @@ function ContactSketch() {
 }
 
 function Sketch({ kind }: { kind: BoardKind }) {
-  if (kind === "profile") return <CpuSketch/>;
   if (kind === "work") return <WorkSketch/>;
   if (kind === "blog") return <CapSketch/>;
   if (kind === "life") return <BuildingSketch/>;

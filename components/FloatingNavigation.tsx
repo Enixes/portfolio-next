@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cv } from "@/data/cv";
+import { FurinChime } from "@/components/FurinChime";
 
 const destinations = [
   { label: "Board", href: "#top", id: "top" },
@@ -88,13 +89,6 @@ export function FloatingNavigation() {
   return (
     <header className="preview-header floating-header" aria-label="Primary navigation">
       <div className="floating-dock" ref={shellRef}>
-        <svg className="studio-wind-chime" viewBox="0 0 48 90" aria-hidden="true" focusable="false">
-          <path className="chime-hook" d="M9 1c0 6 3 8 8 8h22" />
-          <path className="chime-top" d="M12 9c7-5 18-5 25 0l-3 5H15z" />
-          <path className="chime-strings" d="M17 14v20m10-20v11m7-11v17M24 14v43" />
-          <path className="chime-tubes" d="M14 34h6v35h-6zM24 25h6v40h-6zM32 31h5v31h-5z" />
-          <path className="chime-clapper" d="M24 57c-7 0-9 6-5 9 4 4 12 2 13-3 1-4-3-6-8-6zm0 9v12m-8 0c5-3 12-3 17 0l-3 6H19z" />
-        </svg>
         <a className="preview-brand dock-brand" href="#top" aria-label="Asu Singh, home">
           <span aria-hidden="true" /> ASU <span className="dock-brand-slash">/</span> SYSTEMS
         </a>
@@ -111,15 +105,18 @@ export function FloatingNavigation() {
             </a>
           ))}
         </nav>
-        <div className="dock-desktop-resume"><ResumeFieldFile /></div>
-        <div className="dock-mobile-controls">
-          <button ref={triggerRef} className="dock-map-trigger" type="button" aria-expanded={open} aria-controls="dock-paper-map"
-            onClick={() => setOpen((value) => !value)}>
-            <span className="dock-map-glyph" aria-hidden="true">✳</span>
-            <span>Map <small>/ {activeLabel}</small></span>
-            <span aria-hidden="true">{open ? "−" : "+"}</span>
-          </button>
-          <ResumeFieldFile compact />
+        <div className="dock-resume-anchor">
+          <div className="dock-desktop-resume"><ResumeFieldFile /></div>
+          <div className="dock-mobile-controls">
+            <button ref={triggerRef} className="dock-map-trigger" type="button" aria-expanded={open} aria-controls="dock-paper-map"
+              onClick={() => setOpen((value) => !value)}>
+              <span className="dock-map-glyph" aria-hidden="true">✳</span>
+              <span>Map <small>/ {activeLabel}</small></span>
+              <span aria-hidden="true">{open ? "−" : "+"}</span>
+            </button>
+            <ResumeFieldFile compact />
+          </div>
+          <FurinChime />
         </div>
         <nav id="dock-paper-map" className="dock-paper-map" aria-label="Board map" hidden={!open}>
           <p>Choose a corner of the board</p>

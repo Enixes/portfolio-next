@@ -1,5 +1,6 @@
 export type ProfileMilestone = {
   id: string;
+  compact?: boolean;
   year: string;
   title: string;
   aside: string;
@@ -34,6 +35,7 @@ export const profileMilestones: ProfileMilestone[] = [
   {
     id: "degree", year: "2016", title: "Started computer science at MAIT", aside: "The syllabus was only the beginning.", chapter: "A foundation",
     highlight: "Began a B.Tech in Computer Science and Engineering in Delhi.", tone: "blue", doodle: "brackets",
+    preview: { src: "/profile/degree-illustration.svg", alt: "Illustration of a graduation cap and computer science course notes", caption: "CSE at MAIT · illustration" },
     paragraphs: [
       "At Maharaja Agrasen Institute of Technology, affiliated with GGSIPU, I began a four-year Computer Science and Engineering degree. I graduated in 2020 with an 8.25/10 CGPA.",
       "The degree gave structure to a curiosity that increasingly moved outside lectures and into building tools of my own.",
@@ -59,6 +61,8 @@ export const profileMilestones: ProfileMilestone[] = [
   {
     id: "holisol", year: "2019", title: "Shipped Holisol’s daily run-sheet tool", aside: "The code got a real shift.", chapter: "First production delivery",
     highlight: "Built a Django delivery tool approved for daily operations.", tone: "pink", doodle: "route",
+    preview: { src: "/profile/holisol-official-logo.png", alt: "Official Holisol Logistics logo", caption: "Holisol · official logo" },
+    secondaryPreview: { src: "/profile/holisol-route-illustration.svg", alt: "Illustration of a daily run sheet and delivery route", caption: "Daily run sheet · illustration" },
     paragraphs: [
       "During a software development internship at Holisol Logistics, I took a Daily Run Sheet Generator from requirements through a Django frontend to deployment. It helped plan logistics deliveries and was approved by the founder for live daily operations.",
       "It was the first time the outcome of my code depended on people using it at work, every day. That changed what delivery meant to me.",
@@ -67,8 +71,17 @@ export const profileMilestones: ProfileMilestone[] = [
     proof: [],
   },
   {
+    id: "graduation", compact: true, year: "2020", title: "Graduated from MAIT", aside: "The foundation was built.", chapter: "Computer science",
+    highlight: "B.Tech in Computer Science and Engineering · 8.25/10 CGPA.", tone: "blue", doodle: "brackets",
+    preview: { src: "/profile/degree-illustration.svg", alt: "Illustration of a graduation cap and computer science course notes", caption: "MAIT · illustration" },
+    paragraphs: [],
+    proof: [{ label: "Degree grade sheet", href: "https://drive.google.com/file/d/1X3ihQC2I4Si5AzFIHvylql58OJk4IBIC/view?usp=sharing" }],
+  },
+  {
     id: "ion", year: "2020–now", title: "Joined ION to work on trading systems", aside: "The edge cases had a clock.", chapter: "Production systems",
     highlight: "Working on real-time trading workflows, recovery, and throughput.", tone: "lilac", doodle: "clock",
+    preview: { src: "/profile/ion-official-logo.png", alt: "Official ION Group logo", caption: "ION · official logo" },
+    secondaryPreview: { src: "/profile/ion-systems-illustration.svg", alt: "Illustration of event streams and live trading system metrics", caption: "Trading systems · illustration" },
     paragraphs: [
       "At ION I work on XTP, a real-time back-office trading product used by major financial firms. The work crosses Java concurrency, event-driven processing, Oracle, production incidents, and client delivery.",
       "The journey has included a 20× trade-processing throughput improvement, a 90% cut in downtime through automatic recovery, and an IONathon-winning off-heap cache. The Systems board opens up the engineering behind those results.",
@@ -83,6 +96,7 @@ export const profileMilestones: ProfileMilestone[] = [
   {
     id: "paper", year: "2021", title: "Published first-author optimisation research", aside: "The question left the notebook.", chapter: "Research",
     highlight: "A feature-selection study appeared in Cognitive Computation.", tone: "blue", doodle: "graph",
+    preview: { src: "/profile/research-illustration.svg", alt: "Illustration of feature selection and an optimisation graph", caption: "Feature selection · illustration" },
     paragraphs: [
       "I developed Hybrid Social Group Optimization to improve exploration in a machine-learning feature-selection task. Paired with a support vector classifier, the published chest X-ray study reported 99.65% accuracy on its study dataset.",
       "The paper was published online in 2021 in Cognitive Computation. It taught me to be precise about what a measured result does, and does not, say.",
@@ -101,8 +115,21 @@ export const profileMilestones: ProfileMilestone[] = [
     proof: [{ label: "Visit Boxy Group", href: "https://www.boxybuildcon.com/" }, { label: "Career history · LinkedIn", href: "https://linkedin.com/in/asusingh" }],
   },
   {
+    id: "football", compact: true, year: "2025", title: "ION Football League · Player of the Tournament", aside: "A win off the clock.", chapter: "Life beyond work",
+    highlight: "Recognised for a season on the football pitch.", tone: "green", doodle: "spark",
+    preview: { src: "/profile/ion-football-2025.webp", alt: "Asu Singh receiving a football trophy on the pitch at night", caption: "ION Football League · 2025" },
+    paragraphs: [], proof: [],
+  },
+  {
+    id: "ionathon", compact: true, year: "2026", title: "Won IONathon XTP 1.0", aside: "The cache made its case.", chapter: "ION work",
+    highlight: "An off-heap shared-cache idea won the XTP hackathon.", tone: "lilac", doodle: "graph",
+    preview: { src: "/profile/ionathon-xtp-2026.webp", alt: "Asu Singh presenting an off-heap shared-cache design at IONathon XTP 1.0", caption: "IONathon XTP 1.0 · 2026" },
+    paragraphs: [], proof: [{ label: "IONathon recognition", href: "https://lnkd.in/p/g48cHXEA" }],
+  },
+  {
     id: "current", year: "Now", title: "Benchmarking TailCache; building an AI assistant", aside: "The next chapter is in pencil.", chapter: "Current projects",
     highlight: "Studying tail latency and building an assistant with persistent state.", tone: "yellow", doodle: "pencil",
+    preview: { src: "/profile/current-projects-illustration.svg", alt: "Illustration of a latency chart beside an assistant conversation", caption: "Current projects · illustration" },
     paragraphs: [
       "TailCache is a reproducible Java 21/JMH study comparing Caffeine and Chronicle Map. It looks at p50 through p99.9 latency and the trade-offs between heap pressure and off-heap access. The research is in progress.",
       "A personal assistant project brings together asynchronous Python messaging, NVIDIA models, persistent state, Docker, and Prometheus/Grafana monitoring. It has run across more than 100 sessions with sub-two-second median response and no data loss during a 30-day continuous run.",

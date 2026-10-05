@@ -7,7 +7,7 @@
 .work-cv-header small,.work-section-heading small { display:block;color:#9b3c32;font:900 10px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase; }
 .work-cv-header h2 { margin:8px 0 10px;font:800 clamp(42px,5vw,76px)/.9 var(--marker,var(--hand));transform:rotate(-1deg); }
 .work-cv-header p { max-width:720px;margin:0;color:#58544c;font:500 clamp(13px,1.2vw,17px)/1.55 var(--sans); }
-.work-cv-scroll-hint { position:sticky;z-index:12;top:8px;display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;margin:0 0 28px auto;padding:8px 12px;color:#784234;background:#fff0c6f0;border:1px dashed #b78957;box-shadow:2px 4px 8px #49392818;font:800 10px/1 var(--mono);transform:rotate(1deg); }
+.work-cv-scroll-hint { position:relative;z-index:1;display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;margin:0 0 28px auto;padding:8px 12px;color:#784234;background:#fff0c6f0;border:1px dashed #b78957;box-shadow:2px 4px 8px #49392818;font:800 10px/1 var(--mono);transform:rotate(1deg); }
 .work-cv-scroll-hint i { width:54px;height:3px;background:linear-gradient(90deg,#a73c35 var(--work-progress,0%),#d7c0a0 var(--work-progress,0%)); }
 .work-section { position:relative;margin:30px 0 58px; }
 .work-section-heading { position:relative;max-width:800px;margin:0 0 27px; }
@@ -54,7 +54,7 @@
 .work-case-footnote { margin:20px 0 0;color:#70675d;font:700 11px/1.5 var(--mono);text-align:right; }
 @keyframes workCaseUnfold { from { opacity:.2;transform:perspective(700px) rotateX(-28deg) translateY(-12px); } to { opacity:1;transform:none; } }
 @media(max-width:1100px) { .work-evidence-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.work-project-strip { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:760px) { .work-cv-board { padding:82px 20px 82px; }.work-map-stage { grid-template-columns:1fr;gap:28px;margin-bottom:25px; }.work-company-chit,.work-stage-holisol .work-company-chit { width:min(270px,88%);margin:0 0 0 14px; }.work-evidence-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px;padding-left:14px; }.work-stage-holisol .work-evidence-grid { grid-template-columns:1fr;max-width:460px; }.work-cv-header h2 { font-size:clamp(38px,9vw,56px); } }
+@media(max-width:760px) { .work-cv-board { padding:110px 20px 82px; }.work-map-stage { grid-template-columns:1fr;gap:28px;margin-bottom:25px; }.work-company-chit,.work-stage-holisol .work-company-chit { width:min(270px,88%);margin:0 0 0 14px; }.work-evidence-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px;padding-left:14px; }.work-stage-holisol .work-evidence-grid { grid-template-columns:1fr;max-width:460px; }.work-cv-header h2 { font-size:clamp(38px,9vw,56px); } }
 @media(max-width:540px) { .work-cv-board { padding-inline:17px; }.work-evidence-grid,.work-project-strip { grid-template-columns:1fr; }.work-map-stage { padding:13px 0; }.work-case-button,.work-project-strip .work-case-button { min-height:0; }.work-case-button { padding:21px 19px 18px; }.work-case-button strong { font-size:28px; }.work-case-button .work-case-outcome { font-size:13px; }.work-case-detail p { font-size:14px; }.work-section { margin-bottom:43px; } }
 @media(max-width:360px) { .work-cv-board { padding-inline:13px; }.work-evidence-grid { padding-left:10px; }.work-case-button { padding-inline:15px; }.work-case-detail { margin-inline:8px; } }
 @media(prefers-reduced-motion:reduce) { .work-case,.work-case-detail { animation:none!important;transition:none!important;transform:none!important; } }
