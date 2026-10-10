@@ -1,3 +1,5 @@
+import { cv } from "./cv";
+
 export type ProfileMilestone = {
   id: string;
   compact?: boolean;
@@ -40,7 +42,7 @@ export const profileMilestones: ProfileMilestone[] = [
       "At Maharaja Agrasen Institute of Technology, affiliated with GGSIPU, I began a four-year Computer Science and Engineering degree. I graduated in 2020 with an 8.25/10 CGPA.",
       "The degree gave structure to a curiosity that increasingly moved outside lectures and into building tools of my own.",
     ],
-    proof: [{ label: "Degree grade sheet", href: "https://drive.google.com/file/d/1X3ihQC2I4Si5AzFIHvylql58OJk4IBIC/view?usp=sharing" }],
+    proof: [{ label: "Check on LinkedIn", href: cv.linkedin }],
   },
   {
     id: "vide", year: "2017–18", title: "Built vIDE and Injectorist", aside: "From editor tabs to wireless packets.", chapter: "Learning by making",
@@ -75,7 +77,7 @@ export const profileMilestones: ProfileMilestone[] = [
     highlight: "B.Tech in Computer Science and Engineering · 8.25/10 CGPA.", tone: "blue", doodle: "brackets",
     preview: { src: "/profile/degree-illustration.svg", alt: "Illustration of a graduation cap and computer science course notes", caption: "MAIT · illustration" },
     paragraphs: [],
-    proof: [{ label: "Degree grade sheet", href: "https://drive.google.com/file/d/1X3ihQC2I4Si5AzFIHvylql58OJk4IBIC/view?usp=sharing" }],
+    proof: [{ label: "Check on LinkedIn", href: cv.linkedin }],
   },
   {
     id: "ion", year: "2020–now", title: "Joined ION to work on trading systems", aside: "The edge cases had a clock.", chapter: "Production systems",

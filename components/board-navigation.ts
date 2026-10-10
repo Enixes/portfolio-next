@@ -2,6 +2,7 @@
  * checkpoint is the start of the sticky board, with no invisible lead-in. */
 export const BOARD_NAVIGATE_EVENT = "board:navigate";
 export const PROFILE_INTERRUPT_EVENT = "profile:interrupt";
+export const WORK_SKILL_INTERRUPT_EVENT = "work:skill-interrupt";
 export type BoardNavigation = { index: number; immediate?: boolean; reset?: boolean };
 
 /** Spatial stops mirror the clickable zones on the overview board:

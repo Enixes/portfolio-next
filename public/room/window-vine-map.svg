@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1672" height="941" viewBox="0 0 1672 941">
+  <defs><filter id="soft"><feGaussianBlur stdDeviation="9"/></filter></defs>
+  <path fill="#808080" d="M0 0h1672v941H0z"/>
+  <g fill="none" stroke="#e99380" stroke-linecap="round" stroke-linejoin="round" filter="url(#soft)">
+    <path stroke-width="45" d="M0 27Q51 38 95 103T165 178M2 138Q68 170 104 242T91 406M0 306Q44 338 93 424M350 0Q377 42 431 100T463 220M435 179Q459 241 444 350M1605 0Q1574 74 1627 159T1642 312"/>
+    <path stroke-width="70" d="M15 17Q81 43 110 131M37 227Q77 275 89 352M380 45Q428 95 445 164M1607 61Q1644 135 1638 237"/>
+  </g>
+</svg>

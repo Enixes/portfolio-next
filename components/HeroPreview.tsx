@@ -5,6 +5,7 @@ import { ContactBoard } from "@/components/ContactBoard";
 import { HeroChitExperience } from "@/components/HeroChitExperience";
 import { BrandSticker } from "@/components/BrandSticker";
 import { BoardEndCue } from "@/components/BoardEndCue";
+import { RoomDepth } from "@/components/RoomDepth";
 import Image from "next/image";
 
 const sectionBoards = [
@@ -82,40 +83,16 @@ export function HeroPreview() {
           <i className="intro-progress" />
         </div>
         <p className="intro-signal">A little wind in the room · zooming in</p>
-        <Image
-          className="studio-intro-scene"
-          src="/room/afternoon-studio.webp"
-          alt=""
-          width="1672"
-          height="941"
-          sizes="100vw"
-          priority
-        />
+        <RoomDepth intro />
       </div>
 
       <FloatingNavigation />
 
       <section className="preview-hero" aria-labelledby="hero-title">
-        <Image
-          className="room-atmosphere"
-          src="/room/afternoon-studio.webp"
-          alt=""
-          width="1672"
-          height="941"
-          sizes="100vw"
-          priority
-        />
+        <RoomDepth />
         <div className="room-breeze-scene" aria-hidden="true">
           <span className="room-sunlight" />
           <span className="room-leaf-shadow" />
-          <svg className="room-leaves room-leaves-left" viewBox="0 0 180 160" focusable="false">
-            <path className="room-leaf-stem" d="M-4 8C47 35 82 70 111 149M22 6c31 33 63 50 119 63M30 78c33 5 62 15 92 34" />
-            <path d="M8 6C20-6 38 0 41 18 24 27 14 23 8 6ZM34 27C51 13 68 22 67 42 50 48 39 43 34 27ZM69 48C87 34 103 43 99 62 82 67 71 62 69 48ZM100 71c17-13 32-2 27 15-17 5-29-1-27-15ZM18 67C8 48 20 34 38 39c7 19 0 29-20 28ZM51 84C42 63 56 54 73 62c5 18-3 27-22 22ZM83 113c-9-21 5-30 22-22 5 18-3 27-22 22ZM127 57c-2-18 12-25 26-16 1 17-9 25-26 16Z" />
-          </svg>
-          <svg className="room-leaves room-leaves-right" viewBox="0 0 155 172" focusable="false">
-            <path className="room-leaf-stem" d="M145-5C106 38 83 75 61 170M151 44c-33 14-58 37-81 65" />
-            <path d="M121 11c-20 1-27 15-17 30 19-1 26-12 17-30ZM95 43C76 41 69 55 76 69c19 1 28-9 19-26ZM70 80c-19-3-29 10-22 25 19 3 29-7 22-25ZM56 123c-17-5-28 5-24 21 18 5 29-3 24-21ZM120 59c17-9 32-1 31 16-17 9-30 2-31-16ZM91 94c17-8 29 1 28 17-17 9-30 0-28-17Z" />
-          </svg>
           <span className="room-mote mote-one" /><span className="room-mote mote-two" />
           <span className="room-mote mote-three" /><span className="room-mote mote-four" />
         </div>

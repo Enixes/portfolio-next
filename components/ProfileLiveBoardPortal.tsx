@@ -71,6 +71,7 @@ export function ProfileLiveBoardPortal() {
   const activeNow = useRef(0);
   const revealedNow = useRef(0);
   const completedNow = useRef(false);
+  const detailNow = useRef<number | null>(null);
   const explicitPause = useRef(false);
   const pausedForVisit = useRef(false);
   const hereNow = useRef(false);
@@ -80,7 +81,9 @@ export function ProfileLiveBoardPortal() {
     const host = surfaceRef.current;
     const card = cards.current[index];
     if (!host || !card) return;
-    const clearance = window.innerWidth <= 480 ? 158 : 96;
+    const barBottom = host.querySelector<HTMLElement>(".profile-playback-bar")?.getBoundingClientRect().bottom ?? 0;
+    const clearance = Math.max(window.innerWidth <= 760 ? 158 : 96,
+      barBottom - host.getBoundingClientRect().top + 24);
     host.scrollTop = Math.max(0, Math.min(host.scrollHeight - host.clientHeight,
       host.scrollTop + card.getBoundingClientRect().top - host.getBoundingClientRect().top - clearance));
   }, []);
@@ -254,8 +257,12 @@ export function ProfileLiveBoardPortal() {
 
   const play = useCallback((replay = false) => {
     const host = surfaceRef.current;
-    if (!host || detail !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!host || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     stopPlayback();
+    if (detailNow.current !== null) {
+      detailNow.current = null;
+      setDetail(null);
+    }
     explicitPause.current = false;
     pausedForVisit.current = false;
     if (replay || completedNow.current || activeNow.current === last) {
@@ -269,16 +276,17 @@ export function ProfileLiveBoardPortal() {
     playingNow.current = true;
     setPlaying(true);
     queueNext(activeNow.current);
-  }, [detail, queueNext, stopPlayback, updatePosition]);
+  }, [queueNext, stopPlayback, updatePosition]);
 
   const closeDetail = useCallback((restoreFocus = true) => {
-    const index = detail;
+    const index = detailNow.current;
+    detailNow.current = null;
     setDetail(null);
     if (restoreFocus) requestAnimationFrame(() => {
       if (index !== null) alignCard(index);
       opener.current?.focus({ preventScroll: true });
     });
-  }, [alignCard, detail]);
+  }, [alignCard]);
 
   useEffect(() => {
     if (detail === null) return;
@@ -294,17 +302,17 @@ export function ProfileLiveBoardPortal() {
     const root = document.documentElement;
     const onInput = (event: Event) => {
       if (root.dataset.zoomSection !== "profile-board" || root.dataset.boardNavigating === "true") return;
+      const activatesControl = event.type === "pointerdown" || event.type === "touchstart" ||
+        (event instanceof KeyboardEvent && ["Enter", " "].includes(event.key));
       if (event.target instanceof Element && event.target.closest(".profile-playback-control") &&
-          (event instanceof PointerEvent || event instanceof TouchEvent ||
-            (event instanceof KeyboardEvent && ["Enter", " "].includes(event.key)))) return;
+          activatesControl) return;
       if (event.target instanceof Element && event.target.closest(".profile-chit-toggle") &&
-          (event instanceof PointerEvent || event instanceof TouchEvent ||
-            (event instanceof KeyboardEvent && ["Enter", " "].includes(event.key)))) {
+          activatesControl) {
         pausedForVisit.current = true;
         if (playingNow.current) stopPlayback();
         return;
       }
-      if (event instanceof KeyboardEvent && event.key === "Escape" && detail !== null) {
+      if (event instanceof KeyboardEvent && event.key === "Escape" && detailNow.current !== null) {
         event.preventDefault();
         closeDetail();
       }
@@ -326,7 +334,7 @@ export function ProfileLiveBoardPortal() {
       if (hereNow.current) return;
       hereNow.current = true;
       updatePosition();
-      if (explicitPause.current || completedNow.current || detail !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (explicitPause.current || completedNow.current || detailNow.current !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       arrivalTimer.current = window.setTimeout(() => {
         arrivalTimer.current = null;
         if (hereNow.current && !pausedForVisit.current && !explicitPause.current && !completedNow.current) play();
@@ -354,13 +362,14 @@ export function ProfileLiveBoardPortal() {
       if (arrivalTimer.current !== null) window.clearTimeout(arrivalTimer.current);
       stopPlayback();
     };
-  }, [surface, detail, closeDetail, measureTrail, play, stopPlayback, updatePosition]);
+  }, [surface, closeDetail, measureTrail, play, stopPlayback, updatePosition]);
 
   const toggleDetail = (index: number, button: HTMLButtonElement) => {
     pausedForVisit.current = true;
     if (playingNow.current) stopPlayback();
     opener.current = button;
-    if (detail === index) { closeDetail(); return; }
+    if (detailNow.current === index) { closeDetail(); return; }
+    detailNow.current = index;
     setDetail(index);
     revealedNow.current = Math.max(revealedNow.current, index);
     setRevealed(revealedNow.current);
@@ -369,7 +378,7 @@ export function ProfileLiveBoardPortal() {
   return surface && createPortal(<div className={`profile-live-board ${trail ? "has-trail" : ""}`} aria-label="Asu Singh career timeline">
     <div className="profile-playback-bar">
       <span className="profile-playback-count" aria-live="polite">{String(active + 1).padStart(2, "0")} / {String(profileMilestones.length).padStart(2, "0")} · {profileMilestones[active].year}</span>
-      <button type="button" className="profile-playback-control" disabled={detail !== null} onClick={() => {
+      <button type="button" className="profile-playback-control" onClick={() => {
         if (playing) { explicitPause.current = true; stopPlayback(); }
         else play(completed || active === last);
       }} aria-label={playing ? "Pause Profile story" : completed || active === last ? "Replay Profile story" : "Play Profile story"}>

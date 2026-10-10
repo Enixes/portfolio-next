@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import gsap from "gsap";
-import { BOARD_NAVIGATE_EVENT, PROFILE_INTERRUPT_EVENT, boardGeometry, boardSurface, readingDestination } from "./board-navigation";
+import { BOARD_NAVIGATE_EVENT, PROFILE_INTERRUPT_EVENT, WORK_SKILL_INTERRUPT_EVENT, boardGeometry, boardSurface, readingDestination } from "./board-navigation";
 
 const styles = `
 /*
@@ -166,6 +166,9 @@ export function BoardStoryAutoNavigator() {
         window.dispatchEvent(new Event(PROFILE_INTERRUPT_EVENT));
       }
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      if (document.documentElement.dataset.zoomSection === "work-board") {
+        window.dispatchEvent(new Event(WORK_SKILL_INTERRUPT_EVENT));
+      }
       const now = performance.now();
       const fresh = now - lastWheelAt > 190;
       lastWheelAt = now;
@@ -176,6 +179,10 @@ export function BoardStoryAutoNavigator() {
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (document.documentElement.dataset.zoomSection === "work-board" &&
+          ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End"].includes(event.key)) {
+        window.dispatchEvent(new Event(WORK_SKILL_INTERRUPT_EVENT));
+      }
       const profileActive = document.documentElement.dataset.zoomSection === "profile-board";
       const profileControl = event.target instanceof Element &&
         Boolean(event.target.closest(".profile-chit-toggle,.profile-playback-control"));
@@ -250,6 +257,9 @@ export function BoardStoryAutoNavigator() {
       if (Math.abs(distance) >= 48 && (direction > 0 ? bottom : top)) route(direction, true);
     };
     const onTouchStart = (event: TouchEvent) => {
+      if (document.documentElement.dataset.zoomSection === "work-board") {
+        window.dispatchEvent(new Event(WORK_SKILL_INTERRUPT_EVENT));
+      }
       gesture = null;
       if (event.touches.length === 1) beginGesture(event.touches[0].clientY);
     };
@@ -258,6 +268,9 @@ export function BoardStoryAutoNavigator() {
     };
     const cancelGesture = () => { gesture?.surface?.classList.remove("is-dragging"); gesture = null; };
     const onPointerDown = (event: PointerEvent) => {
+      if (document.documentElement.dataset.zoomSection === "work-board") {
+        window.dispatchEvent(new Event(WORK_SKILL_INTERRUPT_EVENT));
+      }
       if (event.pointerType === "touch" || event.button || isInteractiveTarget(event.target) || busy()) return;
       const surface = surfaceFor(indexNow());
       if (surface?.classList.contains("work-cv-board")) return;

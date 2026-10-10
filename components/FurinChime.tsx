@@ -1,108 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-type Soundscape = {
-  context: AudioContext;
-  wind: GainNode;
-  filter: BiquadFilterNode;
-  leaves: GainNode;
-  source: AudioBufferSourceNode;
-};
-
-function makeSoundscape(): Soundscape {
-  const context = new AudioContext();
-  const buffer = context.createBuffer(1, context.sampleRate * 3, context.sampleRate);
-  const samples = buffer.getChannelData(0);
-  for (let index = 0; index < samples.length; index++) samples[index] = Math.random() * 2 - 1;
-
-  const source = context.createBufferSource();
-  source.buffer = buffer;
-  source.loop = true;
-  const highpass = context.createBiquadFilter();
-  highpass.type = "highpass";
-  highpass.frequency.value = 90;
-  const filter = context.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 360;
-  const wind = context.createGain();
-  wind.gain.value = 0.008;
-  source.connect(highpass).connect(filter).connect(wind).connect(context.destination);
-  const leafFilter = context.createBiquadFilter();
-  leafFilter.type = "bandpass";
-  leafFilter.frequency.value = 1700;
-  leafFilter.Q.value = 0.55;
-  const leaves = context.createGain();
-  leaves.gain.value = 0;
-  source.connect(leafFilter).connect(leaves).connect(context.destination);
-  source.start();
-  return { context, wind, filter, leaves, source };
-}
-
-function ring({ context }: Soundscape, quiet = false) {
-  const start = context.currentTime;
-  // High, slightly inharmonic partials give a small glass bell its airy character.
-  for (const [frequency, level, decay] of [
-    [1174, 0.014, 2.4], [1762, 0.008, 1.9], [2811, 0.003, 1.25],
-  ]) {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency * (0.996 + Math.random() * 0.008), start);
-    gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(level * (quiet ? 0.55 : 1), start + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.00001, start + decay);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(start);
-    oscillator.stop(start + decay + 0.02);
-    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
-  }
-}
-
-function bird({ context }: Soundscape) {
-  const start = context.currentTime;
-  for (let note = 0; note < 2; note++) {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const at = start + note * .16;
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(1930 + note * 160, at);
-    oscillator.frequency.exponentialRampToValueAtTime(2650 + note * 100, at + .09);
-    oscillator.frequency.exponentialRampToValueAtTime(2050 + note * 120, at + .18);
-    gain.gain.setValueAtTime(.00001, at);
-    gain.gain.linearRampToValueAtTime(.0035, at + .035);
-    gain.gain.exponentialRampToValueAtTime(.00001, at + .19);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(at);
-    oscillator.stop(at + .2);
-    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
-  }
-}
-
-function gust(soundscape: Soundscape, heroVisible: boolean) {
-  const { context, wind, filter, leaves } = soundscape;
-  const now = context.currentTime;
-  wind.gain.cancelScheduledValues(now);
-  wind.gain.setValueAtTime(wind.gain.value, now);
-  wind.gain.linearRampToValueAtTime(0.018, now + 0.5);
-  wind.gain.linearRampToValueAtTime(0.008, now + 2.8);
-  filter.frequency.cancelScheduledValues(now);
-  filter.frequency.setValueAtTime(filter.frequency.value, now);
-  filter.frequency.linearRampToValueAtTime(680, now + 0.65);
-  filter.frequency.linearRampToValueAtTime(360, now + 2.8);
-  leaves.gain.cancelScheduledValues(now);
-  leaves.gain.setValueAtTime(leaves.gain.value, now);
-  leaves.gain.linearRampToValueAtTime(heroVisible ? 0.011 : 0, now + .4);
-  leaves.gain.linearRampToValueAtTime(0, now + 2.8);
-  if (Math.random() < 0.83) ring(soundscape, true);
-}
+import { birdCall, fadeRoom, makeRoomSoundscape, quietVoices, ringGlass, roomGust, type RoomSoundscape } from "@/lib/room-audio";
 
 export function FurinChime() {
   const [enabled, setEnabled] = useState(false);
   const [message, setMessage] = useState("");
-  const soundscape = useRef<Soundscape | null>(null);
+  const soundscape = useRef<RoomSoundscape | null>(null);
   const enabledRef = useRef(false);
   const swayTimer = useRef<number | undefined>(undefined);
+  const strikeTimer = useRef<number | undefined>(undefined);
+  const suspendTimer = useRef<number | undefined>(undefined);
+  const intent = useRef(0);
   const button = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -117,19 +26,41 @@ export function FurinChime() {
       }
       if (enabledRef.current && document.visibilityState === "visible" && soundscape.current?.context.state === "running") {
         const heroVisible = Boolean((event as CustomEvent<{ heroVisible?: boolean }>).detail?.heroVisible);
-        gust(soundscape.current, heroVisible);
-        if (heroVisible && Math.random() < .34) {
-          bird(soundscape.current);
+        roomGust(soundscape.current, heroVisible);
+        if (heroVisible && Math.random() < .3) birdCall(soundscape.current);
+        if (Math.random() < .44) {
+          window.clearTimeout(strikeTimer.current);
+          strikeTimer.current = window.setTimeout(() => {
+            if (!enabledRef.current || document.visibilityState !== "visible" || soundscape.current?.context.state !== "running") return;
+            ringGlass(soundscape.current);
+            button.current?.classList.remove("is-ringing");
+            void button.current?.offsetWidth;
+            button.current?.classList.add("is-ringing");
+            window.dispatchEvent(new Event("room:chime-strike"));
+            window.setTimeout(() => button.current?.classList.remove("is-ringing"), 1000);
+          }, 360);
         }
       }
     };
     const onVisibility = () => {
       const active = soundscape.current;
-      if (!active || !enabledRef.current) return;
       if (document.visibilityState === "hidden") {
-        void active.context.suspend().catch(() => {});
-      } else {
-        void active.context.resume().catch(() => {
+        window.clearTimeout(strikeTimer.current);
+        window.clearTimeout(suspendTimer.current);
+        button.current?.classList.remove("is-ringing");
+        if (!active) return;
+        fadeRoom(active, 0, enabledRef.current ? .24 : .12);
+        suspendTimer.current = window.setTimeout(() => {
+          quietVoices(active);
+          void active.context.suspend().catch(() => {});
+        }, 300);
+      } else if (active && enabledRef.current) {
+        window.clearTimeout(suspendTimer.current);
+        const currentIntent = intent.current;
+        void active.context.resume().then(() => {
+          if (enabledRef.current && intent.current === currentIntent && document.visibilityState === "visible") fadeRoom(active, .82, 1.2);
+        }).catch(() => {
+          if (intent.current !== currentIntent) return;
           enabledRef.current = false;
           setEnabled(false);
           setMessage("Sound is unavailable here.");
@@ -142,9 +73,13 @@ export function FurinChime() {
       window.removeEventListener("room:gust", onGust);
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearTimeout(swayTimer.current);
+      window.clearTimeout(strikeTimer.current);
+      window.clearTimeout(suspendTimer.current);
       const active = soundscape.current;
       if (active) {
+        quietVoices(active);
         active.source.stop();
+        active.breath.stop();
         void active.context.close().catch(() => {});
         soundscape.current = null;
       }
@@ -152,22 +87,37 @@ export function FurinChime() {
   }, []);
 
   const toggle = async () => {
+    const currentIntent = ++intent.current;
     try {
       if (enabledRef.current) {
         enabledRef.current = false;
         setEnabled(false);
         setMessage("Wind chime sound off.");
-        await soundscape.current?.context.suspend();
+        window.clearTimeout(strikeTimer.current);
+        window.clearTimeout(suspendTimer.current);
+        button.current?.classList.remove("is-ringing");
+        const active = soundscape.current;
+        if (active) {
+          fadeRoom(active, 0, .85);
+          suspendTimer.current = window.setTimeout(() => {
+            if (intent.current !== currentIntent || enabledRef.current) return;
+            quietVoices(active);
+            void active.context.suspend().catch(() => {});
+          }, 950);
+        }
         return;
       }
-      const active = soundscape.current ?? makeSoundscape();
+      window.clearTimeout(suspendTimer.current);
+      const active = soundscape.current ?? makeRoomSoundscape();
       soundscape.current = active;
-      await active.context.resume();
       enabledRef.current = true;
+      await active.context.resume();
+      if (intent.current !== currentIntent || !enabledRef.current) return;
+      fadeRoom(active, .82, 1.2);
       setEnabled(true);
       setMessage("Wind chime sound on.");
-      ring(active);
     } catch {
+      if (intent.current !== currentIntent) return;
       enabledRef.current = false;
       setEnabled(false);
       setMessage("Sound is unavailable here.");
@@ -196,7 +146,7 @@ export function FurinChime() {
         </g>
         <g className="furin-tail">
           <path d="M26 49v12" stroke="#72898a" strokeWidth="1.1" />
-          <circle cx="26" cy="55" r="4.5" fill="#a9c1c2" stroke="#63828a" strokeWidth="1" />
+          <circle className="furin-clapper" cx="26" cy="55" r="4.5" fill="#a9c1c2" stroke="#63828a" strokeWidth="1" />
           <path d="M26 59v7" stroke="#72898a" strokeWidth="1.1" />
           <path className="furin-tanzaku" d="M17 66h18l-1.5 43-16-2Z" fill="url(#furin-paper)" stroke="#9eab91" strokeWidth="1" />
         </g>

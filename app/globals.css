@@ -2563,8 +2563,10 @@ html,body,.portfolio-preview,.board-scroll-story,.board-scroll-sticky { backgrou
 .furin-button svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(1px 3px 3px #28282055); transform-origin: 50% 0; }
 .furin-button .furin-hanger { fill: none; stroke: #d9d0b5; stroke-width: 1.6; }
 .furin-button .furin-tail { transform-origin: 26px 50px; }
+.furin-button .furin-clapper { transform-box: fill-box; transform-origin: center; }
 .furin-button.is-gusting svg { animation: furin-bell-swing 1.6s ease-in-out both; }
 .furin-button.is-gusting .furin-tail { animation: furin-paper-flutter 1.5s ease-in-out both; }
+.furin-button.is-ringing .furin-clapper { animation: furin-clapper-strike .8s ease-out both; }
 .furin-button:hover svg { filter: drop-shadow(0 0 5px #c6eff7a8) drop-shadow(1px 3px 3px #28282055); }
 .furin-button:focus-visible { outline: 3px solid #f1ce79; outline-offset: 1px; border-radius: 10px; }
 .furin-sound-mark {
@@ -2578,40 +2580,55 @@ html,body,.portfolio-preview,.board-scroll-story,.board-scroll-sticky { backgrou
 .furin-status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 @keyframes furin-bell-swing { 0%,100% { transform: rotate(0); } 25% { transform: rotate(5deg); } 62% { transform: rotate(-4deg); } 82% { transform: rotate(1.5deg); } }
 @keyframes furin-paper-flutter { 0%,100% { transform: rotate(0) scaleX(1); } 24% { transform: rotate(12deg) scaleX(.87); } 56% { transform: rotate(-13deg) scaleX(.72); } 78% { transform: rotate(5deg) scaleX(.94); } }
+@keyframes furin-clapper-strike { 0%,100% { transform: translateX(0); } 25% { transform: translateX(4px); } 48% { transform: translateX(-3px); } 69% { transform: translateX(1px); } }
 
 /* Image-aligned foliage and light sit between the room photo and the board. */
 .room-breeze-scene { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
+.room-depth-art { pointer-events: none; }
+.room-depth-art .room-cleanplate-image { opacity: 0; }
+.room-depth-art.is-plate-ready .room-cleanplate-image { opacity: 1; }
+.room-window-prop { position: absolute; z-index: 1; left: 16px; top: 89px; width: 42px; height: auto; overflow: visible; visibility: hidden; opacity: 0; pointer-events: none; filter: drop-shadow(1px 4px 3px #4b3c2d50); }
+.room-window-prop.is-ready { visibility: visible; opacity: .94; }
+.preview-hero .room-window-prop { position: absolute; }
+@media (min-width: 901px) and (max-width: 1350px) { .preview-hero .room-window-prop { left: 2px; top: 78px; width: 18px; } }
+@media (min-width: 761px) and (max-width: 900px) { .preview-hero .room-window-prop { left: 17px; top: 65px; width: 27px; } }
+.room-window-prop .room-window-chime { transform-box: view-box; transform-origin: 26px 0; }
+.war-room-intro .room-window-prop { z-index: 3; animation: studioSceneOut 3.35s cubic-bezier(.2,.72,.26,1) both; }
+.war-room-intro .room-window-prop .room-window-chime { animation: room-window-furin-sway 2.6s ease-in-out .25s both; }
+.room-window-clapper { transform-box: fill-box; transform-origin: center 0; }
+.room-window-paper { transform-box: fill-box; transform-origin: center 0; }
+.room-window-leaves { opacity: .15; stroke: #fff4b5; stroke-width: 3; filter: blur(2px); }
+.room-window-leaves .room-leaf-glint { stroke-width: 5; }
+.is-room-breezing .room-window-chime { animation: room-window-furin-sway 2.55s ease-in-out both; }
+.is-room-breezing .room-window-paper { animation: room-window-paper-flutter 2.4s ease-in-out both; }
+.is-room-breezing .room-window-leaves { animation: room-window-light-flicker 2.55s ease-in-out both; }
+.room-window-prop.is-striking .room-window-clapper { animation: room-window-clapper-strike .82s ease-out both; }
+@keyframes room-window-furin-sway { 0%,100% { transform: rotate(0); } 20% { transform: rotate(3.5deg); } 46% { transform: rotate(-2.8deg); } 70% { transform: rotate(1.3deg); } }
+@keyframes room-window-paper-flutter { 0%,100% { transform: rotate(0) scaleX(1); } 31% { transform: rotate(5deg) scaleX(.94); } 67% { transform: rotate(-4deg) scaleX(.96); } }
+@keyframes room-window-clapper-strike { 0%,100% { transform: rotate(0); } 22% { transform: rotate(19deg); } 45% { transform: rotate(-14deg); } 68% { transform: rotate(6deg); } }
+@keyframes room-window-light-flicker { 0%,100% { opacity: .15; transform: translateX(0); } 28% { opacity: .32; transform: translateX(3px); } 66% { opacity: .09; transform: translateX(-2px); } }
 .room-sunlight { position: absolute; inset: 0; background: radial-gradient(ellipse 38% 58% at 15% 37%, #fff5cb20, transparent 80%); opacity: .45; }
 .room-leaf-shadow { position: absolute; inset: 0; background: radial-gradient(ellipse 18% 28% at 14% 14%, #354d2940, transparent 80%), radial-gradient(ellipse 11% 23% at 96% 20%, #3d532d35, transparent 85%); filter: blur(13px); opacity: .35; }
-.room-leaves { position: absolute; overflow: visible; fill: #405b2d; fill-opacity: .7; stroke: #6d873e; stroke-width: 1.1; filter: drop-shadow(1px 3px 2px #1e351b44); transform-origin: top center; }
-.room-leaf-stem { fill: none; stroke: #56713a; stroke-width: 2.5; stroke-linecap: round; }
-.room-leaves-left { top: -2%; left: -.5%; width: clamp(105px, 14vw, 205px); }
-.room-leaves-right { top: -2%; right: -1%; width: clamp(85px, 10vw, 150px); }
 .room-mote { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff8d3; box-shadow: 0 0 7px 3px #ffe7a57a; opacity: .1; }
 .mote-one { top: 22%; left: 21%; }.mote-two { top: 45%; left: 10%; }.mote-three { top: 32%; right: 13%; }.mote-four { bottom: 21%; right: 21%; }
-.is-room-breezing .room-leaves-left { animation: room-leaf-rustle 1.9s ease-in-out both; }
-.is-room-breezing .room-leaves-right { animation: room-leaf-rustle 1.9s ease-in-out .13s both reverse; }
-.is-room-breezing .room-leaves path:not(.room-leaf-stem) { animation: room-leaflet 1.35s ease-in-out both; transform-box: fill-box; transform-origin: center; }
-.is-room-breezing .room-leaves path:nth-of-type(3n) { animation-delay: .15s; }
-.is-room-breezing .room-leaves path:nth-of-type(4n) { animation-delay: .28s; }
 .is-room-breezing .room-leaf-shadow { animation: room-shadow-shift 2.5s ease-in-out both; }
 .is-room-breezing .room-sunlight { animation: room-sun-shift 2.5s ease-in-out both; }
 .is-room-breezing .room-mote { animation: room-mote-drift 2.4s ease-out both; }
 .is-room-breezing .mote-two { animation-delay: .3s; }.is-room-breezing .mote-three { animation-delay: .55s; }.is-room-breezing .mote-four { animation-delay: .8s; }
-@keyframes room-leaf-rustle { 0%,100% { transform: rotate(0); } 28% { transform: rotate(9deg) translateX(5px); } 62% { transform: rotate(-7deg) translateX(-3px); } 83% { transform: rotate(3deg); } }
-@keyframes room-leaflet { 0%,100% { transform: rotate(0) scale(1); } 35% { transform: rotate(8deg) scale(.92,1.06); } 70% { transform: rotate(-6deg) scale(1.05,.96); } }
 @keyframes room-shadow-shift { 0%,100% { transform: translateX(0); opacity: .35; } 45% { transform: translateX(28px); opacity: .55; } }
 @keyframes room-sun-shift { 0%,100% { transform: translateX(0); opacity: .45; } 45% { transform: translateX(10px); opacity: .65; } }
 @keyframes room-mote-drift { 0% { transform: translate(0,0); opacity: 0; } 35% { opacity: .7; } 100% { transform: translate(12px,-24px); opacity: 0; } }
 
 /* Keep the hanging strip away from content when a board arrives. */
 @media (max-width: 760px) {
+  .preview-hero .room-window-prop { left: 12px; top: 65px; width: 26px; }
   .furin-button { right: -3px; width: 38px; height: 87px; }
   .scroll-board-gold .story-board-surface { padding-top: 124px !important; }
   .hero-interaction-guide { top: 88px; left: calc(50% - 28px); }
   .preview-hero { padding-top: 158px; }
 }
 @media (max-width: 390px) {
+  .preview-hero .room-window-prop { left: 9px; top: 67px; width: 27px; }
   .dock-map-trigger { min-width: clamp(110px, calc(100vw - 250px), 140px); }
   .dock-resume-compact.resume-link { width: clamp(118px, calc(100vw - 240px), 150px); }
   .dock-map-trigger small, .dock-resume-compact .resume-caption-detail, .dock-resume-compact .resume-caption small { display: none; }
@@ -2621,7 +2638,9 @@ html,body,.portfolio-preview,.board-scroll-story,.board-scroll-sticky { backgrou
   .preview-hero { padding-top: 178px; }
 }
 @media (max-width: 340px) { .hero-interaction-guide { left: calc(50% - 28px); } }
+@media (max-width: 340px) { .preview-hero .room-window-prop { left: 2px; width: 19px; } }
 @media (prefers-reduced-motion: reduce) {
-  .furin-button svg, .furin-button .furin-tail, .room-breeze-scene * { animation: none !important; transition: none !important; }
+  .furin-button svg, .furin-button .furin-tail, .furin-button .furin-clapper, .room-breeze-scene * { animation: none !important; transition: none !important; }
+  .room-depth-art *, .room-depth-art, .room-window-prop, .room-window-prop * { animation: none !important; transition: none !important; }
   .room-mote { opacity: 0; }
 }
