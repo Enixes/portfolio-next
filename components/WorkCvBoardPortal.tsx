@@ -60,6 +60,7 @@ function CaseCard({ note, index, open, onToggle, buttonRef, spotlight, onBack, p
   spotlight: CaseSpotlight | null; onBack: () => void; production?: boolean;
 }) {
   const linked = spotlight?.caseId === note.id;
+  const measuredTitle = production ? note.title.match(/^(\d+(?:×|%))\s+(.+)$/) : null;
   const cardRef = useRef<HTMLElement>(null);
   const [perimeter, setPerimeter] = useState({ width: 0, height: 0 });
   useLayoutEffect(() => {
@@ -80,7 +81,7 @@ function CaseCard({ note, index, open, onToggle, buttonRef, spotlight, onBack, p
     </svg>}
     <button ref={buttonRef} type="button" className="work-case-button" onClick={onToggle} aria-expanded={open} aria-controls={`work-case-${note.id}`}>
       <small>{String(index + 1).padStart(2, "0")} / {note.kicker}</small>
-      <strong>{note.title}</strong>
+      <strong>{measuredTitle ? <><span className="work-case-metric">{measuredTitle[1]}</span><span>{measuredTitle[2]}</span></> : note.title}</strong>
       <span className="work-case-outcome">{note.outcome}</span>
       <span className="work-case-action">{open ? "Fold note ↖" : "Unfold details ↗"}</span>
       <WorkCaseArtwork caseId={note.id} />
@@ -182,16 +183,18 @@ export function WorkCvBoardPortal() {
   const surfaceRef = useRef<HTMLElement | null>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
   const travel = useRef<{
-    token: number; timer: number | null; tween: gsap.core.Tween | null; pending: boolean;
+    token: number; timer: number | null; frame: number | null; tween: gsap.core.Tween | null; pending: boolean;
     origin: { button: HTMLButtonElement; scrollTop: number; viewportOffset: number } | null;
-  }>({ token: 0, timer: null, tween: null, pending: false, origin: null });
+  }>({ token: 0, timer: null, frame: null, tween: null, pending: false, origin: null });
 
   const cancelTravel = useCallback((clearSpotlight = false) => {
     const current = travel.current;
     current.token += 1;
     if (current.timer !== null) window.clearTimeout(current.timer);
+    if (current.frame !== null) window.cancelAnimationFrame(current.frame);
     current.tween?.kill();
     current.timer = null;
+    current.frame = null;
     current.tween = null;
     current.pending = false;
     setTrace(null);
@@ -240,20 +243,30 @@ export function WorkCvBoardPortal() {
     const current = travel.current;
     const token = current.token;
     current.pending = true;
-    const rawDestination = origin.button.isConnected
-      ? board.scrollTop + origin.button.getBoundingClientRect().top - board.getBoundingClientRect().top - origin.viewportOffset
-      : origin.scrollTop;
-    const destination = Math.max(0, Math.min(board.scrollHeight - board.clientHeight, rawDestination));
     const arrive = () => {
       if (token !== current.token) return;
       current.pending = false;
       current.tween = null;
-      if (origin.button.isConnected) origin.button.focus({ preventScroll: true });
+      if (origin.button.isConnected) {
+        // Removing the linked strip can change a case above the bench during travel.
+        const actualOffset = origin.button.getBoundingClientRect().top - board.getBoundingClientRect().top;
+        board.scrollTop = Math.max(0, Math.min(board.scrollHeight - board.clientHeight,
+          board.scrollTop + actualOffset - origin.viewportOffset));
+        origin.button.focus({ preventScroll: true });
+      }
     };
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      board.scrollTop = destination;
-      arrive();
-    } else current.tween = gsap.to(board, { scrollTop: destination, duration: .78, ease: "power2.inOut", onComplete: arrive });
+    current.frame = window.requestAnimationFrame(() => {
+      current.frame = null;
+      if (token !== current.token) return;
+      const rawDestination = origin.button.isConnected
+        ? board.scrollTop + origin.button.getBoundingClientRect().top - board.getBoundingClientRect().top - origin.viewportOffset
+        : origin.scrollTop;
+      const destination = Math.max(0, Math.min(board.scrollHeight - board.clientHeight, rawDestination));
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        board.scrollTop = destination;
+        arrive();
+      } else current.tween = gsap.to(board, { scrollTop: destination, duration: .78, ease: "power2.inOut", onComplete: arrive });
+    });
   }, [cancelTravel]);
 
   useEffect(() => {
@@ -289,6 +302,7 @@ export function WorkCvBoardPortal() {
       panelObserver.disconnect();
       document.removeEventListener("visibilitychange", onPanel);
       if (travelState.timer !== null) window.clearTimeout(travelState.timer);
+      if (travelState.frame !== null) window.cancelAnimationFrame(travelState.frame);
       travelState.tween?.kill();
     };
   }, [target, cancelTravel]);
@@ -379,15 +393,13 @@ export function WorkCvBoardPortal() {
 
   const board = target ? createPortal(<div ref={boardRef} className="work-cv-board" tabIndex={0} aria-label="Scrollable systems case board">
     <header className="work-cv-header">
-      <small>Case board / 01 · tools and production evidence</small>
+      <small>Case board / experience → toolkit → public work</small>
       <h2>Systems / Work</h2>
-      <p>First the working kit, then the decisions it helped make. Every skill stays on the bench; unfold a pinned case for the engineering underneath an outcome.</p>
+      <p>Follow the production paths from ION and Holisol, then explore the working kit behind them. Open a pinned case for the engineering underneath each outcome.</p>
     </header>
     <div className="work-cv-scroll-hint" aria-hidden="true"><span>Scroll the case board</span><i /></div>
-    <SystemsSkillsBench onFollow={followSkill} onAnnotation={() => cancelTravel(true)} trace={trace} />
-    <svg className="work-case-divider work-skills-divider" viewBox="0 0 760 28" aria-hidden="true"><path d="M3 17C155 2 221 23 375 12S593 21 757 7" /></svg>
-    <section className="work-section" aria-labelledby="work-production-title">
-      <header className="work-section-heading"><small>02 / ION Trading · 2020–present / Holisol · 2019</small><h3 id="work-production-title">Production, with receipts.</h3><p>Measured changes in live workflows. Each number belongs to the path it describes.</p></header>
+    <section className="work-section work-experience-section" aria-labelledby="work-production-title">
+      <header className="work-section-heading"><small>01 / Experience · ION Trading · 2020–present / Holisol · 2019</small><h3 id="work-production-title">Production, with receipts.</h3><p>Measured changes in live workflows. Each number belongs to the path it describes. Trace the colored lines from each workplace to its cases.</p></header>
       <EvidenceStage company="ION" period="2020–present" description="Trading workflows · throughput · recovery" selectedCaseId={spotlight?.caseId ?? null}>
         {productionCases.slice(0, 6).map(renderCase)}
       </EvidenceStage>
@@ -395,12 +407,14 @@ export function WorkCvBoardPortal() {
         {productionCases.slice(6).map((note, index) => renderCase(note, index + 6))}
       </EvidenceStage>
     </section>
-    <svg className="work-case-divider" viewBox="0 0 760 28" aria-hidden="true"><path d="M3 17C155 2 221 23 375 12S593 21 757 7" /></svg>
+    <div className="work-chapter-turn" aria-hidden="true"><svg viewBox="0 0 760 28"><path d="M3 17C155 2 221 23 375 12S593 21 757 7" /></svg><span>from the work → to the kit</span></div>
+    <SystemsSkillsBench onFollow={followSkill} onAnnotation={() => cancelTravel(true)} trace={trace} />
+    <div className="work-chapter-turn work-chapter-turn-projects" aria-hidden="true"><svg viewBox="0 0 760 28"><path d="M3 17C155 2 221 23 375 12S593 21 757 7" /></svg><span>from the kit → to public work</span></div>
     <section className="work-section" aria-labelledby="work-projects-title">
-      <header className="work-section-heading"><small>03 / Public code and experiments</small><h3 id="work-projects-title">Things with fingerprints on them.</h3><p>Projects that can be inspected beyond this board.</p></header>
+      <header className="work-section-heading"><small>03 / Public projects and experiments</small><h3 id="work-projects-title">Things with fingerprints on them.</h3><p>Projects that can be inspected beyond this board.</p></header>
       <div className="work-project-strip">{projectCases.map((note, index) => renderCase(note, index + productionCases.length))}</div>
     </section>
-    <p className="work-case-footnote">The skills sit beside the decisions that needed them. ↗</p>
+    <p className="work-case-footnote">Experience → skills → inspectable work. ↗</p>
     <BoardEndCue from="work" />
   </div>, target) : null;
 

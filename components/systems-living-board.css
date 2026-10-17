@@ -67,33 +67,33 @@
 @keyframes workInkRace { 50% { transform:translate(18px,0); } }
 @keyframes workInkBlink { 0%,46%,100% { opacity:1; } 50%,90% { opacity:.2; } }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-code .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-code .work-drawing-a { animation:workInkType 1.1s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-code .work-drawing-a { animation:workInkType 1.1s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-code .work-drawing-c,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-code .work-drawing-c { animation:workInkBlink .7s steps(1) 2; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-code .work-drawing-c { animation:workInkBlink .7s steps(1) 2; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-plug .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-plug .work-drawing-a { animation:workInkConnect 1s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-plug .work-drawing-a { animation:workInkConnect 1s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-plug .work-drawing-c,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-plug .work-drawing-c { animation:workInkBlink .48s steps(1) 2 .36s; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-plug .work-drawing-c { animation:workInkBlink .48s steps(1) 2 .36s; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-pulse .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-pulse .work-drawing-a { animation:workInkPulse .75s ease-in-out 2; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-pulse .work-drawing-a { animation:workInkPulse .75s ease-in-out 2; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-pulse .work-drawing-b,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-pulse .work-drawing-b { animation:workInkCheck .85s ease-out both;stroke-dasharray:1; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-pulse .work-drawing-b { animation:workInkCheck .85s ease-out both;stroke-dasharray:1; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-database .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-database .work-drawing-a { animation:workInkLift 1.15s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-database .work-drawing-a { animation:workInkLift 1.15s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-spark .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-spark .work-drawing-a { animation:workInkPaperLeft 1.25s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-spark .work-drawing-a { animation:workInkPaperLeft 1.25s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-spark .work-drawing-b,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-spark .work-drawing-b { animation:workInkPaperRight 1.25s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-spark .work-drawing-b { animation:workInkPaperRight 1.25s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-tick .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-tick .work-drawing-a { animation:workInkCheck 1.4s ease-out both;stroke-dasharray:1; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-tick .work-drawing-a { animation:workInkCheck 1.4s ease-out both;stroke-dasharray:1; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-conversation .work-drawing-a,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-conversation .work-drawing-a { animation:workInkPaperLeft 1.15s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-conversation .work-drawing-a { animation:workInkPaperLeft 1.15s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-conversation .work-drawing-b,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-conversation .work-drawing-b { animation:workInkPaperRight 1.15s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-conversation .work-drawing-b { animation:workInkPaperRight 1.15s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-compass .work-drawing-b,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-compass .work-drawing-b { animation:workInkRace 1s ease-in-out both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-compass .work-drawing-b { animation:workInkRace 1s ease-in-out both; }
 .work-skill-scene.is-board-active .work-skill-paper.is-drawing .scene-compass .work-drawing-c,
-.work-skill-scene.is-board-active .work-skill-paper:is(:hover,:focus-within) .scene-compass .work-drawing-c { animation:workInkRace 1.1s ease-in-out .1s both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .scene-compass .work-drawing-c { animation:workInkRace 1.1s ease-in-out .1s both; }
 
 /* Case art occupies its own paper strip. Marker circles never sit over copy. */
 .work-case-button { padding-bottom:14px; }
@@ -176,3 +176,117 @@
     stroke-dasharray:none!important;stroke-dashoffset:0!important;
   }
 }
+
+/* The route reads as a set of large annotated papers, then eight smaller workbenches. */
+.work-cv-board { background:radial-gradient(circle at 14% 9%,#fffdfa 0,transparent 29%),radial-gradient(circle at 87% 39%,#e2eadf91 0,transparent 27%),repeating-linear-gradient(0deg,transparent 0 31px,#5a51450a 31px 32px),#f4eee2; }
+.work-cv-header { max-width:920px;margin-bottom:25px; }
+.work-cv-header small { color:#9b493a; }
+.work-cv-header p { max-width:760px; }
+.work-experience-section { margin-top:16px;margin-bottom:42px; }
+.work-experience-section .work-section-heading h3::after { border-color:#d77443; }
+.work-experience-section .work-section-heading p { max-width:660px; }
+.work-map-stage { --stage-ink:#c4644d;--stage-wash:#f6d9bc;gap:clamp(26px,3.5vw,50px);padding:34px 12px 34px 9px; }
+.work-stage-holisol { --stage-ink:#5d9b78;--stage-wash:#d9ead5; }
+.work-map-stage::before { content:"";position:absolute;z-index:-2;inset:9px 0 7px;border:1px dashed color-mix(in srgb,var(--stage-ink) 47%,transparent);border-radius:18px 25px 19px 24px;background:linear-gradient(125deg,color-mix(in srgb,var(--stage-wash) 34%,transparent),transparent 58%);transform:rotate(-.25deg); }
+.work-stage-ion::before,.work-stage-holisol::before { inset:9px 0 7px;border-color:color-mix(in srgb,var(--stage-ink) 47%,transparent);border-radius:18px 25px 19px 24px;transform:rotate(-.25deg); }
+.work-stage-holisol::before { transform:rotate(.35deg); }
+.work-company-chit { width:100%;margin-top:45px;padding:29px 20px 21px;border-color:#d6ad8c;background:#fff2da;box-shadow:7px 10px 0 #cc91703d,10px 15px 24px #44332825; }
+.work-stage-holisol .work-company-chit { background:#e6f3df;border-color:#8eaf8e;box-shadow:7px 10px 0 #95bb9340,10px 15px 24px #44332825; }
+.work-company-chit::before { content:"";position:absolute;top:-7px;right:21%;width:52px;height:17px;background:#e7c992a3;border:1px solid #bd9f78a0;transform:rotate(7deg); }
+.work-company-chit h3 { font-size:clamp(36px,3.4vw,50px); }
+.work-company-mini-scene { padding-top:11px; }
+.work-company-mini-scene svg { height:100px;stroke-width:2.6; }
+.work-cv-thread path { stroke:var(--stage-ink);stroke-width:3.1;opacity:.82; }
+.work-cv-thread path:nth-child(3n+2) { stroke:#d5964f;stroke-width:2.6; }
+.work-cv-thread path:nth-child(3n+3) { stroke:#9a799a;stroke-width:2.6; }
+.work-stage-holisol .work-cv-thread path:nth-child(3n+2) { stroke:#79a8a1; }
+.work-case { border-color:#b7a58d;box-shadow:5px 8px 0 #7d62451a,9px 13px 22px #483b2b1f; }
+.work-case.tone-yellow { background:#ffe9ad; }
+.work-case.tone-blue { background:#daeff1; }
+.work-case.tone-green { background:#e4f2d2; }
+.work-case.tone-pink { background:#f8dedf; }
+.work-case.tone-lilac { background:#eae1f6; }
+.work-case-button { min-height:211px;padding:26px 20px 14px; }
+.work-case-button strong { display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin:11px 0 9px;font-size:clamp(25px,2.5vw,35px);line-height:.94; }
+.work-case-metric { display:block;color:#ad483a;font:900 clamp(43px,4.6vw,67px)/.82 var(--marker,var(--hand));letter-spacing:-.035em;transform:rotate(-2deg); }
+.work-case.tone-blue .work-case-metric { color:#378399; }
+.work-case.tone-green .work-case-metric { color:#57874d; }
+.work-case.tone-pink .work-case-metric { color:#ad6475; }
+.work-case.tone-lilac .work-case-metric { color:#8067aa; }
+.work-case-art { height:72px; }
+.work-stage-holisol .work-evidence-grid { grid-template-columns:minmax(0,1fr);max-width:330px; }
+.work-chapter-turn { position:relative;display:flex;align-items:center;justify-content:space-between;gap:17px;width:100%;margin:14px 0 36px;color:#477b83; }
+.work-chapter-turn svg { flex:1;min-width:0;height:28px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round; }
+.work-chapter-turn span { flex:none;padding:8px 12px;border:1px dashed currentColor;background:#e9f2ee;color:#41777d;font:900 11px/1.1 var(--mono);transform:rotate(1.5deg); }
+.work-chapter-turn-projects { color:#a95d49; }
+.work-chapter-turn-projects span { color:#9a5343;background:#f9e8ce;transform:rotate(-1deg); }
+
+/* Every skill cluster has a stable text area and an illustration on its own plane. */
+.work-skills-section { margin:0 0 31px; }
+.work-skills-heading { max-width:810px;margin-bottom:22px; }
+.work-skill-scene { padding:28px 12px 52px; }
+.work-skill-scene::before { background:radial-gradient(circle at 52% 48%,#fffaf2b8,transparent 72%); }
+.work-skill-grid { gap:34px 34px; }
+.work-skill-paper { --paper-tilt:-.9deg;--paper-edge:#c79e69;min-height:342px;width:100%;padding:24px 23px 22px;border:1.5px solid var(--paper-edge);border-radius:4px 12px 5px 9px;background:linear-gradient(156deg,#fff7dc,var(--paper-base,#fff0b9));box-shadow:5px 7px 0 #9b77502b,10px 15px 23px #4b382420; }
+.work-skill-paper:nth-child(4n+2),.work-skill-paper:nth-child(4n+3) { width:100%;justify-self:stretch; }
+.work-skill-paper:nth-child(4n+2) { --paper-tilt:.8deg;border-radius:11px 4px 13px 5px; }
+.work-skill-paper:nth-child(4n+3) { --paper-tilt:-.5deg;border-radius:5px 14px 4px 11px; }
+.work-skill-paper:nth-child(4n+4) { --paper-tilt:.65deg;border-radius:13px 5px 10px 4px; }
+.work-skill-paper::before { content:"";position:absolute;top:-8px;left:39%;width:66px;height:19px;background:#e6d1a5b3;border:1px solid #ab947278;transform:rotate(-5deg);box-shadow:0 2px 3px #4b382418;pointer-events:none; }
+.work-skill-paper:nth-child(even)::before { left:auto;right:21%;transform:rotate(4deg); }
+.work-skill-paper::after { content:"";position:absolute;z-index:-1;inset:7px -6px -7px 7px;border:1px solid var(--paper-edge);border-radius:inherit;background:transparent;box-shadow:4px 5px 0 color-mix(in srgb,var(--paper-base) 70%,white);transform:rotate(.45deg);pointer-events:none; }
+.work-skill-paper.tone-yellow { --paper-base:#ffe0a0;--paper-edge:#d1a353; }
+.work-skill-paper.tone-blue { --paper-base:#c9e6f0;--paper-edge:#7aa8b7; }
+.work-skill-paper.tone-green { --paper-base:#d9edbe;--paper-edge:#94ae78; }
+.work-skill-paper.tone-pink { --paper-base:#f4d0d9;--paper-edge:#c697a2; }
+.work-skill-paper.tone-lilac { --paper-base:#dfd1f2;--paper-edge:#ab94c2; }
+.work-skill-paper.tone-mint { --paper-base:#cde9d9;--paper-edge:#84b49e; }
+.work-skill-paper.tone-peach { --paper-base:#f8d8b7;--paper-edge:#c9a278; }
+.work-skill-paper.tone-cream { --paper-base:#eee0b8;--paper-edge:#bea978; }
+.work-skill-paper:is(.tone-yellow,.tone-blue,.tone-green,.tone-pink,.tone-lilac,.tone-mint,.tone-peach,.tone-cream) { background:linear-gradient(150deg,color-mix(in srgb,var(--paper-base) 52%,white),var(--paper-base) 78%); }
+.work-skill-paper:hover,.work-skill-paper:focus-within { transform:translateY(-6px) rotate(0);box-shadow:6px 10px 0 #9b775037,13px 20px 28px #4b38242e; }
+.work-skill-pin { z-index:2;left:25px;top:-10px; }
+.work-skill-index { color:var(--skill-ink); }
+.work-skill-paper h4 { max-width:none;margin:10px 0 11px;font-size:clamp(29px,2.8vw,41px);line-height:.98; }
+.work-skill-paper h4::after { width:84px;max-width:42%;height:4px;margin-top:9px;background:var(--skill-ink); }
+.work-skill-art { height:125px;margin:5px 0 15px;border-top-color:color-mix(in srgb,var(--skill-ink) 35%,transparent);border-bottom-color:color-mix(in srgb,var(--skill-ink) 35%,transparent);background:radial-gradient(ellipse at 50% 50%,#fffefaaf,transparent 74%); }
+.work-skill-art-svg { width:min(100%,330px);stroke-width:2.45; }
+.work-skill-paper ul { gap:6px 7px;min-height:66px;align-content:start; }
+.work-skill-paper .work-skill-tag { min-height:32px;padding:6px 9px;font-size:11px;line-height:1.25; }
+.work-skill-caption { display:flex;align-items:flex-start;gap:9px;min-height:78px;margin:18px 0 0;padding:10px 11px;border:1px dashed color-mix(in srgb,var(--skill-ink) 62%,transparent);background:#fffdf8b8;color:#544e47;font:650 11px/1.43 var(--sans); }
+.work-skill-caption-mark { flex:none;color:var(--skill-ink);font:900 20px/1 var(--hand); }
+.work-skill-caption strong { color:var(--skill-ink);font-weight:850; }
+.work-skill-paper .work-skill-aside { margin-top:12px;padding-top:11px; }
+.work-skill-cable-note { right:17px;bottom:6px;color:#8e674e;font-size:16px; }
+@keyframes workPaperSettle { from { opacity:.7;transform:translateY(13px) rotate(calc(var(--paper-tilt) + 2deg)); } to { opacity:1;transform:translateY(0) rotate(var(--paper-tilt)); } }
+@keyframes workArtEnter { from { opacity:.35;clip-path:inset(0 100% 0 0); } to { opacity:1;clip-path:inset(0); } }
+.work-skill-scene.is-board-active .work-skill-paper.is-drawing { animation:workPaperSettle .74s cubic-bezier(.19,.7,.2,1) both; }
+.work-skill-scene.is-board-active .work-skill-paper.is-drawing .work-skill-art-svg { animation:workArtEnter 1.25s ease-out both; }
+
+/* In ambient mode only the drawing moves. The scheduler limits this class to two visible papers. */
+@keyframes workAmbientCode { 0%,100% { transform:translateX(0); } 45% { transform:translateX(5px); } }
+@keyframes workAmbientConnect { 0%,100% { transform:translateX(0); } 47% { transform:translateX(8px); } }
+@keyframes workAmbientFlow { 0%,100% { transform:translateX(0);opacity:1; } 50% { transform:translateX(9px);opacity:.65; } }
+@keyframes workAmbientLog { 0%,100% { transform:translateY(0); } 52% { transform:translateY(-5px); } }
+@keyframes workAmbientResearch { 0%,100% { transform:rotate(0); } 48% { transform:rotate(-3deg); } }
+@keyframes workAmbientTick { 0%,100% { opacity:1; } 48% { opacity:.38; } }
+@keyframes workAmbientTalk { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+@keyframes workAmbientRace { 0%,100% { transform:translateX(0); } 53% { transform:translateX(13px); } }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-code .work-drawing-c { animation:workAmbientCode 5.8s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-plug .work-drawing-a { animation:workAmbientConnect 6.4s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-pulse .work-drawing-c { animation:workAmbientFlow 6.7s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-database .work-drawing-a { animation:workAmbientLog 7.1s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-spark .work-drawing-a { animation:workAmbientResearch 7.6s ease-in-out infinite;transform-origin:70px 60px; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-tick .work-drawing-a { animation:workAmbientTick 6.2s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-conversation .work-drawing-b { animation:workAmbientTalk 6.9s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-ambient:not(.is-drawing):not(.is-reacting) .scene-compass .work-drawing-c { animation:workAmbientRace 7.4s ease-in-out infinite; }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .work-skill-art { box-shadow:inset 0 0 30px var(--skill-wash); }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .work-skill-art-svg { filter:drop-shadow(0 0 4px var(--skill-glow)); }
+.work-skill-scene.is-board-active .work-skill-paper.is-reacting .work-skill-art-svg * { animation-duration:.78s!important;animation-delay:0s!important;animation-iteration-count:1!important; }
+
+@media(max-width:900px) { .work-map-stage { grid-template-columns:minmax(155px,22%) minmax(0,1fr); }.work-case-button { padding-inline:17px; }.work-case-metric { font-size:clamp(44px,5.4vw,61px); } }
+@media(max-width:760px) { .work-map-stage { grid-template-columns:1fr;gap:25px;padding:22px 10px; }.work-company-chit,.work-stage-holisol .work-company-chit { width:min(285px,88%);margin:0 0 0 14px; }.work-company-mini-scene svg { height:90px; }.work-skill-grid { gap:27px 21px; }.work-skill-paper { padding:21px 17px 19px; }.work-skill-paper h4 { font-size:clamp(27px,4.4vw,35px); }.work-skill-art { height:107px; }.work-skill-paper .work-skill-tag { font-size:10.5px; }.work-case-metric { font-size:53px; } }
+@media(max-width:680px) { .work-skill-grid { grid-template-columns:1fr;gap:28px; }.work-skill-paper { min-height:0; }.work-skill-art { height:112px; }.work-skill-paper .work-skill-tag { font-size:11px; }.work-skill-scene { padding-inline:16px; }.work-chapter-turn span { font-size:9px;padding:7px 8px; } }
+@media(max-width:540px) { .work-case-button { min-height:0; }.work-case-button strong { font-size:29px; }.work-case-metric { font-size:55px; }.work-map-stage { padding-inline:6px; }.work-case-art { height:62px; }.work-chapter-turn { margin:5px 0 30px; }.work-chapter-turn svg { height:23px; }.work-skill-caption { min-height:86px; } }
+@media(max-width:360px) { .work-map-stage { padding-inline:0; }.work-skill-scene { padding-left:14px;padding-right:8px; }.work-skill-paper { padding-inline:14px; }.work-skill-paper h4 { font-size:28px; }.work-skill-paper .work-skill-tag { font-size:10px;padding-inline:7px; }.work-skill-caption { min-height:96px; }.work-chapter-turn span { max-width:140px;line-height:1.3; } }
+@media(prefers-reduced-motion:reduce) { .work-skill-paper.is-drawing,.work-skill-paper.is-drawing .work-skill-art-svg,.work-skill-paper.is-ambient .work-skill-art-svg *, .work-skill-paper.is-reacting .work-skill-art-svg * { animation:none!important;transform:none!important;filter:none!important;clip-path:none!important; }.work-skill-paper.is-reacting .work-skill-art { box-shadow:none!important; } }

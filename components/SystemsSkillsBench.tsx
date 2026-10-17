@@ -22,6 +22,14 @@ const toolkitNotes: Record<string, string> = {
   "Current experiments": "The experiments here are still being measured and revised.",
 };
 
+const casePreviews: Record<string, string> = {
+  throughput: "20× trade throughput", cache: "50× supported workflows",
+  recovery: "90% less downtime", alazium: "30% faster triage",
+  database: "95% database uplift", ci: "40% faster CI",
+  holisol: "Holisol run sheet", tailcache: "TailCache study",
+  hsgo: "Published feature-selection research", mining: "Illegal Mining Detector",
+};
+
 export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
   onFollow: (request: SkillFollowRequest) => void;
   onAnnotation: () => void;
@@ -32,6 +40,7 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
   const [cable, setCable] = useState("");
   const [tracePath, setTracePath] = useState("");
   const [annotation, setAnnotation] = useState<{ clusterId: string; skill: string } | null>(null);
+  const [preview, setPreview] = useState<{ clusterId: string; skill: string } | null>(null);
   const [active, setActive] = useState(false);
 
   useEffect(() => {
@@ -56,6 +65,7 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
     const visibleCards = new Set<HTMLElement>();
     const played = new Set<HTMLElement>();
     const entranceTimers = new Map<HTMLElement, number>();
+    const reactionTimers = new Map<HTMLElement, number>();
     let sceneIntersects = false;
     let frame = 0;
     let disposed = false;
@@ -89,6 +99,21 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
         }
       });
     };
+    const scheduleAmbient = () => {
+      const focused = document.activeElement instanceof HTMLElement
+        ? document.activeElement.closest<HTMLElement>(".work-skill-paper") : null;
+      const hovered = scene.querySelector<HTMLElement>(".work-skill-paper:hover");
+      const middle = board.getBoundingClientRect().top + board.clientHeight * .5;
+      const selected = !document.hidden && !reduced.matches && sceneIntersects &&
+        panel.getAttribute("aria-hidden") === "false" && panel.style.pointerEvents === "auto"
+        ? Array.from(visibleCards).filter((card) => !card.classList.contains("is-drawing"))
+          .sort((a, b) => {
+            const rank = (card: HTMLElement) => card === focused ? 0 : card === hovered ? 1 : 2;
+            return rank(a) - rank(b) ||
+              Math.abs(a.getBoundingClientRect().top - middle) - Math.abs(b.getBoundingClientRect().top - middle);
+          }).slice(0, 2) : [];
+      cards.forEach((card) => card.classList.toggle("is-ambient", selected.includes(card)));
+    };
     const refreshActive = () => {
       const next = !document.hidden && panel.getAttribute("aria-hidden") === "false" &&
         panel.style.pointerEvents === "auto" && panel.style.visibility !== "hidden";
@@ -99,13 +124,17 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
         cards.forEach((card) => {
           if (!visibleCards.has(card)) {
             card.classList.remove("is-drawing");
+            card.classList.remove("is-reacting");
+            const reaction = reactionTimers.get(card);
+            if (reaction !== undefined) window.clearTimeout(reaction);
+            reactionTimers.delete(card);
             const timer = entranceTimers.get(card);
             if (timer !== undefined) window.clearTimeout(timer);
             entranceTimers.delete(card);
           } else if (!played.has(card)) {
             card.classList.add("is-drawing"); played.add(card);
             entranceTimers.set(card, window.setTimeout(() => {
-              card.classList.remove("is-drawing"); entranceTimers.delete(card);
+              card.classList.remove("is-drawing"); entranceTimers.delete(card); scheduleAmbient();
             }, 1750));
           }
         });
@@ -114,7 +143,29 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
         entranceTimers.forEach((timer) => window.clearTimeout(timer));
         entranceTimers.clear();
         played.clear();
+        reactionTimers.forEach((timer) => window.clearTimeout(timer));
+        reactionTimers.clear();
+        cards.forEach((card) => card.classList.remove("is-reacting"));
       }
+      scheduleAmbient();
+    };
+    const reactTo = (event: Event) => {
+      if (document.hidden || reduced.matches || !sceneIntersects || panel.getAttribute("aria-hidden") !== "false") return;
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const card = target.closest<HTMLElement>(".work-skill-paper");
+      if (!card || !visibleCards.has(card)) return;
+      if (event instanceof PointerEvent && event.relatedTarget instanceof Element &&
+        event.relatedTarget.closest(".work-skill-tag") === target.closest(".work-skill-tag")) return;
+      const previous = reactionTimers.get(card);
+      if (previous !== undefined) window.clearTimeout(previous);
+      card.classList.remove("is-reacting");
+      void card.offsetWidth;
+      card.classList.add("is-reacting");
+      reactionTimers.set(card, window.setTimeout(() => {
+        card.classList.remove("is-reacting"); reactionTimers.delete(card);
+      }, 900));
+      scheduleAmbient();
     };
     const resize = new ResizeObserver(measure);
     [scene, ...cards].forEach((element) => resize.observe(element));
@@ -129,7 +180,13 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
       entries.forEach((entry) => {
         const card = entry.target as HTMLElement;
         if (entry.isIntersecting) visibleCards.add(card);
-        else visibleCards.delete(card);
+        else {
+          visibleCards.delete(card);
+          card.classList.remove("is-reacting");
+          const timer = reactionTimers.get(card);
+          if (timer !== undefined) window.clearTimeout(timer);
+          reactionTimers.delete(card);
+        }
       });
       refreshActive();
     }, { root: board, threshold: .16 });
@@ -138,13 +195,22 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
     panelObserver.observe(panel, { attributes: true, attributeFilter: ["aria-hidden", "style"] });
     document.addEventListener("visibilitychange", refreshActive);
     reduced.addEventListener("change", refreshActive);
+    scene.addEventListener("pointerover", reactTo);
+    scene.addEventListener("focusin", reactTo);
+    scene.addEventListener("pointerout", scheduleAmbient);
+    scene.addEventListener("focusout", scheduleAmbient);
     refreshActive();
     return () => {
       disposed = true;
       resize.disconnect(); sceneObserver.disconnect(); cardObserver.disconnect(); panelObserver.disconnect();
       document.removeEventListener("visibilitychange", refreshActive);
       reduced.removeEventListener("change", refreshActive);
+      scene.removeEventListener("pointerover", reactTo);
+      scene.removeEventListener("focusin", reactTo);
+      scene.removeEventListener("pointerout", scheduleAmbient);
+      scene.removeEventListener("focusout", scheduleAmbient);
       entranceTimers.forEach((timer) => window.clearTimeout(timer));
+      reactionTimers.forEach((timer) => window.clearTimeout(timer));
       cancelAnimationFrame(frame);
     };
   }, []);
@@ -178,15 +244,23 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
 
   return <section className="work-section work-skills-section" aria-labelledby="work-skills-title">
     <header className="work-section-heading work-skills-heading">
-      <small>01 / Skills · the tool bench</small>
+      <small>02 / Skills · the tool bench</small>
       <h3 id="work-skills-title">What’s on the bench.</h3>
-      <p>Eight clusters, one working kit. Skills marked ↗ lead to a case; the others open a note here on the bench.</p>
+      <p>Eight illustrated workbenches, one working kit. Skills marked ↗ lead back to an experience case or onward to a public project; the others open a note here.</p>
     </header>
     <div className="work-skill-scene" ref={sceneRef} data-active={active}>
       <svg className="work-skill-cable" aria-hidden="true" focusable="false"><path d={cable} pathLength="1" /></svg>
       {tracePath && <svg key={trace?.serial} className="work-skill-route" aria-hidden="true" focusable="false"><path d={tracePath} pathLength="1" /></svg>}
       <div className="work-skill-grid">
-        {systemsSkillClusters.map((cluster, index) => <article className={`work-skill-paper tone-${cluster.tone}`} key={cluster.id}>
+        {systemsSkillClusters.map((cluster, index) => {
+          const featured = preview?.clusterId === cluster.id ? preview.skill : null;
+          const destination = featured ? systemsSkillEvidence[featured] : null;
+          const selectedNote = annotation?.clusterId === cluster.id ? annotation.skill : null;
+          const localNote = selectedNote && (!featured || featured === selectedNote) ? selectedNote : null;
+          return <article className={`work-skill-paper tone-${cluster.tone}`} key={cluster.id}
+            onPointerLeave={(event) => {
+              if (!event.currentTarget.contains(document.activeElement)) setPreview(null);
+            }}>
           <span className="work-skill-pin" aria-hidden="true" />
           <small className="work-skill-index">{String(index + 1).padStart(2, "0")} / TOOLKIT</small>
           <h4>{cluster.category}</h4>
@@ -197,16 +271,21 @@ export function SystemsSkillsBench({ onFollow, onAnnotation, trace }: {
               aria-expanded={systemsSkillEvidence[item] ? undefined : annotation?.clusterId === cluster.id && annotation.skill === item}
               aria-controls={!systemsSkillEvidence[item] && annotation?.clusterId === cluster.id && annotation.skill === item
                 ? `work-toolkit-note-${cluster.id}` : undefined}
+              onPointerEnter={() => setPreview({ clusterId: cluster.id, skill: item })}
+              onFocus={() => setPreview({ clusterId: cluster.id, skill: item })}
               onClick={(event) => selectSkill(cluster, item, event.currentTarget)}>{item}{systemsSkillEvidence[item] && <span aria-hidden="true">↗</span>}</button>
           </li>)}</ul>
-          {annotation?.clusterId === cluster.id && <div id={`work-toolkit-note-${cluster.id}`} className="work-skill-annotation" role="status">
-            <span className="work-skill-annotation-mark" aria-hidden="true">✳</span>
-            <p><strong>{annotation.skill}</strong> / {toolkitNotes[cluster.category]}</p>
-          </div>}
+          <div id={`work-toolkit-note-${cluster.id}`} className="work-skill-caption" role={localNote ? "status" : undefined}>
+            <span className="work-skill-caption-mark" aria-hidden="true">{localNote ? "✳" : destination ? "↗" : "·"}</span>
+            <span>{localNote ? <><strong>{localNote}</strong> / {toolkitNotes[cluster.category]}</> : featured ?
+              destination ? <><strong>{featured}</strong> / Open {casePreviews[destination]}</> :
+              <><strong>{featured}</strong> / Open a toolkit note here.</> :
+              "Select a skill to follow its case or read a toolkit note."}</span>
+          </div>
           <p className="work-skill-aside">{cluster.aside}</p>
-        </article>)}
+        </article>; })}
       </div>
-      <span className="work-skill-cable-note" aria-hidden="true">next: the proof →</span>
+      <span className="work-skill-cable-note" aria-hidden="true">next: inspectable work →</span>
     </div>
   </section>;
 }

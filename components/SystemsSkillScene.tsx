@@ -21,11 +21,13 @@ export function SystemsSkillScene({ motif }: { motif: SystemsSkillCluster["motif
       <circle cx="134" cy="45" r="4" className="work-drawing-c" />
     </>,
     pulse: <>
-      <path d="M17 62h50l9-25 17 43 17-37 11 19h42" className="work-drawing-a" />
-      <path d="M160 54a38 38 0 1 1 35 32m-8-17 8 17 16-10" className="work-drawing-b" pathLength="1" />
-      <circle cx="195" cy="47" r="11" className="work-drawing-sheet" />
-      <path d="m189 47 5 5 9-11" className="work-drawing-c" />
-      <circle cx="22" cy="23" r="3" /><circle cx="36" cy="23" r="3" /><circle cx="50" cy="23" r="3" />
+      <rect x="18" y="30" width="54" height="38" rx="4" className="work-drawing-sheet" />
+      <path d="m20 34 25 18 25-18M76 49h43m-12-7 12 7-12 7" className="work-drawing-a" />
+      <rect x="126" y="35" width="36" height="29" rx="4" className="work-drawing-sheet work-drawing-c" />
+      <path d="M168 49h27m-8-7 8 7-8 7" className="work-drawing-a" />
+      <path d="M220 34a24 24 0 1 1-8 44m-1-12 1 12 13-4" className="work-drawing-b" pathLength="1" />
+      <path d="m216 51 5 5 10-12" className="work-drawing-c" />
+      <circle cx="93" cy="22" r="3" /><circle cx="105" cy="22" r="3" /><circle cx="117" cy="22" r="3" />
     </>,
     database: <>
       <path d="M22 22h91v54H22zM31 35h70m-70 12h58m-58 12h64" className="work-drawing-sheet" />
@@ -57,10 +59,11 @@ export function SystemsSkillScene({ motif }: { motif: SystemsSkillCluster["motif
     </>,
     compass: <>
       <path d="M20 24h204M20 46h204M20 68h204" className="work-drawing-lines" />
-      <path d="M217 14v65m0-65h19l-6 9 6 9h-19" className="work-drawing-sheet" />
+      <path d="M217 14v65m0-65h19l-6 9 6 9h-19M22 14v65" className="work-drawing-sheet" />
       <path d="M57 24h66m-53 22h95m-103 22h120" className="work-drawing-a" />
       <circle cx="123" cy="24" r="8" className="work-drawing-b" />
       <circle cx="165" cy="46" r="8" className="work-drawing-c" />
+      <circle cx="183" cy="68" r="8" className="work-drawing-b" />
       <path d="m31 18 6 6-6 6m4 10 6 6-6 6" />
     </>,
   }[motif];
