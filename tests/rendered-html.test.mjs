@@ -69,7 +69,11 @@ test("keeps the board story and expandable case content grounded", async () => {
 test("each linked TailCache milestone renders an article at its own URL", async () => {
   const home = await (await render()).text();
   const paths = new Set(Array.from(home.matchAll(/href="(\/field-notes\/tailcache\/[^"]+)"/g), match => match[1]));
-  assert.equal(paths.size, 4);
+  assert.equal(paths.size, 6);
+  const archive = await (await render("/field-notes")).text();
+  assert.match(archive, /<h1[^>]*>Field Notes<\/h1>/);
+  const dates = [...archive.matchAll(/<time dateTime="([^"]+)"/gi)].map(match => match[1]);
+  assert.deepEqual(dates, ["2026-06-05", "2026-08-15", "2026-09-05", "2026-09-19", "2026-11-10", "2026-11-23"]);
   for (const path of paths) {
     const response = await render(path);
     assert.equal(response.status, 200);
@@ -77,7 +81,10 @@ test("each linked TailCache milestone renders an article at its own URL", async 
     assert.match(html, /<h1[^>]*>[^<]+<\/h1>/);
     assert.match(html, /From the lab notebook/);
     assert.match(html, /aria-label="Series navigation"/);
-    assert.match(html, /href="\/#blog-board"/);
+    assert.match(html, /href="\/field-notes"/);
+    const schema = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+    assert.equal(schema["@type"], "BlogPosting");
+    assert.equal(schema.mainEntityOfPage, new URL(path, "https://enixes.vercel.app").href);
   }
   assert.equal((await render("/field-notes/tailcache/missing-note")).status, 404);
 });

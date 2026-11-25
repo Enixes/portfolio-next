@@ -42,7 +42,7 @@ const sectionBoards = [
     marker: "blue",
     eyebrow: "Field Notes / TailCache",
     title: "The TailCache notebook",
-    summary: "Four milestones in a Java cache experiment.",
+    summary: "Caffeine and Chronicle Map, from the shared-cache prototype to the two-host latency results.",
     cards: [],
   },
   {
@@ -329,7 +329,7 @@ export function HeroPreview() {
                 <span className="board-pin" aria-hidden="true" />
                 <p>Field notes / TailCache</p>
                 <strong>Chasing p99.9.</strong>
-                <span>Read the four-part experiment →</span>
+                <span>Read the TailCache series →</span>
               </article>
 
               <aside className="war-note blog-topic-one">
