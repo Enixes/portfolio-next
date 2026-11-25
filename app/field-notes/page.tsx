@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FieldNotesBoard } from "@/components/FieldNotesBoard";
 
 const title = "Field Notes on Java Cache Performance";
-const description = "Asu Singh’s TailCache notebook follows a shared-cache prototype through benchmarks of Caffeine and Chronicle Map, JVM heap pressure, write locality, and p99.9 latency.";
+const description = "Asu Singh follows a question from a hackathon through six field notes on Java cache performance. See how Caffeine and Chronicle Map handle repeated reads, updates, and slow requests.";
 
 export const metadata: Metadata = {
   title, description, alternates: { canonical: "/field-notes" },

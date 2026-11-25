@@ -14,7 +14,7 @@ export function FieldNotesBoard({ standalone = false }: { standalone?: boolean }
             <span className="tc-tape" aria-hidden="true" />
             <p className="tc-label">Performance engineering</p>
             <h3>TailCache</h3>
-            <p className="tc-deck">Where do the slow requests go when a Java cache moves off-heap?</p>
+            <p className="tc-deck">We built a shared cache at a hackathon. I wanted to know why some requests take so much longer than others.</p>
             <TailCacheSketch />
             <a className="tc-start" href={notePath(tailCacheSeries[0].slug)}>Read from the start <span aria-hidden="true">→</span></a>
           </section>
