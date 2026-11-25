@@ -1,3 +1,4 @@
+import { FieldNotesBoard } from "./FieldNotesBoard";
 import { BreezeController } from "@/components/BreezeController";
 import { BoardScrollController } from "@/components/BoardScrollController";
 import { FloatingNavigation } from "@/components/FloatingNavigation";
@@ -39,9 +40,9 @@ const sectionBoards = [
     id: "blog-board",
     number: "02",
     marker: "blue",
-    eyebrow: "Field Notes / In progress",
-    title: "The notebook is still in pencil",
-    summary: "A space for observations that are being worked into writing, with no publication date promised yet.",
+    eyebrow: "Field Notes / TailCache",
+    title: "The TailCache notebook",
+    summary: "Four milestones in a Java cache experiment.",
     cards: [],
   },
   {
@@ -120,12 +121,12 @@ export function HeroPreview() {
                 </svg>
                 <span>01 / Systems + Work</span>
               </a>
-              <a className="board-zone board-zone-blog" href="#blog-board" aria-label="Open the Field Notes work-in-progress board">
+              <a className="board-zone board-zone-blog" href="#blog-board" aria-label="Open the TailCache series in Field Notes">
                 <svg className="zone-mark zone-mark-blog" viewBox="0 0 205 60" aria-hidden="true">
                   <path pathLength={100} d="M22 13 C61 3 161 4 191 20 C215 35 174 53 96 52 C34 52 3 40 14 22 C18 15 28 10 38 8" />
                   <path pathLength={100} d="M15 19 C25 9 39 6 50 7" />
                 </svg>
-                <span>02 / Field Notes · WIP</span>
+                <span>02 / Field Notes</span>
               </a>
               <a className="board-zone board-zone-life" href="#life-board" aria-label="Open the Life board">
                 <svg className="zone-mark zone-mark-life" viewBox="0 0 150 66" aria-hidden="true">
@@ -326,21 +327,21 @@ export function HeroPreview() {
 
               <article className="board-sticky sticky-pink blog-note">
                 <span className="board-pin" aria-hidden="true" />
-                <p>Field notes / In pencil</p>
-                <strong>Work in progress.</strong>
-                <span>The notebook will open when the writing is ready →</span>
+                <p>Field notes / TailCache</p>
+                <strong>Chasing p99.9.</strong>
+                <span>Read the four-part experiment →</span>
               </article>
 
               <aside className="war-note blog-topic-one">
                 <span className="board-pin pin-blue" aria-hidden="true" />
-                <strong>Loose leaf / 001</strong>
-                <span>still finding the thread</span>
+                <strong>Two clocks</strong>
+                <span>service & response</span>
               </aside>
 
               <aside className="war-note blog-topic-two">
                 <span className="board-pin" aria-hidden="true" />
-                <strong>Notes in pencil</strong>
-                <span>revision before publication</span>
+                <strong>Write locality</strong>
+                <span>same rate, different keys</span>
               </aside>
 
               <article className="board-paper life-note">
@@ -451,7 +452,7 @@ export function HeroPreview() {
                 aria-labelledby={`${section.id}-story-title`}
               >
                 <div className="story-board-frame">
-                  <div className="story-board-surface" data-blog-board-host={section.id === "blog-board" ? "" : undefined}>
+                  {section.id === "blog-board" ? <FieldNotesBoard /> : <div className="story-board-surface">
                     <p className="story-board-index">Case board / {section.number}</p>
                     <header className="story-board-header">
                       <span>{section.eyebrow}</span>
@@ -481,7 +482,7 @@ export function HeroPreview() {
                       {section.id === "contact-board" ? "The board stays open." : "Follow the thread across the board →"}
                     </p>
                     {section.id === "contact-board" && <BoardEndCue from="contact" />}
-                  </div>
+                  </div>}
                 </div>
               </article>
             ))}
