@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
+import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
-
-const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
